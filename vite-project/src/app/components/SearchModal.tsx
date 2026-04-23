@@ -1,6 +1,13 @@
 /**
- * Command-palette style modal used for global navigation.
- * Supports recent searches and quick jumps across showcase sections and detail pages.
+ * Global command-palette style search modal.
+ *
+ * 역할:
+ * - 전체 페이지/쇼케이스 항목을 검색한다.
+ * - 최근 검색 기록을 localStorage에 저장하고 다시 불러온다.
+ * - 클릭한 검색 결과로 즉시 라우팅한다.
+ *
+ * 탐색 UX 측면에서 중요한 파일이며,
+ * 실제 검색 대상은 `config/navigation.tsx`의 `searchItems`를 재사용한다.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -15,12 +22,38 @@ interface SearchModalProps {
   onClose: () => void;
 }
 
+/**
+ * 최근 검색 레코드가 원하는 형태인지 검사하는 타입 가드.
+ *
+ * localStorage는 문자열 기반 저장소이므로, 다시 읽어왔을 때
+ * 데이터 구조가 기대한 타입과 맞는지 런타임에서 검사해야 안전하다.
+ */
+function isStoredRecentSearch(value: unknown): value is StoredRecentSearch {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const record = value as Record<string, unknown>;
+
+  return (
+    typeof record.name === 'string' &&
+    typeof record.path === 'string' &&
+    typeof record.timestamp === 'number'
+  );
+}
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<StoredRecentSearch[]>([]);
   const navigate = useNavigate();
 
+  /**
+   * 사용자가 입력한 검색어를 기준으로 전체 검색 대상 중 일치 항목만 추린다.
+   *
+   * `useMemo`를 사용하는 이유:
+   * - 입력값이 바뀔 때만 결과를 다시 계산하고
+   * - 불필요한 반복 필터링을 줄이기 위해서다.
+   */
   const filteredResults = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     if (!normalizedQuery) {
@@ -33,12 +66,24 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     });
   }, [searchQuery]);
 
+  /**
+   * 모달이 열릴 때마다 최근 검색 기록을 다시 불러온다.
+   *
+   * 사용자가 다른 화면에서 검색을 수행했더라도
+   * 모달을 다시 열면 최신 상태를 반영하게 된다.
+   */
   useEffect(() => {
     if (isOpen) {
       setRecentSearches(loadStoredList('recentSearches', isStoredRecentSearch));
     }
   }, [isOpen]);
 
+  /**
+   * 검색 결과 클릭 시 최근 검색 목록을 갱신한다.
+   *
+   * 같은 path는 중복 저장하지 않고 최신 항목을 맨 앞으로 보낸다.
+   * 최대 5개까지만 유지해 리스트가 과도하게 길어지지 않도록 한다.
+   */
   const saveRecentSearch = (item: SearchItem) => {
     const newSearch: StoredRecentSearch = {
       name: item.name,
@@ -52,6 +97,12 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     saveStoredList('recentSearches', updated);
   };
 
+  /**
+   * 최근 검색 1개를 삭제한다.
+   *
+   * 바깥 클릭 이벤트로 항목 이동이 발생하지 않도록
+   * `preventDefault`, `stopPropagation`을 함께 사용한다.
+   */
   const removeRecentSearch = (path: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -60,11 +111,22 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     saveStoredList('recentSearches', updated);
   };
 
+  /**
+   * 최근 검색 전체 삭제.
+   */
   const clearAllRecentSearches = () => {
     setRecentSearches([]);
     localStorage.removeItem('recentSearches');
   };
 
+  /**
+   * 검색 결과 또는 최근 검색 항목을 클릭했을 때의 공통 처리.
+   *
+   * - 필요하면 최근 검색으로 저장
+   * - 라우팅 수행
+   * - 모달 닫기
+   * - 입력창 초기화
+   */
   const handleItemClick = (path: string, item?: SearchItem) => {
     if (item) {
       saveRecentSearch(item);
@@ -74,12 +136,20 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     setSearchQuery('');
   };
 
+  /**
+   * 모달이 열릴 때마다 검색 입력창을 초기화한다.
+   */
   useEffect(() => {
     if (isOpen) {
       setSearchQuery('');
     }
   }, [isOpen]);
 
+  /**
+   * ESC 키로 모달을 닫을 수 있도록 전역 키 이벤트를 등록한다.
+   *
+   * 모달이 닫힐 때는 cleanup으로 리스너를 제거해 중복 등록을 방지한다.
+   */
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -184,38 +254,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
             </div>
           ) : (
             <div className="px-4 py-12 text-center text-gray-400 dark:text-gray-500">
+              <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No results found for "{searchQuery}"</p>
               <p className="text-sm mt-2">Try searching with different keywords</p>
             </div>
           )}
         </div>
-
-        <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <kbd className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs">↵</kbd>
-              to select
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-xs">ESC</kbd>
-              to close
-            </span>
-          </div>
-        </div>
       </div>
     </div>
-  );
-}
-
-function isStoredRecentSearch(value: unknown): value is StoredRecentSearch {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const candidate = value as Partial<StoredRecentSearch>;
-  return (
-    typeof candidate.name === 'string'
-    && typeof candidate.path === 'string'
-    && typeof candidate.timestamp === 'number'
   );
 }
