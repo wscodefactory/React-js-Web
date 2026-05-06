@@ -17,7 +17,7 @@ import type { SearchItem } from '../types/navigation';
 import type { StoredRecentSearch } from '../types/common';
 import { loadStoredList, saveStoredList } from '../utils/storage';
 
-interface SearchModalProps {
+export interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
 }

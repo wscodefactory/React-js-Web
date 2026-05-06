@@ -3,7 +3,7 @@ import { Clock, Search, X } from 'lucide-react';
 import { Link } from 'react-router';
 import type { CatalogItem } from '../../types/catalog';
 
-interface CatalogSearchProps {
+export interface CatalogSearchProps {
   items: CatalogItem[];
   searchQuery: string;
   isDropdownOpen: boolean;

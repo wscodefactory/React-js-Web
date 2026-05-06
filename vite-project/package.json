@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
-    "docs": "typedoc "
+    "docs": "typedoc --entryPoints src --entryPointStrategy expand --out docs"
   },
   "dependencies": {
     "lucide-react": "0.487.0",
@@ -25,7 +25,7 @@
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
     "typedoc": "^0.28.19",
-    "typescript": "5.8.3",
+    "typescript": "^6.0.3",
     "vite": "^6.4.2"
   },
   "pnpm": {

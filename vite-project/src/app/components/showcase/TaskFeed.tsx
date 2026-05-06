@@ -1,7 +1,7 @@
 import { taskStatusIconMap } from '@/app/data/showcase';
 import type { TaskItem } from '@/app/types/showcase';
 
-interface TaskFeedProps {
+export interface TaskFeedProps {
   title: string;
   items: TaskItem[];
 }

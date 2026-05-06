@@ -5,7 +5,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { WithChildren } from '../types/common';
 
-type DarkModeContextType = {
+export type DarkModeContextType = {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 };

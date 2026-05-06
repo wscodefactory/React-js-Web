@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Card, CardContent } from '../common';
 import type { CatalogItem } from '../../types/catalog';
 
-interface CatalogCardProps {
+export interface CatalogCardProps {
   item: CatalogItem;
 }
 

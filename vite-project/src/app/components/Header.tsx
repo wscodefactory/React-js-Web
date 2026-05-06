@@ -21,7 +21,7 @@ function BrandLogo() {
   );
 }
 
-interface NavLinkProps {
+export interface NavLinkProps {
   item: NavigationLinkItem;
   isActive: boolean;
 }

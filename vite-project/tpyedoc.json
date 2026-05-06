@@ -1,8 +1,12 @@
 {
     "$schema": "https://typedoc.org/schema.json",
-    "entryPoints": ["./src/main.tsx"],
+    "entryPoints": ["src/main.tsx"],
+    "entryPointStrategy": "expand",
     "out": "docs",
     "name": "내 프로젝트 API 문서",
     "excludePrivate": true,
+    "excludeInternal": true,
+    "includeVersion": true,
     "plugin": []
 }
+{

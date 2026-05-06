@@ -6,7 +6,7 @@ import { ReactNode, ButtonHTMLAttributes } from 'react';
  * HTML button 기본 속성을 그대로 상속하면서,
  * 프로젝트 내부에서 자주 쓰는 variant만 추가로 정의한다.
  */
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'icon';
   children: ReactNode;
   className?: string;
@@ -40,7 +40,7 @@ export function Button({ variant = 'primary', children, className = '', ...props
   );
 }
 
-interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: ReactNode;
   label: string;
   className?: string;

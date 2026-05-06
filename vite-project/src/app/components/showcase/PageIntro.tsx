@@ -1,4 +1,4 @@
-interface PageIntroProps {
+export interface PageIntroProps {
   highlight: string;
   title: string;
   description: string;

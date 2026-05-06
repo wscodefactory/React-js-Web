@@ -1,6 +1,6 @@
 import type { MetricItem } from '@/app/types/showcase';
 
-interface MetricGridProps {
+export interface MetricGridProps {
   items: MetricItem[];
   columnsClassName?: string;
 }

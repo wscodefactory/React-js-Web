@@ -1,6 +1,6 @@
 import type { CanvasStatItem } from '@/app/types/showcase';
 
-interface CanvasStatGridProps {
+export interface CanvasStatGridProps {
   items: CanvasStatItem[];
 }
 

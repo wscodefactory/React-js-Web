@@ -4,7 +4,7 @@ import { SectionHeader } from '../common';
 import { useCatalogSearch } from '../../hooks/useCatalogSearch';
 import type { CatalogItem } from '../../types/catalog';
 
-interface CatalogPageProps {
+export interface CatalogPageProps {
   title: string;
   titleHighlight?: string;
   description: string;

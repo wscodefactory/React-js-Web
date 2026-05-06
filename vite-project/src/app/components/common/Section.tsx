@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-interface SectionProps {
+export interface SectionProps {
   children: ReactNode;
   className?: string;
 }
@@ -9,7 +9,7 @@ export function Section({ children, className = '' }: SectionProps) {
   return <section className={`section ${className}`}>{children}</section>;
 }
 
-interface SectionHeaderProps {
+export interface SectionHeaderProps {
   title: string;
   titleHighlight?: string;
   description?: string;

@@ -1,7 +1,7 @@
 import type { ComponentShowcaseConfig } from "@/app/types/component-showcase";
 import { ComponentPreviewCard } from "./ComponentPreviewCard";
 
-interface ComponentShowcasePageProps {
+export interface ComponentShowcasePageProps {
   config: ComponentShowcaseConfig;
 }
 

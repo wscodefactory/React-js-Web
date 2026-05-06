@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { OptionCardItem } from '@/app/types/showcase';
 
-interface SelectionGridProps {
+export interface SelectionGridProps {
   items: OptionCardItem[];
   columnsClassName?: string;
   trailing?: (item: OptionCardItem) => ReactNode;

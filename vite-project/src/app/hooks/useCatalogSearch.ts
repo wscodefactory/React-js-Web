@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEven
 import type { CatalogItem } from '../types/catalog';
 import { loadStoredList, saveStoredList } from '../utils/storage';
 
-interface SearchState {
+export interface SearchState {
   searchQuery: string;
   isDropdownOpen: boolean;
   recentSearches: CatalogItem[];

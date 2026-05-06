@@ -1,7 +1,7 @@
 import { Star } from 'lucide-react';
 import type { FeedbackEntry } from '@/app/types/showcase';
 
-interface FeedbackFeedProps {
+export interface FeedbackFeedProps {
   title: string;
   items: FeedbackEntry[];
 }

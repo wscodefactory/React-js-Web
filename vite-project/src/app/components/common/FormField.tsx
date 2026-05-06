@@ -4,7 +4,7 @@ import type { SelectOption } from '../../types/common';
 /**
  * 라벨과 입력 요소를 하나의 블록으로 묶어주는 기본 필드 래퍼 props.
  */
-interface FormFieldProps {
+export interface FormFieldProps {
   label: string;
   children: ReactNode;
   className?: string;
@@ -25,7 +25,7 @@ export function FormField({ label, children, className = '' }: FormFieldProps) {
   );
 }
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   className?: string;
 }
 
@@ -39,7 +39,7 @@ export function Input({ className = '', ...props }: InputProps) {
   return <input className={`form-input ${className}`} {...props} />;
 }
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   options: SelectOption[];
   className?: string;
 }
@@ -59,7 +59,7 @@ export function Select({ options, className = '', ...props }: SelectProps) {
   );
 }
 
-interface ColorInputProps {
+export interface ColorInputProps {
   label: string;
   defaultValue?: string;
   onChange?: (color: string) => void;

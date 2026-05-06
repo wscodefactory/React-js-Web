@@ -9,7 +9,7 @@ const badgeToneClasses = {
   featured: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
 } as const;
 
-interface ComponentPreviewCardProps {
+export interface ComponentPreviewCardProps {
   item: ComponentPreviewItem;
 }
 

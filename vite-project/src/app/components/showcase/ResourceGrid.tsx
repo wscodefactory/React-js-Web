@@ -1,6 +1,6 @@
 import type { ToolResourceItem } from '@/app/types/showcase';
 
-interface ResourceGridProps {
+export interface ResourceGridProps {
   title: string;
   items: ToolResourceItem[];
 }

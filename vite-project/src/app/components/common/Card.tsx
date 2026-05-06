@@ -6,7 +6,7 @@ import { ReactNode } from 'react';
  * hover와 onClick을 분리해 두어
  * "보여주기만 하는 카드"와 "상호작용 가능한 카드"를 모두 표현할 수 있다.
  */
-interface CardProps {
+export interface CardProps {
   children: ReactNode;
   hover?: boolean;
   className?: string;
@@ -32,7 +32,7 @@ export function Card({ children, hover = false, className = '', onClick }: CardP
   );
 }
 
-interface CardHeaderProps {
+export interface CardHeaderProps {
   title: string;
   description?: string;
   icon?: ReactNode;
@@ -62,7 +62,7 @@ export function CardHeader({ title, description, icon, badge }: CardHeaderProps)
   );
 }
 
-interface CardContentProps {
+export interface CardContentProps {
   children: ReactNode;
   className?: string;
 }
@@ -74,7 +74,7 @@ export function CardContent({ children, className = '' }: CardContentProps) {
   return <div className={`card-padding ${className}`}>{children}</div>;
 }
 
-interface CardFooterProps {
+export interface CardFooterProps {
   children: ReactNode;
   className?: string;
 }

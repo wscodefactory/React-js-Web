@@ -1,6 +1,6 @@
 import type { ActivityItem } from '@/app/types/showcase';
 
-interface ActivityListProps {
+export interface ActivityListProps {
   title: string;
   items: ActivityItem[];
 }

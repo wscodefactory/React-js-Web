@@ -30,6 +30,7 @@ import { Toggles } from '../pages/components/Toggles';
 import { InputFields } from '../pages/components/InputFields';
 import { FeedbackAppPage } from '../pages/fullapps/FeedbackAppPage';
 import { ProjectManagementAppPage } from '../pages/fullapps/ProjectManagementAppPage';
+import { ChromeExtensionsPage } from '../pages/fullapps/ChromeExtensionsPage';
 import { CleaningConfirmationPage } from '../pages/fullapps/CleaningConfirmationPage';
 import { YamlLibraryPage } from '../pages/libraries/YamlLibraryPage';
 import { CustomSvgLibraryPage } from '../pages/libraries/CustomSvgLibraryPage';
@@ -81,6 +82,7 @@ export const routeSections: RouteSectionDefinition[] = [
     landingDescription: 'Complete workflow demos that combine multiple UI building blocks.',
     landingComponent: FullAppsPage,
     children: [
+      { label: 'Chrome Extensions', slug: 'full-apps/chrome-extensions', description: 'Chrome extension templates and Power Apps installation workflow', component: ChromeExtensionsPage, badge: 'New', searchKeywords: ['chrome', 'extension', 'power apps'] },
       { label: 'Feedback App', slug: 'full-apps/feedback-app', description: 'Complete feedback collection and rating system', component: FeedbackAppPage, badge: 'New', searchKeywords: ['reviews', 'ratings'] },
       { label: 'Project Management', slug: 'full-apps/project-management', description: 'Project tracking with analytics and team collaboration', component: ProjectManagementAppPage, badge: 'New', searchKeywords: ['kanban', 'tasks'] },
       { label: 'Cleaning Confirmation', slug: 'full-apps/cleaning-confirmation', description: 'Service confirmation and scheduling application', component: CleaningConfirmationPage, badge: 'New', searchKeywords: ['service', 'schedule'] },

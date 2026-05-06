@@ -17,7 +17,7 @@ import { IconButton } from './common';
 import { getSidebarItems } from '../config/navigation';
 import type { SidebarItem } from '../types/navigation';
 
-interface SidebarLinkProps {
+export interface SidebarLinkProps {
   item: SidebarItem;
   isActive: boolean;
 }
@@ -44,7 +44,7 @@ function SidebarLink({ item, isActive }: SidebarLinkProps) {
   );
 }
 
-interface SidebarContentProps {
+export interface SidebarContentProps {
   items: SidebarItem[];
   currentPath: string;
   onClose?: () => void;

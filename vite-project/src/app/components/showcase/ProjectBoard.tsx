@@ -1,7 +1,7 @@
 import { Clock, Users } from 'lucide-react';
 import type { ProjectOverview } from '@/app/types/showcase';
 
-interface ProjectBoardProps {
+export interface ProjectBoardProps {
   title: string;
   items: ProjectOverview[];
 }

@@ -5,7 +5,7 @@
 import { createContext, useContext, useState } from 'react';
 import type { WithChildren } from '../types/common';
 
-type SidebarContextType = {
+export type SidebarContextType = {
   isSidebarOpen: boolean;
   toggleSidebar: () => void;
   closeSidebar: () => void;

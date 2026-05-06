@@ -32,7 +32,7 @@ const asideItems: AsideItem[] = [
   { title: 'Support', description: 'Help and support' },
 ];
 
-interface AsideCardProps extends AsideItem {}
+export interface AsideCardProps extends AsideItem {}
 
 /**
  * 우측 패널에서 재사용되는 카드 단위 표현 컴포넌트.
