@@ -1,0 +1,1 @@
+export { calendarShowcaseConfig } from './showcaseConfig';
