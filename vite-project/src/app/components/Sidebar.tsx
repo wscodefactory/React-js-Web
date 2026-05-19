@@ -10,7 +10,7 @@
  * 현재 사용자가 들어와 있는 섹션에 맞는 하위 탐색만 제공한다"는 점이다.
  */
 import { ChevronRight, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useSidebar } from '../context/SidebarContext';
 import { useEffect } from 'react';
 import { IconButton } from './common';
@@ -20,6 +20,7 @@ import type { SidebarItem } from '../types/navigation';
 export interface SidebarLinkProps {
   item: SidebarItem;
   isActive: boolean;
+  onClose?: () => void;
 }
 
 /**
@@ -28,11 +29,22 @@ export interface SidebarLinkProps {
  * `isActive`는 현재 경로와 이 링크의 경로가 같은지를 의미하며,
  * 선택된 메뉴와 선택되지 않은 메뉴의 시각적 상태를 분리하는 데 사용된다.
  */
-function SidebarLink({ item, isActive }: SidebarLinkProps) {
+function SidebarLink({ item, isActive, onClose }: SidebarLinkProps) {
+  const navigate = useNavigate();
   const activeClass = isActive ? 'sidebar-link-active' : 'sidebar-link-inactive';
 
+  const handleNavigate = () => {
+    navigate(item.path);
+    onClose?.();
+  };
+
   return (
-    <Link to={item.path} className={`sidebar-link ${activeClass}`}>
+    <button
+      type="button"
+      onClick={handleNavigate}
+      aria-current={isActive ? 'page' : undefined}
+      className={`sidebar-link w-full text-left ${activeClass}`}
+    >
       <span className="flex items-center justify-between w-full">
         <span className="flex items-center gap-2">
           <ChevronRight className="icon-sm" />
@@ -40,7 +52,7 @@ function SidebarLink({ item, isActive }: SidebarLinkProps) {
         </span>
         {item.badge && <span className="badge badge-success">{item.badge}</span>}
       </span>
-    </Link>
+    </button>
   );
 }
 
@@ -67,7 +79,7 @@ function SidebarContent({ items, currentPath, onClose }: SidebarContentProps) {
       )}
       <div className="space-y-1">
         {items.map((item) => (
-          <SidebarLink key={item.path} item={item} isActive={currentPath === item.path} />
+          <SidebarLink key={item.path} item={item} isActive={currentPath === item.path} onClose={onClose} />
         ))}
       </div>
     </nav>

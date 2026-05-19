@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Download, RefreshCw, Sparkles } from 'lucide-react';
+import { Check, Copy, Download, RefreshCw, Sparkles } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import { PageIntro } from '../../components/showcase/PageIntro';
 
@@ -21,11 +21,20 @@ const palettes: Record<PaletteName, [string, string, string]> = {
 };
 
 function slugify(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9가-힣]+/gi, '-').replace(/^-|-$/g, '') || 'logo';
+  return value.trim().toLowerCase().replace(/[^a-z0-9\uac00-\ud7a3]+/gi, '-').replace(/^-|-$/g, '') || 'logo';
+}
+
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 function createLogoSvg(brandName: string, style: LogoStyle, colors: [string, string, string], variant = 0) {
-  const initial = (brandName.trim()[0] ?? 'L').toUpperCase();
+  const initial = escapeSvgText((brandName.trim()[0] ?? 'L').toUpperCase());
   const [primary, secondary, soft] = colors;
 
   const templates: Record<LogoStyle, string> = {
@@ -49,7 +58,17 @@ function downloadSvg(svg: string, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-function LogoPreview({ option, brandName }: { option: LogoOption; brandName: string }) {
+function LogoPreview({
+  option,
+  brandName,
+  copied,
+  onCopy,
+}: {
+  option: LogoOption;
+  brandName: string;
+  copied: boolean;
+  onCopy: (option: LogoOption) => void;
+}) {
   return (
     <Card className="overflow-hidden">
       <CardContent className="space-y-4">
@@ -61,9 +80,14 @@ function LogoPreview({ option, brandName }: { option: LogoOption; brandName: str
             <h3 className="font-semibold text-gray-900 dark:text-white">{option.label}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">SVG export ready</p>
           </div>
-          <Button variant="secondary" onClick={() => downloadSvg(option.svg, `${brandName}-${option.label}`)}>
-            <Download className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => onCopy(option)} aria-label={`Copy ${option.label} SVG`}>
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+            <Button variant="secondary" onClick={() => downloadSvg(option.svg, `${brandName}-${option.label}`)} aria-label={`Download ${option.label} SVG`}>
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -75,6 +99,8 @@ export function LogoGeneratorPage() {
   const [style, setStyle] = useState<LogoStyle>('Modern');
   const [palette, setPalette] = useState<PaletteName>('Forest');
   const [seed, setSeed] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [status, setStatus] = useState('Choose a style and export the SVG concept you like.');
 
   const options = useMemo<LogoOption[]>(() => {
     const colors = palettes[palette];
@@ -84,6 +110,23 @@ export function LogoGeneratorPage() {
       svg: createLogoSvg(brandName, style, colors, variant + seed),
     }));
   }, [brandName, palette, seed, style]);
+
+  const copyLogo = async (option: LogoOption) => {
+    await navigator.clipboard.writeText(option.svg);
+    setCopiedId(option.id);
+    setStatus(`${option.label} SVG copied to clipboard.`);
+    window.setTimeout(() => setCopiedId(null), 1200);
+  };
+
+  const refreshVariations = () => {
+    setSeed((value) => value + 1);
+    setStatus('Generated a fresh set of SVG variations.');
+  };
+
+  const downloadAll = () => {
+    options.forEach((option) => downloadSvg(option.svg, `${brandName}-${option.label}`));
+    setStatus('All current SVG variations were queued for download.');
+  };
 
   return (
     <main className="p-4 md:p-8">
@@ -101,7 +144,7 @@ export function LogoGeneratorPage() {
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Style</span>
               <div className="grid grid-cols-2 gap-2">
                 {styles.map((item) => (
-                  <button key={item} onClick={() => setStyle(item)} className={`rounded-lg border px-3 py-2 text-sm transition ${style === item ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'}`}>{item}</button>
+                  <button key={item} type="button" onClick={() => setStyle(item)} className={`rounded-lg border px-3 py-2 text-sm transition ${style === item ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'}`}>{item}</button>
                 ))}
               </div>
             </div>
@@ -110,7 +153,7 @@ export function LogoGeneratorPage() {
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Palette</span>
               <div className="space-y-2">
                 {(Object.keys(palettes) as PaletteName[]).map((name) => (
-                  <button key={name} onClick={() => setPalette(name)} className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm ${palette === name ? 'border-green-500' : 'border-gray-300 dark:border-gray-700'}`}>
+                  <button key={name} type="button" onClick={() => setPalette(name)} className={`flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm ${palette === name ? 'border-green-500' : 'border-gray-300 dark:border-gray-700'}`}>
                     <span>{name}</span>
                     <span className="flex gap-1">{palettes[name].map((color) => <span key={color} className="h-4 w-4 rounded-full border border-black/10" style={{ backgroundColor: color }} />)}</span>
                   </button>
@@ -118,8 +161,11 @@ export function LogoGeneratorPage() {
               </div>
             </div>
 
-            <Button onClick={() => setSeed((value) => value + 1)} className="w-full justify-center">
+            <Button onClick={refreshVariations} className="w-full justify-center">
               <RefreshCw className="h-4 w-4" /> Refresh variations
+            </Button>
+            <Button variant="secondary" onClick={downloadAll} className="w-full justify-center">
+              <Download className="h-4 w-4" /> Download all
             </Button>
           </CardContent>
         </Card>
@@ -127,10 +173,18 @@ export function LogoGeneratorPage() {
         <section className="space-y-4">
           <div className="flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-900/60 dark:bg-green-900/20 dark:text-green-200">
             <Sparkles className="h-4 w-4" />
-            Generated locally as SVG with clean React state and reusable preview cards.
+            {status}
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            {options.map((option) => <LogoPreview key={option.id} option={option} brandName={brandName} />)}
+            {options.map((option) => (
+              <LogoPreview
+                key={option.id}
+                option={option}
+                brandName={brandName}
+                copied={copiedId === option.id}
+                onCopy={copyLogo}
+              />
+            ))}
           </div>
         </section>
       </div>

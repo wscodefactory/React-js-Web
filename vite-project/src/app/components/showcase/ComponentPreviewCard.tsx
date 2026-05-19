@@ -1,4 +1,4 @@
-import { Link2, MoreVertical } from "lucide-react";
+import { Link2, MoreVertical, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentPreviewItem } from "@/app/types/component-showcase";
 
@@ -9,11 +9,13 @@ const badgeToneClasses = {
   featured: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
 } as const;
 
+export const savedPreviewStorageKey = "web5:saved-component-previews";
+
 export interface ComponentPreviewCardProps {
   item: ComponentPreviewItem;
 }
 
-function slugify(value: string) {
+export function getPreviewSectionId(value: string) {
   return value
     .toLowerCase()
     .trim()
@@ -28,11 +30,21 @@ function slugify(value: string) {
  */
 export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
   const tone = item.badge?.tone ?? "free";
-  const sectionId = useMemo(() => slugify(item.title), [item.title]);
+  const sectionId = useMemo(() => getPreviewSectionId(item.title), [item.title]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isCopiedVisible, setIsCopiedVisible] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const hideCopiedTimeoutRef = useRef<number | null>(null);
+  const hideToastTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedPreviews = JSON.parse(window.localStorage.getItem(savedPreviewStorageKey) ?? "[]") as string[];
+      setIsSaved(savedPreviews.includes(sectionId));
+    } catch {
+      setIsSaved(false);
+    }
+  }, [sectionId]);
 
   useEffect(() => {
     function handleOutsideClick(event: MouseEvent) {
@@ -54,11 +66,23 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
       document.removeEventListener("mousedown", handleOutsideClick);
       document.removeEventListener("keydown", handleEscapeKey);
 
-      if (hideCopiedTimeoutRef.current) {
-        window.clearTimeout(hideCopiedTimeoutRef.current);
+      if (hideToastTimeoutRef.current) {
+        window.clearTimeout(hideToastTimeoutRef.current);
       }
     };
   }, []);
+
+  function showToast(message: string) {
+    setToastMessage(message);
+
+    if (hideToastTimeoutRef.current) {
+      window.clearTimeout(hideToastTimeoutRef.current);
+    }
+
+    hideToastTimeoutRef.current = window.setTimeout(() => {
+      setToastMessage("");
+    }, 1800);
+  }
 
   async function handleCopyLink() {
     const baseUrl = window.location.href.split("#")[0];
@@ -66,18 +90,29 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
 
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setIsCopiedVisible(true);
       setIsMenuOpen(false);
-
-      if (hideCopiedTimeoutRef.current) {
-        window.clearTimeout(hideCopiedTimeoutRef.current);
-      }
-
-      hideCopiedTimeoutRef.current = window.setTimeout(() => {
-        setIsCopiedVisible(false);
-      }, 1800);
+      showToast("Link copied.");
     } catch {
       setIsMenuOpen(false);
+      showToast("Copy failed.");
+    }
+  }
+
+  function handleToggleSave() {
+    try {
+      const savedPreviews = JSON.parse(window.localStorage.getItem(savedPreviewStorageKey) ?? "[]") as string[];
+      const nextSaved = isSaved
+        ? savedPreviews.filter((id) => id !== sectionId)
+        : [...new Set([...savedPreviews, sectionId])];
+
+      window.localStorage.setItem(savedPreviewStorageKey, JSON.stringify(nextSaved));
+      window.dispatchEvent(new CustomEvent("web5:saved-preview-change", { detail: nextSaved }));
+      setIsSaved(!isSaved);
+      setIsMenuOpen(false);
+      showToast(isSaved ? "Preview removed." : "Preview saved.");
+    } catch {
+      setIsMenuOpen(false);
+      showToast("Save failed.");
     }
   }
 
@@ -93,6 +128,12 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
             {item.badge ? (
               <span className={`rounded-full px-3 py-1 text-xs font-medium ${badgeToneClasses[tone]}`}>
                 {item.badge.label}
+              </span>
+            ) : null}
+            {isSaved ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                <Star className="h-3 w-3 fill-current" />
+                Saved
               </span>
             ) : null}
           </div>
@@ -114,6 +155,14 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
             <div className="absolute right-0 top-12 z-20 min-w-[180px] overflow-hidden rounded-xl border border-gray-200 bg-white py-2 shadow-lg dark:border-gray-700 dark:bg-gray-900">
               <button
                 type="button"
+                onClick={handleToggleSave}
+                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+              >
+                <Star className={`h-4 w-4 ${isSaved ? "fill-current text-amber-500" : ""}`} />
+                <span>{isSaved ? "Remove Saved" : "Save Preview"}</span>
+              </button>
+              <button
+                type="button"
                 onClick={handleCopyLink}
                 className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
               >
@@ -123,9 +172,9 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
             </div>
           ) : null}
 
-          {isCopiedVisible ? (
+          {toastMessage ? (
             <div className="pointer-events-none fixed bottom-6 right-6 z-[100] rounded-2xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-2xl transition-all duration-300 dark:bg-white dark:text-gray-900">
-              Copied!
+              {toastMessage}
             </div>
           ) : null}
         </div>

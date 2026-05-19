@@ -93,6 +93,10 @@ export const quickToolOptions: SelectOption[] = [
   { value: 'formatter', label: 'Code Formatter' },
   { value: 'validator', label: 'JSON Validator' },
   { value: 'converter', label: 'Data Converter' },
+  { value: 'command', label: 'Command Generator' },
+  { value: 'config', label: 'Config Builder' },
+  { value: 'performance', label: 'Performance Analyzer' },
+  { value: 'powerfx', label: 'Power Fx Converter' },
 ];
 
 export const quickToolActions = [

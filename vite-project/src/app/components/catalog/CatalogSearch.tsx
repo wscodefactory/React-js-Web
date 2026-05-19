@@ -15,6 +15,7 @@ export interface CatalogSearchProps {
   onResultClick: (item: CatalogItem) => void;
   onRemoveRecent: (path: string, event: MouseEvent<Element>) => void;
   onClearAllRecent: () => void;
+  onClearSearch: () => void;
 }
 
 export function CatalogSearch({
@@ -29,6 +30,7 @@ export function CatalogSearch({
   onResultClick,
   onRemoveRecent,
   onClearAllRecent,
+  onClearSearch,
 }: CatalogSearchProps) {
   const searchableItems = searchQuery.trim() === '' ? [] : items;
 
@@ -42,8 +44,18 @@ export function CatalogSearch({
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
           onFocus={onInputFocus}
-          className="form-input w-full pl-12"
+          className="form-input w-full pl-12 pr-12"
         />
+        {searchQuery.trim() ? (
+          <button
+            type="button"
+            onClick={onClearSearch}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+            aria-label="Clear search"
+          >
+            <X className="icon-sm" />
+          </button>
+        ) : null}
       </div>
 
       {isDropdownOpen && (
