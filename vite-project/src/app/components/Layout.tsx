@@ -22,14 +22,14 @@ import type { AsideItem } from '../types/common';
  * 교체하더라도 `AsidePanel` 자체 구조는 그대로 재사용할 수 있다.
  */
 const asideItems: AsideItem[] = [
-  { title: 'Accolate Ad library', description: 'Additional content area' },
-  { title: 'What User Say', description: 'User feedback section' },
-  { title: 'Features', description: 'Feature highlights' },
-  { title: 'Resources', description: 'Resource links' },
-  { title: 'Community', description: 'Community updates' },
-  { title: 'Latest News', description: 'Recent announcements' },
-  { title: 'Documentation', description: 'Getting started guides' },
-  { title: 'Support', description: 'Help and support' },
+  { title: '제작 메모', description: '홈, 라우팅, 검색, 다크모드 구조가 연결된 상태입니다.' },
+  { title: '추천 탐색', description: 'Components와 Tools 섹션에서 재사용 패턴을 먼저 확인하세요.' },
+  { title: '다음 작업', description: '개별 앱 데모의 카피, 인터랙션, 반응형 상태를 순서대로 다듬으면 좋습니다.' },
+  { title: '검증 상태', description: '타입체크와 프로덕션 빌드가 통과하는 흐름을 유지합니다.' },
+  { title: '콘텐츠 기준', description: '임시 문구 대신 화면 목적과 사용 흐름이 드러나는 문장으로 정리합니다.' },
+  { title: '리소스', description: '공용 컴포넌트와 카탈로그 데이터를 기준으로 새 페이지를 확장합니다.' },
+  { title: '문서화', description: '구조 변경 후 typedoc 문서를 갱신할 수 있습니다.' },
+  { title: '지원 범위', description: '디자인 보강, 기능 연결, 브라우저 QA를 이어서 진행할 수 있습니다.' },
 ];
 
 export interface AsideCardProps extends AsideItem {}
