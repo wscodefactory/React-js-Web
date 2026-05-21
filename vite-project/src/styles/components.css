@@ -1,0 +1,247 @@
+/* Header Styles */
+.header {
+  @apply border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900;
+}
+
+.header-container {
+  @apply max-w-[1440px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between md:justify-center relative;
+}
+
+.header-menu-btn {
+  @apply md:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors;
+}
+
+.header-brand {
+  @apply flex items-center gap-2 md:absolute md:left-6 hover:opacity-80 transition-opacity;
+}
+
+.header-brand-icon {
+  @apply w-6 h-6 bg-green-600 rounded;
+}
+
+.header-brand-text {
+  @apply font-semibold text-gray-900 dark:text-white text-sm md:text-base;
+}
+
+.header-nav {
+  @apply hidden md:flex items-center gap-1;
+}
+
+.header-nav-link {
+  @apply px-3 lg:px-4 py-2 rounded-md transition-colors text-sm lg:text-base;
+}
+
+.header-nav-link-active {
+  @apply text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20;
+}
+
+.header-nav-link-inactive {
+  @apply text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-green-800;
+}
+
+.header-theme-toggle {
+  @apply p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors md:absolute md:right-6;
+}
+
+/* Button Styles */
+.btn {
+  @apply px-4 py-2 rounded-lg transition-all duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+  @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-secondary {
+  @apply border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800;
+}
+
+.btn-icon {
+  @apply p-2 rounded-md transition-colors;
+}
+
+/* Card Styles */
+.card {
+  @apply border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800;
+}
+
+.card-hover {
+  @apply hover:border-green-500 dark:hover:border-green-600 transition-all cursor-pointer;
+}
+
+.card-padding {
+  @apply p-4 md:p-6;
+}
+
+.card-title {
+  @apply text-lg font-semibold text-gray-900 dark:text-white mb-2;
+}
+
+.card-description {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+/* Layout Styles */
+.layout-root {
+  @apply h-screen flex flex-col bg-gray-50 dark:bg-gray-950;
+}
+
+.layout-content {
+  @apply flex-1 overflow-y-auto;
+}
+
+.layout-grid {
+  @apply md:grid md:grid-cols-[minmax(180px,200px)_1fr] lg:grid-cols-[minmax(40px,5vw)_minmax(180px,15vw)_1fr] xl:grid-cols-[minmax(40px,5vw)_minmax(180px,15vw)_1fr_minmax(200px,20vw)_minmax(40px,5vw)] md:gap-0;
+}
+
+.layout-spacer {
+  @apply hidden lg:block bg-gray-50 dark:bg-gray-950;
+}
+
+.layout-main {
+  @apply min-h-screen md:h-screen md:sticky md:top-0 md:overflow-y-auto bg-white dark:bg-gray-900;
+}
+
+.layout-aside {
+  @apply hidden xl:block h-screen sticky top-0 overflow-y-auto border-l border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  @apply bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700;
+}
+
+.sidebar-scrollable {
+  @apply h-screen sticky top-0 overflow-y-auto;
+}
+
+.sidebar-mobile-overlay {
+  @apply md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300;
+}
+
+.sidebar-mobile {
+  @apply md:hidden fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-900 z-50 transform transition-transform duration-300;
+}
+
+.sidebar-nav {
+  @apply p-4 space-y-1;
+}
+
+.sidebar-link {
+  @apply block px-4 py-2 rounded-lg text-sm transition-colors;
+}
+
+.sidebar-link-active {
+  @apply bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 font-medium;
+}
+
+.sidebar-link-inactive {
+  @apply text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800;
+}
+
+/* Section Styles */
+.section {
+  @apply py-8 md:py-12;
+}
+
+.section-header {
+  @apply mb-6 md:mb-8;
+}
+
+.section-title {
+  @apply text-3xl md:text-4xl mb-4;
+}
+
+.section-title-highlight {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.section-description {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+/* Form Styles */
+.form-group {
+  @apply space-y-2;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500;
+}
+
+.form-select {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500;
+}
+
+.form-color-group {
+  @apply flex gap-2 items-stretch;
+}
+
+.form-color-picker {
+  @apply w-14 border border-gray-300 dark:border-gray-600 rounded cursor-pointer;
+}
+
+/* Grid Styles */
+.grid-auto {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6;
+}
+
+.grid-responsive {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+/* Icon Styles */
+.icon {
+  @apply w-5 h-5 text-gray-600 dark:text-gray-300;
+}
+
+.icon-sm {
+  @apply w-4 h-4;
+}
+
+.icon-lg {
+  @apply w-6 h-6;
+}
+
+/* Text Styles */
+.text-muted {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.text-primary {
+  @apply text-green-600 dark:text-green-400;
+}
+
+/* Badge Styles */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+  @apply bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400;
+}
+
+.badge-primary {
+  @apply bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900;
+}
+
+.badge-warning {
+  @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400;
+}
+
+.badge-error {
+  @apply bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400;
+}
+
+/* Utility Classes */
+.container-page {
+  @apply p-4 md:p-8;
+}
+
+.space-y-section {
+  @apply space-y-6;
+}
