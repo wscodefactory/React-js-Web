@@ -1,14 +1,31 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, User } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader } from '@/app/components/common';
+import { CalendarDays, CheckCircle2, ClipboardCheck, Plus, RotateCcw, Trash2, User } from 'lucide-react';
+import { Button, Card, CardContent, CardHeader, FormField, Input } from '@/app/components/common';
 import { PageIntro } from '@/app/components/showcase/PageIntro';
 import { cleaningAppointments, cleaningSessionDetails, cleaningTasks } from '@/app/data/showcase';
 import type { CleaningAppointment, CleaningTask } from '@/app/types/showcase';
+import { copyTextToClipboard } from '@/app/utils/clipboard';
+
+function buildSessionSummary(tasks: CleaningTask[], notes: string, confirmed: boolean) {
+  const completedRooms = tasks.filter((task) => task.completed).map((task) => `${task.room} (${task.time})`);
+
+  return [
+    `Cleaning status: ${confirmed ? 'Confirmed' : 'Not confirmed'}`,
+    `Completed rooms: ${completedRooms.length}/${tasks.length}`,
+    ...completedRooms.map((room) => `- ${room}`),
+    '',
+    `Notes: ${notes || 'No notes added.'}`,
+  ].join('\n');
+}
 
 export function CleaningConfirmationPage() {
   const [tasks, setTasks] = useState<CleaningTask[]>(cleaningTasks);
   const [appointments, setAppointments] = useState<CleaningAppointment[]>(cleaningAppointments);
   const [notes, setNotes] = useState('Entryway supplies restocked. Bedrooms pending final inspection.');
+  const [newRoom, setNewRoom] = useState('Laundry Room');
+  const [newAppointmentDate, setNewAppointmentDate] = useState('2026-05-28');
+  const [newAppointmentLocation, setNewAppointmentLocation] = useState('Retail Floor Refresh');
+  const [newAppointmentCleaner, setNewAppointmentCleaner] = useState('Sarah Johnson');
   const [confirmed, setConfirmed] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Tap checklist items as rooms are completed.');
 
@@ -36,6 +53,55 @@ export function CleaningConfirmationPage() {
     setStatusMessage('Checklist updated.');
   };
 
+  const addTask = () => {
+    const room = newRoom.trim();
+
+    if (!room) {
+      setStatusMessage('Add a room or area name before adding a checklist item.');
+      return;
+    }
+
+    setTasks((current) => [
+      ...current,
+      {
+        id: Math.max(0, ...current.map((task) => task.id)) + 1,
+        room,
+        completed: false,
+        time: 'Pending',
+      },
+    ]);
+    setNewRoom('');
+    setConfirmed(false);
+    setStatusMessage(`${room} added to the checklist.`);
+  };
+
+  const removeTask = (id: number) => {
+    const task = tasks.find((item) => item.id === id);
+
+    if (tasks.length === 1) {
+      setStatusMessage('Keep at least one room in the checklist.');
+      return;
+    }
+
+    setTasks((current) => current.filter((item) => item.id !== id));
+    setConfirmed(false);
+    setStatusMessage(task ? `${task.room} removed from the checklist.` : 'Checklist item removed.');
+  };
+
+  const markAllComplete = () => {
+    const completedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setTasks((current) => current.map((task) => ({ ...task, completed: true, time: task.completed ? task.time : completedAt })));
+    setConfirmed(false);
+    setStatusMessage('All checklist items were marked complete.');
+  };
+
+  const resetSession = () => {
+    setTasks(cleaningTasks);
+    setNotes('Entryway supplies restocked. Bedrooms pending final inspection.');
+    setConfirmed(false);
+    setStatusMessage('Cleaning session reset to the starter checklist.');
+  };
+
   const toggleAppointmentStatus = (id: number) => {
     setAppointments((current) => current.map((appointment) => (
       appointment.id === id
@@ -43,6 +109,35 @@ export function CleaningConfirmationPage() {
         : appointment
     )));
     setStatusMessage('Appointment status updated.');
+  };
+
+  const addAppointment = () => {
+    const location = newAppointmentLocation.trim();
+    const cleaner = newAppointmentCleaner.trim();
+
+    if (!newAppointmentDate || !location || !cleaner) {
+      setStatusMessage('Add a date, location, and cleaner before creating an appointment.');
+      return;
+    }
+
+    setAppointments((current) => [
+      {
+        id: Math.max(0, ...current.map((appointment) => appointment.id)) + 1,
+        date: newAppointmentDate,
+        location,
+        cleaner,
+        status: 'Pending',
+      },
+      ...current,
+    ]);
+    setStatusMessage(`${location} appointment added.`);
+    setNewAppointmentLocation('');
+  };
+
+  const deleteAppointment = (id: number) => {
+    const appointment = appointments.find((item) => item.id === id);
+    setAppointments((current) => current.filter((item) => item.id !== id));
+    setStatusMessage(appointment ? `${appointment.location} appointment removed.` : 'Appointment removed.');
   };
 
   const confirmSession = () => {
@@ -55,6 +150,11 @@ export function CleaningConfirmationPage() {
     setStatusMessage('Cleaning session confirmed with notes attached.');
   };
 
+  const copySummary = async () => {
+    const wasCopied = await copyTextToClipboard(buildSessionSummary(tasks, notes, confirmed));
+    setStatusMessage(wasCopied ? 'Cleaning summary copied to clipboard.' : 'Clipboard copy failed. Use the notes panel instead.');
+  };
+
   return (
     <div className="space-y-8 p-4 md:p-8">
       <PageIntro
@@ -64,15 +164,32 @@ export function CleaningConfirmationPage() {
       />
 
       <CurrentSessionPanel
-        tasks={tasks}
         completedCount={completedCount}
+        newRoom={newRoom}
+        onAddTask={addTask}
+        onMarkAllComplete={markAllComplete}
+        onNewRoomChange={setNewRoom}
+        onRemoveTask={removeTask}
+        onResetSession={resetSession}
+        onToggleTask={toggleTask}
         progressPercent={progressPercent}
         sessionBadge={sessionBadge}
-        onToggleTask={toggleTask}
+        tasks={tasks}
       />
 
-      <section className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <AppointmentsPanel appointments={appointments} onToggleStatus={toggleAppointmentStatus} />
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <AppointmentsPanel
+          appointments={appointments}
+          newAppointmentCleaner={newAppointmentCleaner}
+          newAppointmentDate={newAppointmentDate}
+          newAppointmentLocation={newAppointmentLocation}
+          onAddAppointment={addAppointment}
+          onDeleteAppointment={deleteAppointment}
+          onNewAppointmentCleanerChange={setNewAppointmentCleaner}
+          onNewAppointmentDateChange={setNewAppointmentDate}
+          onNewAppointmentLocationChange={setNewAppointmentLocation}
+          onToggleStatus={toggleAppointmentStatus}
+        />
 
         <Card>
           <CardHeader title="Completion Notes" description="Add closeout notes and confirm only after every task is done." />
@@ -83,12 +200,21 @@ export function CleaningConfirmationPage() {
               className="form-input min-h-32 resize-none"
               placeholder="Write completion notes"
             />
-            <Button onClick={confirmSession} disabled={!allComplete} className="w-full justify-center">
-              Confirm Completion
-            </Button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button onClick={confirmSession} disabled={!allComplete} className="justify-center">
+                Confirm Completion
+              </Button>
+              <Button variant="secondary" onClick={copySummary} className="justify-center gap-2">
+                <ClipboardCheck className="h-4 w-4" />
+                Copy Summary
+              </Button>
+            </div>
             <p className={`rounded-lg px-3 py-2 text-sm ${confirmed ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' : 'bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-400'}`}>
               {statusMessage}
             </p>
+            <pre className="max-h-52 overflow-auto rounded-lg bg-gray-950 p-4 text-sm text-gray-100">
+              <code>{buildSessionSummary(tasks, notes, confirmed)}</code>
+            </pre>
           </CardContent>
         </Card>
       </section>
@@ -97,17 +223,29 @@ export function CleaningConfirmationPage() {
 }
 
 function CurrentSessionPanel({
-  tasks,
   completedCount,
+  newRoom,
+  onAddTask,
+  onMarkAllComplete,
+  onNewRoomChange,
+  onRemoveTask,
+  onResetSession,
+  onToggleTask,
   progressPercent,
   sessionBadge,
-  onToggleTask,
+  tasks,
 }: {
-  tasks: CleaningTask[];
   completedCount: number;
+  newRoom: string;
+  onAddTask: () => void;
+  onMarkAllComplete: () => void;
+  onNewRoomChange: (value: string) => void;
+  onRemoveTask: (id: number) => void;
+  onResetSession: () => void;
+  onToggleTask: (id: number) => void;
   progressPercent: number;
   sessionBadge: string;
-  onToggleTask: (id: number) => void;
+  tasks: CleaningTask[];
 }) {
   const badgeClassName = sessionBadge === 'Confirmed'
     ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
@@ -140,16 +278,32 @@ function CurrentSessionPanel({
           })}
         </div>
 
+        <div>
+          <div className="mb-2 flex justify-between text-sm">
+            <span className="text-gray-600 dark:text-gray-400">Overall Progress</span>
+            <span className="font-semibold text-gray-900 dark:text-white">{progressPercent}%</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+            <div className="h-2 rounded-full bg-green-600 transition-all dark:bg-green-500" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={onMarkAllComplete} className="gap-2">
+            <CheckCircle2 className="h-4 w-4" />
+            Mark all complete
+          </Button>
+          <Button variant="secondary" onClick={onResetSession} className="gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Reset session
+          </Button>
+        </div>
+
         <div className="space-y-3">
           <h3 className="font-semibold text-gray-900 dark:text-white">Task Checklist</h3>
           {tasks.map((task) => (
-            <button
-              key={task.id}
-              type="button"
-              onClick={() => onToggleTask(task.id)}
-              className="flex w-full items-center justify-between rounded-lg border border-gray-200 p-4 text-left transition hover:border-green-300 dark:border-gray-700"
-            >
-              <span className="flex items-center gap-3">
+            <div key={task.id} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
+              <button type="button" onClick={() => onToggleTask(task.id)} className="flex flex-1 items-center gap-3 text-left">
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-full ${
                     task.completed ? 'bg-green-600 dark:bg-green-500' : 'border-2 border-gray-300 dark:border-gray-600'
@@ -160,19 +314,26 @@ function CurrentSessionPanel({
                 <span className={task.completed ? 'text-gray-500 line-through dark:text-gray-500' : 'text-gray-900 dark:text-white'}>
                   {task.room}
                 </span>
-              </span>
-              <span className="text-sm text-gray-600 dark:text-gray-400">{task.time}</span>
-            </button>
+              </button>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-gray-600 dark:text-gray-400">{task.time}</span>
+                <Button variant="secondary" onClick={() => onRemoveTask(task.id)} aria-label={`Remove ${task.room}`}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
 
-        <div>
-          <div className="mb-2 flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Overall Progress</span>
-            <span className="font-semibold text-gray-900 dark:text-white">{progressPercent}%</span>
-          </div>
-          <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-            <div className="h-2 rounded-full bg-green-600 transition-all dark:bg-green-500" style={{ width: `${progressPercent}%` }} />
+        <div className="grid gap-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700 md:grid-cols-[1fr_auto]">
+          <FormField label="Add room or area">
+            <Input value={newRoom} onChange={(event) => onNewRoomChange(event.target.value)} placeholder="Room name" />
+          </FormField>
+          <div className="flex items-end">
+            <Button onClick={onAddTask} className="w-full justify-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add room
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -182,40 +343,86 @@ function CurrentSessionPanel({
 
 function AppointmentsPanel({
   appointments,
+  newAppointmentCleaner,
+  newAppointmentDate,
+  newAppointmentLocation,
+  onAddAppointment,
+  onDeleteAppointment,
+  onNewAppointmentCleanerChange,
+  onNewAppointmentDateChange,
+  onNewAppointmentLocationChange,
   onToggleStatus,
 }: {
   appointments: CleaningAppointment[];
+  newAppointmentCleaner: string;
+  newAppointmentDate: string;
+  newAppointmentLocation: string;
+  onAddAppointment: () => void;
+  onDeleteAppointment: (id: number) => void;
+  onNewAppointmentCleanerChange: (value: string) => void;
+  onNewAppointmentDateChange: (value: string) => void;
+  onNewAppointmentLocationChange: (value: string) => void;
   onToggleStatus: (id: number) => void;
 }) {
   return (
     <Card>
       <CardHeader title="Upcoming Appointments" description="Upcoming visits and assigned cleaners." />
-      <CardContent className="divide-y divide-gray-200 p-0 dark:divide-gray-700">
-        {appointments.map((appointment) => (
-          <div key={appointment.id} className="p-6">
-            <div className="mb-3 flex items-start justify-between gap-4">
-              <div>
-                <h3 className="mb-1 font-semibold text-gray-900 dark:text-white">{appointment.date}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{appointment.location}</p>
+      <CardContent className="space-y-5">
+        <div className="divide-y divide-gray-200 rounded-lg border border-gray-200 dark:divide-gray-700 dark:border-gray-700">
+          {appointments.map((appointment) => (
+            <div key={appointment.id} className="p-5">
+              <div className="mb-3 flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="mb-1 font-semibold text-gray-900 dark:text-white">{appointment.date}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{appointment.location}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onToggleStatus(appointment.id)}
+                  className={`rounded-full px-3 py-1 text-xs ${
+                    appointment.status === 'Confirmed'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                  }`}
+                >
+                  {appointment.status}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => onToggleStatus(appointment.id)}
-                className={`rounded-full px-3 py-1 text-xs ${
-                  appointment.status === 'Confirmed'
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                }`}
-              >
-                {appointment.status}
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600 dark:text-gray-400">
+                <span className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  {appointment.cleaner}
+                </span>
+                <Button variant="secondary" onClick={() => onDeleteAppointment(appointment.id)} className="gap-2 text-red-600 dark:text-red-300">
+                  <Trash2 className="h-4 w-4" />
+                  Remove
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-              <User className="h-4 w-4" />
-              <span>{appointment.cleaner}</span>
-            </div>
+          ))}
+        </div>
+
+        <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+          <div className="mb-3 flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-green-600" />
+            <h3 className="font-semibold text-gray-900 dark:text-white">Add appointment</h3>
           </div>
-        ))}
+          <div className="grid gap-3 md:grid-cols-3">
+            <FormField label="Date">
+              <Input type="date" value={newAppointmentDate} onChange={(event) => onNewAppointmentDateChange(event.target.value)} />
+            </FormField>
+            <FormField label="Location">
+              <Input value={newAppointmentLocation} onChange={(event) => onNewAppointmentLocationChange(event.target.value)} placeholder="Visit name" />
+            </FormField>
+            <FormField label="Cleaner">
+              <Input value={newAppointmentCleaner} onChange={(event) => onNewAppointmentCleanerChange(event.target.value)} placeholder="Cleaner" />
+            </FormField>
+          </div>
+          <Button onClick={onAddAppointment} className="mt-4 justify-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add appointment
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

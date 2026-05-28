@@ -14,8 +14,8 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { routeSections, searchItems } from '../config/navigation';
 import { Button, Card, CardContent } from '../components/common';
+import { routeSections, searchItems } from '../config/navigation';
 import type { SearchItem } from '../types/navigation';
 
 const quickLinkIcons = {
@@ -28,23 +28,40 @@ const quickLinkIcons = {
 
 const featureCards = [
   {
-    title: '구조가 보이는 쇼케이스',
-    description: '컴포넌트, 페이지, 앱 데모를 한 라우팅 체계 안에 묶어 필요한 예시를 빠르게 찾을 수 있습니다.',
+    title: '구조가 보이는 작업 허브',
+    description: '컴포넌트, 앱, 라이브러리, 도구, MCP 화면을 한 흐름에서 찾고 바로 이동할 수 있습니다.',
     icon: Sparkles,
   },
   {
-    title: '완성형 앱 데모',
-    description: '단일 UI 조각을 넘어 실제 업무 흐름처럼 확인할 수 있는 전체 화면 예제를 함께 제공합니다.',
+    title: '실제 화면 중심의 데모',
+    description: '정적 예시가 아니라 검색, 저장, 변환, 업로드, 상태 변경까지 확인할 수 있는 화면을 모았습니다.',
     icon: MonitorSmartphone,
   },
   {
-    title: '이어 만들기 쉬운 기반',
+    title: '확장하기 쉬운 기반',
     description: '공용 카드, 버튼, 섹션, 검색, 내비게이션 패턴을 재사용해 다음 화면 제작 속도를 높입니다.',
     icon: CheckCircle2,
   },
 ] as const;
 
 const suggestedSearches = ['Buttons', 'Chrome Extensions', 'SVG Editor', 'Form Builder'] as const;
+
+const localizedSearchAliases: Record<string, string[]> = {
+  '/components': ['컴포넌트', '구성요소', 'UI'],
+  '/full-apps': ['앱', '데모', '업무앱', '전체앱'],
+  '/full-apps/cleaning-confirmation': ['청소', '청소확인', '청소 확인', '방문', '일정', '서비스 확인'],
+  '/full-apps/feedback-app': ['피드백', '후기', '리뷰', '고객 의견'],
+  '/full-apps/project-management': ['프로젝트', '작업', '칸반', '일정 관리'],
+  '/libraries': ['라이브러리', '자료실', '에셋'],
+  '/libraries/custom-svg-library': ['아이콘', 'svg', '벡터', '커스텀 svg'],
+  '/libraries/yaml-library': ['yaml', '설정', '스키마'],
+  '/tools': ['도구', '툴', '유틸리티'],
+  '/tools/form-builder': ['폼', '양식', '폼 빌더'],
+  '/tools/logo-generator': ['로고', '브랜딩', '생성기'],
+  '/tools/powerts-toolkit': ['변환', '타입스크립트', '파워티'],
+  '/tools/svg-editor': ['svg', '편집기', '벡터'],
+  '/mcp': ['mcp', '모델 컨텍스트'],
+};
 
 function SearchResultList({
   query,
@@ -69,6 +86,7 @@ function SearchResultList({
           type="button"
           onClick={onClear}
           className="rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+          aria-label="검색어 지우기"
         >
           <X className="h-4 w-4" />
         </button>
@@ -112,6 +130,7 @@ export function HomePage() {
 
   const quickLinks = routeSections.filter((section) => section.key !== 'home');
   const totalPages = searchItems.length;
+  const readySections = quickLinks.filter((section) => section.children?.length || section.basePath === '/mcp').length;
 
   const filteredResults = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -120,7 +139,7 @@ export function HomePage() {
     }
 
     return searchItems.filter((item) => {
-      const haystacks = [item.name, item.description, item.category, ...item.keywords]
+      const haystacks = [item.name, item.description, item.category, ...item.keywords, ...(localizedSearchAliases[item.path] ?? [])]
         .join(' ')
         .toLowerCase();
       return haystacks.includes(normalizedQuery);
@@ -151,14 +170,11 @@ export function HomePage() {
             </div>
 
             <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight text-gray-950 dark:text-white md:text-5xl">
-              솔루시오네모스 
-            </h1>
-            <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight text-gray-950 dark:text-white md:text-5xl">
-              제작 현황을 한눈에
+              솔루시오네모스 웹 제작 현황을 한눈에 확인하세요
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-gray-600 dark:text-gray-400 md:text-xl">
-              컴포넌트, 풀 앱, 라이브러리, 툴, MCP 자료를 하나의 쇼케이스로 정리했습니다.
-              지금 만들어진 화면을 빠르게 확인하고 다음 작업 지점으로 바로 이어갈 수 있습니다.
+              컴포넌트, 앱 데모, 라이브러리, 도구, MCP 자료를 하나의 작업 공간으로 정리했습니다.
+              지금 구현된 화면을 빠르게 찾아보고 다음 작업 지점으로 바로 이동할 수 있습니다.
             </p>
 
             <div className="relative mt-8 max-w-3xl">
@@ -220,15 +236,15 @@ export function HomePage() {
                 <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
                   <div className="rounded-xl border border-white/10 bg-white/[0.06] p-4">
                     <p className="text-3xl font-bold">{quickLinks.length}</p>
-                    <p className="mt-1 text-sm text-gray-300">핵심 섹션</p>
+                    <p className="mt-1 text-sm text-gray-300">주요 섹션</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/[0.06] p-4">
                     <p className="text-3xl font-bold">{totalPages}</p>
                     <p className="mt-1 text-sm text-gray-300">검색 가능 화면</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/[0.06] p-4">
-                    <p className="text-3xl font-bold">5</p>
-                    <p className="mt-1 text-sm text-gray-300">콘텐츠 그룹</p>
+                    <p className="text-3xl font-bold">{readySections}</p>
+                    <p className="mt-1 text-sm text-gray-300">연결된 그룹</p>
                   </div>
                 </div>
 
@@ -259,7 +275,8 @@ export function HomePage() {
               </div>
 
               <div className="mt-6 rounded-xl border border-amber-300/20 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">
-                홈, 라우팅, 카탈로그, 검색, 다크모드 기반이 연결되어 있어 다음 단계는 개별 앱 데모와 툴 화면의 완성도를 높이는 흐름이 좋습니다.
+                라우팅, 카탈로그 데이터, 검색, 다크모드, 사이드바 이동 흐름이 연결되어 있습니다.
+                다음 단계는 개별 데모의 세부 기능과 화면 완성도를 더 높이는 작업입니다.
               </div>
             </div>
           </div>
@@ -270,7 +287,7 @@ export function HomePage() {
         <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">빠른 이동</h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">핵심 섹션으로 바로 이동해 전체 구조를 살펴보세요.</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">주요 섹션으로 바로 이동해 전체 구조를 둘러보세요.</p>
           </div>
           <Link to="/components" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 transition hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200">
             컴포넌트부터 보기
@@ -311,9 +328,10 @@ export function HomePage() {
 
       <section>
         <div className="mb-8 max-w-2xl">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">제작 기준</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">작업 기준</h2>
           <p className="mt-3 text-gray-600 dark:text-gray-400">
-            지금 단계에서는 페이지를 많이 늘리는 것보다, 찾기 쉽고 확장하기 쉬운 기본 구조를 안정적으로 만드는 데 초점을 맞췄습니다.
+            화면을 많이 늘리는 것보다 찾기 쉽고 확장하기 쉬운 구조를 안정적으로 만드는 데 초점을 맞췄습니다.
+            각 섹션은 독립적으로 개선하면서도 같은 공용 컴포넌트와 라우팅 데이터를 공유합니다.
           </p>
         </div>
 

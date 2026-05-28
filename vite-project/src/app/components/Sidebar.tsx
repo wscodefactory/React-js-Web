@@ -99,7 +99,11 @@ function SidebarContent({ items, currentPath, onClose }: SidebarContentProps) {
  * - 모바일은 슬라이드 패널이 필요함
  * - 데스크톱은 항상 보이는 고정형 패널이 필요함
  */
-export function Sidebar() {
+export interface SidebarProps {
+  mobileOnly?: boolean;
+}
+
+export function Sidebar({ mobileOnly = false }: SidebarProps) {
   const location = useLocation();
   const { isSidebarOpen, closeSidebar } = useSidebar();
   const sidebarItems = getSidebarItems(location.pathname);
@@ -110,21 +114,24 @@ export function Sidebar() {
 
   return (
     <>
-      {isSidebarOpen && <div className="sidebar-mobile-overlay" onClick={closeSidebar} />}
+      {isSidebarOpen && (
+        <>
+          <div className="sidebar-mobile-overlay" onClick={closeSidebar} />
+          <aside className="sidebar-mobile translate-x-0">
+            <div className="sidebar-scrollable">
+              <SidebarContent items={sidebarItems} currentPath={location.pathname} onClose={closeSidebar} />
+            </div>
+          </aside>
+        </>
+      )}
 
-      <aside
-        className={`sidebar-mobile ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative md:block`}
-      >
-        <div className="sidebar-scrollable">
-          <SidebarContent items={sidebarItems} currentPath={location.pathname} onClose={closeSidebar} />
-        </div>
-      </aside>
-
-      <aside className="hidden md:block sidebar">
-        <div className="sidebar-scrollable">
-          <SidebarContent items={sidebarItems} currentPath={location.pathname} />
-        </div>
-      </aside>
+      {!mobileOnly && (
+        <aside className="hidden md:block sidebar">
+          <div className="sidebar-scrollable">
+            <SidebarContent items={sidebarItems} currentPath={location.pathname} />
+          </div>
+        </aside>
+      )}
     </>
   );
 }

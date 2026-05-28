@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle, Copy, Download } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
+import { copyTextToClipboard } from '../../utils/clipboard';
 import { buildManifest, downloadManifest } from './manifest';
 import type { ExtensionTemplate } from './types';
 
@@ -11,10 +12,19 @@ type ManifestPanelProps = {
 export function ManifestPanel({ template }: ManifestPanelProps) {
   const manifest = useMemo(() => buildManifest(template), [template]);
   const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('Manifest is ready to copy or download.');
 
   const copyManifest = async () => {
-    await navigator.clipboard.writeText(manifest);
+    const wasCopied = await copyTextToClipboard(manifest);
+
+    if (!wasCopied) {
+      setCopied(false);
+      setCopyStatus('Clipboard copy failed. Use JSON download instead.');
+      return;
+    }
+
     setCopied(true);
+    setCopyStatus('Manifest copied to clipboard.');
     window.setTimeout(() => setCopied(false), 1400);
   };
 
@@ -39,6 +49,7 @@ export function ManifestPanel({ template }: ManifestPanelProps) {
         <pre className="max-h-80 overflow-auto rounded-xl bg-gray-950 p-4 text-sm text-gray-100">
           <code>{manifest}</code>
         </pre>
+        <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-gray-900 dark:text-gray-400">{copyStatus}</p>
       </CardContent>
     </Card>
   );

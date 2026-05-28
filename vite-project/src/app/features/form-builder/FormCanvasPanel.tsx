@@ -1,14 +1,17 @@
 import { Plus } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader } from '../../components/common';
 import { CanvasFieldCard } from './CanvasFieldCard';
-import type { BuilderField, MoveDirection } from './types';
+import type { BuilderField, BuilderFieldValue, MoveDirection } from './types';
 
 type FormCanvasPanelProps = {
+  fieldErrors: Record<number, string>;
+  fieldValues: Record<number, BuilderFieldValue>;
   fields: BuilderField[];
   formName: string;
   isPreview: boolean;
   onAddField: () => void;
   onDuplicateField: (id: number) => void;
+  onFieldValueChange: (fieldId: number, value: BuilderFieldValue) => void;
   onMoveField: (id: number, direction: MoveDirection) => void;
   onRemoveField: (id: number) => void;
   onSubmit: () => void;
@@ -20,11 +23,14 @@ type FormCanvasPanelProps = {
 };
 
 export function FormCanvasPanel({
+  fieldErrors,
+  fieldValues,
   fields,
   formName,
   isPreview,
   onAddField,
   onDuplicateField,
+  onFieldValueChange,
   onMoveField,
   onRemoveField,
   onSubmit,
@@ -55,12 +61,15 @@ export function FormCanvasPanel({
         {fields.map((field, index) => (
           <CanvasFieldCard
             key={field.id}
+            error={fieldErrors[field.id]}
             field={field}
+            fieldValue={fieldValues[field.id]}
             canMoveDown={index < fields.length - 1}
             canMoveUp={index > 0}
             showLabel={showLabels}
             isPreview={isPreview}
             onDuplicate={onDuplicateField}
+            onFieldValueChange={onFieldValueChange}
             onMove={onMoveField}
             onRemove={onRemoveField}
             onToggleRequired={onToggleRequired}

@@ -3,6 +3,11 @@ export type ExportFormat = 'svg' | 'png' | 'jpg' | 'webp';
 export type ExportQuality = 'high' | 'medium' | 'low';
 export type ExportScale = '1x' | '2x' | '3x';
 
+export type SvgPoint = {
+  x: number;
+  y: number;
+};
+
 export type SvgShape = {
   id: number;
   name: string;
@@ -15,6 +20,7 @@ export type SvgShape = {
   stroke: string;
   strokeWidth: number;
   opacity: number;
+  points?: SvgPoint[];
   visible: boolean;
   locked: boolean;
 };

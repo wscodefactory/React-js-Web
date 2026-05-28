@@ -2,7 +2,7 @@
  * Stores responsive sidebar visibility state.
  * Mobile surfaces consume this context to open and close the slide-over menu.
  */
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { WithChildren } from '../types/common';
 
 export type SidebarContextType = {
@@ -16,16 +16,21 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export function SidebarProvider({ children }: WithChildren) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
-  };
+  }, []);
 
-  const closeSidebar = () => {
+  const closeSidebar = useCallback(() => {
     setIsSidebarOpen(false);
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ isSidebarOpen, toggleSidebar, closeSidebar }),
+    [closeSidebar, isSidebarOpen, toggleSidebar],
+  );
 
   return (
-    <SidebarContext.Provider value={{ isSidebarOpen, toggleSidebar, closeSidebar }}>
+    <SidebarContext.Provider value={value}>
       {children}
     </SidebarContext.Provider>
   );

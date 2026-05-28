@@ -36,7 +36,9 @@ export function FormBuilderPage() {
             onShowLabelsChange={formBuilder.setShowLabels}
           />
           <BuilderActions
+            draftStatus={formBuilder.draftStatus}
             mode={formBuilder.mode}
+            onDownloadSchema={formBuilder.downloadSchema}
             onModeChange={formBuilder.setMode}
             onReset={formBuilder.resetFields}
           />
@@ -47,6 +49,8 @@ export function FormBuilderPage() {
             <ExportCodePanel code={formBuilder.exportCode} />
           ) : (
             <FormCanvasPanel
+              fieldErrors={formBuilder.fieldErrors}
+              fieldValues={formBuilder.fieldValues}
               fields={formBuilder.fields}
               formName={formBuilder.formName}
               submitText={formBuilder.submitText}
@@ -55,6 +59,7 @@ export function FormBuilderPage() {
               submitStatus={formBuilder.submitStatus}
               onAddField={() => formBuilder.addField()}
               onDuplicateField={formBuilder.duplicateField}
+              onFieldValueChange={formBuilder.updateFieldValue}
               onMoveField={formBuilder.moveField}
               onRemoveField={formBuilder.removeField}
               onSubmit={formBuilder.submitForm}

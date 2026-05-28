@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react';
-import { Calendar, Copy, Download, Heart, Home, Mail, Search, SearchX, Settings, ShoppingCart, Star, Upload, UserCircle } from 'lucide-react';
+import { Calendar, Copy, Download, Heart, Home, Mail, Search, SearchX, Settings, ShoppingCart, Star, Trash2, Upload, UserCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import { PageIntro } from '../../components/showcase/PageIntro';
+import { copyTextToClipboard } from '../../utils/clipboard';
 
 export type IconAsset = {
   id: string;
@@ -125,6 +126,8 @@ export function CustomSvgLibraryPage() {
 
   const allIcons = useMemo(() => [...customIcons, ...iconAssets], [customIcons]);
   const categories = useMemo(() => ['All', ...Array.from(new Set(allIcons.map((asset) => asset.category)))], [allIcons]);
+  const customCount = customIcons.length;
+  const builtInCount = iconAssets.length;
 
   const filteredIcons = useMemo(() => {
     return allIcons.filter((asset) => {
@@ -135,7 +138,14 @@ export function CustomSvgLibraryPage() {
   }, [allIcons, category, query]);
 
   const copySvg = async (asset: IconAsset) => {
-    await navigator.clipboard.writeText(getAssetSvg(asset, color, size));
+    const wasCopied = await copyTextToClipboard(getAssetSvg(asset, color, size));
+
+    if (!wasCopied) {
+      setCopied(null);
+      setStatus('Clipboard copy failed. Use SVG download instead.');
+      return;
+    }
+
     setCopied(asset.id);
     setStatus(`${asset.name} SVG copied to clipboard.`);
     window.setTimeout(() => setCopied(null), 1200);
@@ -168,12 +178,40 @@ export function CustomSvgLibraryPage() {
     setCategory('All');
   };
 
+  const removeCustomIcon = (id: string) => {
+    const removedIcon = customIcons.find((asset) => asset.id === id);
+    setCustomIcons((current) => current.filter((item) => item.id !== id));
+    setStatus(removedIcon ? `${removedIcon.name} removed from the custom library.` : 'Custom icon removed.');
+  };
+
+  const clearCustomIcons = () => {
+    if (customIcons.length === 0) {
+      setStatus('There are no imported SVG icons to clear.');
+      return;
+    }
+
+    setCustomIcons([]);
+    setCategory('All');
+    setStatus('Imported SVG icons were cleared from this session.');
+  };
+
+  const downloadVisibleIcons = () => {
+    if (filteredIcons.length === 0) {
+      setStatus('No visible icons are available to download.');
+      return;
+    }
+
+    filteredIcons.forEach((asset) => downloadText(getAssetSvg(asset, color, size), `${asset.id}.svg`));
+    setStatus(`${filteredIcons.length} visible SVG files were queued for download.`);
+  };
+
   return (
     <main className="p-4 md:p-8">
       <PageIntro highlight="Custom SVG" title="Library" description="Manage reusable icon assets with typed filters, import controls, and export actions." />
 
       <Card className="mb-8">
-        <CardContent className="grid gap-4 lg:grid-cols-[1fr_180px_150px_120px_auto]">
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-[1fr_180px_150px_120px_auto]">
           <label className="relative block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search icons" className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
@@ -191,6 +229,25 @@ export function CustomSvgLibraryPage() {
               <Upload className="h-4 w-4" />
               Import
             </Button>
+          </div>
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-gray-100 pt-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <span className="rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-900">{builtInCount} built-in</span>
+              <span className="rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-900">{customCount} imported</span>
+              <span className="rounded-full bg-gray-100 px-3 py-1 dark:bg-gray-900">{filteredIcons.length} visible</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={downloadVisibleIcons} className="gap-2">
+                <Download className="h-4 w-4" />
+                Download visible
+              </Button>
+              <Button variant="secondary" onClick={clearCustomIcons} className="gap-2 text-red-600 dark:text-red-300">
+                <Trash2 className="h-4 w-4" />
+                Clear imports
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -211,7 +268,7 @@ export function CustomSvgLibraryPage() {
               color={color}
               size={size}
               onCopy={copySvg}
-              onRemove={asset.category === 'Custom' ? (id) => setCustomIcons((current) => current.filter((item) => item.id !== id)) : undefined}
+              onRemove={asset.category === 'Custom' ? removeCustomIcon : undefined}
             />
           ))}
         </section>

@@ -5,4 +5,6 @@ export { ImplementationNotes } from './ImplementationNotes';
 export { ManifestPanel } from './ManifestPanel';
 export { TemplateSelector } from './TemplateSelector';
 export { extensionTemplates } from './data';
+export { buildExtensionScaffold } from './scaffold';
+export type { ExtensionScaffoldFile } from './scaffold';
 export type { ExtensionTemplate, PreviewTheme } from './types';

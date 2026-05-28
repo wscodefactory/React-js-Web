@@ -32,11 +32,17 @@ export function McpPage() {
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <ManifestPreviewPanel
           copied={mcpImport.copied}
+          copyStatus={mcpImport.copyStatus}
           manifestPreview={mcpImport.manifestPreview}
           onCopyManifest={mcpImport.copyManifest}
           platform={mcpImport.selectedPlatformInfo}
         />
-        <ImportHistoryPanel history={mcpImport.importHistory} onRestoreImport={mcpImport.restoreImport} />
+        <ImportHistoryPanel
+          history={mcpImport.importHistory}
+          onClearHistory={mcpImport.clearImportHistory}
+          onRemoveImport={mcpImport.removeImportHistoryItem}
+          onRestoreImport={mcpImport.restoreImport}
+        />
       </section>
     </div>
   );

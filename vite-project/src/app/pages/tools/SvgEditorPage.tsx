@@ -43,15 +43,35 @@ export function SvgEditorPage() {
             onDuplicateShape={svgEditor.duplicateShape}
             onDeleteShape={svgEditor.deleteShape}
           />
-          <ActionsPanel onExport={svgEditor.handleExport} onImportClick={() => svgEditor.fileInputRef.current?.click()} />
+          <ActionsPanel
+            canRedo={svgEditor.canRedo}
+            canUndo={svgEditor.canUndo}
+            onCopySvg={svgEditor.copySvgMarkup}
+            onExport={svgEditor.handleExport}
+            onHideSource={() => svgEditor.setShowSource(false)}
+            onImportClick={() => svgEditor.fileInputRef.current?.click()}
+            onRedo={svgEditor.redo}
+            onReset={svgEditor.resetCanvas}
+            onUndo={svgEditor.undo}
+            showSource={svgEditor.showSource}
+            svgMarkup={svgEditor.svgMarkup}
+          />
         </aside>
 
         <section className="space-y-6">
           <CanvasPreview
+            activeTool={svgEditor.activeTool}
+            onBeginShapeTransform={svgEditor.beginShapeTransform}
+            onCreateFreehandPath={svgEditor.createFreehandPath}
             shapes={svgEditor.shapes}
             selectedShapeId={svgEditor.selectedShapeId}
             showGrid={svgEditor.showGrid}
             showGuides={svgEditor.showGuides}
+            onDragLockedShape={svgEditor.handleLockedShapeDrag}
+            onFinishShapeDrag={svgEditor.finishShapeDrag}
+            onFinishShapeResize={svgEditor.finishShapeResize}
+            onMoveShape={svgEditor.moveShape}
+            onResizeShape={svgEditor.resizeShape}
             onToggleGrid={() => svgEditor.setShowGrid((current) => !current)}
             onToggleGuides={() => svgEditor.setShowGuides((current) => !current)}
             onSelectShape={svgEditor.setSelectedShapeId}

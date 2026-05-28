@@ -1,5 +1,8 @@
+import { useState } from 'react';
+import { Check, Copy, Download } from 'lucide-react';
 import { Button } from '../../components/common';
 import { quickToolOptions } from '../../data/showcase';
+import { copyTextToClipboard } from '../../utils/clipboard';
 import { toolPlaceholders } from './data';
 import type { ConversionTarget, QuickToolValue, ToolProcessResult } from './types';
 
@@ -30,6 +33,49 @@ export function QuickToolPanel({
   selectedHelp,
   selectedTool,
 }: QuickToolPanelProps) {
+  const [copied, setCopied] = useState(false);
+  const [actionStatus, setActionStatus] = useState('');
+  const hasOutput = result.output.trim().length > 0;
+
+  const copyResult = async () => {
+    if (!hasOutput) {
+      setActionStatus('Process input before copying a result.');
+      return;
+    }
+
+    try {
+      const wasCopied = await copyTextToClipboard(result.output);
+
+      if (!wasCopied) {
+        throw new Error('Clipboard copy failed.');
+      }
+
+      setCopied(true);
+      setActionStatus('Result copied to clipboard.');
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      setActionStatus('Copy failed. Use download instead.');
+    }
+  };
+
+  const downloadResult = () => {
+    if (!hasOutput) {
+      setActionStatus('Process input before downloading a result.');
+      return;
+    }
+
+    const extension = selectedTool === 'formatter' || selectedTool === 'validator' || selectedTool === 'converter' ? 'json' : selectedTool === 'config' ? 'txt' : 'ts';
+    const blob = new Blob([result.output], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = `powerts-${selectedTool}-${conversionTarget}.${extension}`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    setActionStatus('Result queued for download.');
+  };
+
   return (
     <section className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       <div className="flex flex-col gap-3 border-b border-gray-200 p-4 dark:border-gray-700 md:flex-row md:items-center md:justify-between">
@@ -87,9 +133,22 @@ export function QuickToolPanel({
             </span>
           </div>
           <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{result.status}</p>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={copyResult} disabled={!hasOutput} className="gap-2">
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+            <Button variant="secondary" onClick={downloadResult} disabled={!hasOutput} className="gap-2">
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
+          </div>
           <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-gray-950 p-4 text-sm text-gray-100">
             <code>{result.output || 'Processed output will appear here.'}</code>
           </pre>
+          {actionStatus ? (
+            <p className="mt-3 rounded-lg bg-white px-3 py-2 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">{actionStatus}</p>
+          ) : null}
         </div>
       </div>
     </section>

@@ -145,6 +145,13 @@ export function getRouteSectionByPath(pathname: string): RouteSectionDefinition 
 }
 
 export function getSidebarItems(pathname: string): SidebarItem[] {
+  if (pathname === '/') {
+    return topNavigationItems.map((item) => ({
+      name: item.name,
+      path: item.path,
+    }));
+  }
+
   const section = getRouteSectionByPath(pathname);
   if (!section?.children?.length) {
     return [];

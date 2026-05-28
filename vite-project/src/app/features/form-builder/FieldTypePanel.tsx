@@ -1,8 +1,30 @@
-import { Plus } from 'lucide-react';
+import type { ComponentType } from 'react';
+import {
+  AlignLeft,
+  CalendarDays,
+  CheckSquare,
+  CircleDot,
+  Hash,
+  ListChecks,
+  Mail,
+  Plus,
+  Type,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/common';
 import { formFieldTemplates } from '../../data/showcase';
 import { fieldTypeFromTemplate } from './data';
 import type { BuilderFieldType } from './types';
+
+const fieldTypeIcons: Record<BuilderFieldType, ComponentType<{ className?: string }>> = {
+  checkbox: CheckSquare,
+  date: CalendarDays,
+  email: Mail,
+  number: Hash,
+  radio: CircleDot,
+  select: ListChecks,
+  text: Type,
+  textarea: AlignLeft,
+};
 
 type FieldTypePanelProps = {
   onAddField: (type: BuilderFieldType) => void;
@@ -21,6 +43,7 @@ export function FieldTypePanel({
       <CardContent className="space-y-2">
         {formFieldTemplates.map((field) => {
           const type = fieldTypeFromTemplate(field.id);
+          const Icon = fieldTypeIcons[type];
           const isSelected = selectedType === type;
 
           return (
@@ -38,7 +61,7 @@ export function FieldTypePanel({
               }`}
             >
               <span className="flex items-center gap-2">
-                <span>{field.icon}</span>
+                <Icon className="h-4 w-4" />
                 <span className="text-sm font-medium">{field.label}</span>
               </span>
               <Plus className="h-4 w-4" />

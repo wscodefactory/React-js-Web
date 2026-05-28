@@ -1,6 +1,7 @@
 import { Link2, MoreVertical, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentPreviewItem } from "@/app/types/component-showcase";
+import { copyTextToClipboard } from "@/app/utils/clipboard";
 
 const badgeToneClasses = {
   free: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
@@ -89,7 +90,12 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
     const shareUrl = `${baseUrl}#${sectionId}`;
 
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      const copied = await copyTextToClipboard(shareUrl);
+
+      if (!copied) {
+        throw new Error("Clipboard unavailable.");
+      }
+
       setIsMenuOpen(false);
       showToast("Link copied.");
     } catch {

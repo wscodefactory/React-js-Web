@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PageIntro } from '../../components/showcase/PageIntro';
 import {
   BuildChecklist,
@@ -7,6 +7,7 @@ import {
   ImplementationNotes,
   ManifestPanel,
   TemplateSelector,
+  buildExtensionScaffold,
   extensionTemplates,
   type PreviewTheme,
 } from '../../features/chrome-extensions';
@@ -16,6 +17,7 @@ export function ChromeExtensionsPage() {
   const [theme, setTheme] = useState<PreviewTheme>('light');
   const [notesOpen, setNotesOpen] = useState(false);
   const selectedTemplate = extensionTemplates.find((template) => template.id === selectedId) ?? extensionTemplates[0];
+  const scaffoldFiles = useMemo(() => buildExtensionScaffold(selectedTemplate), [selectedTemplate]);
 
   return (
     <main className="p-4 md:p-8">
@@ -40,7 +42,7 @@ export function ChromeExtensionsPage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <ManifestPanel template={selectedTemplate} />
-            <FileList template={selectedTemplate} />
+            <FileList files={scaffoldFiles} />
           </div>
         </section>
       </div>

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Check, Copy, Download, RefreshCw, Sparkles } from 'lucide-react';
+import { Check, Copy, Download, ImageDown, RefreshCw, Sparkles } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import { PageIntro } from '../../components/showcase/PageIntro';
+import { copyTextToClipboard } from '../../utils/clipboard';
 
 export type LogoStyle = 'Minimal' | 'Modern' | 'Geometric' | 'Badge';
 export type PaletteName = 'Forest' | 'Ocean' | 'Sunset' | 'Mono';
@@ -58,16 +59,65 @@ function downloadSvg(svg: string, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
+async function downloadPng(svg: string, fileName: string, outputSize = 1024) {
+  const svgUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+
+  try {
+    const image = new Image();
+    const loaded = new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error('Unable to render SVG preview.'));
+    });
+
+    image.src = svgUrl;
+    await loaded;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      throw new Error('Canvas is not available.');
+    }
+
+    context.clearRect(0, 0, outputSize, outputSize);
+    context.drawImage(image, 0, 0, outputSize, outputSize);
+
+    const pngBlob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+
+        reject(new Error('PNG export failed.'));
+      }, 'image/png');
+    });
+
+    const pngUrl = URL.createObjectURL(pngBlob);
+    const anchor = document.createElement('a');
+    anchor.href = pngUrl;
+    anchor.download = `${slugify(fileName)}.png`;
+    anchor.click();
+    URL.revokeObjectURL(pngUrl);
+  } finally {
+    URL.revokeObjectURL(svgUrl);
+  }
+}
+
 function LogoPreview({
   option,
   brandName,
   copied,
   onCopy,
+  onDownloadPng,
 }: {
   option: LogoOption;
   brandName: string;
   copied: boolean;
   onCopy: (option: LogoOption) => void;
+  onDownloadPng: (option: LogoOption) => void;
 }) {
   return (
     <Card className="overflow-hidden">
@@ -87,6 +137,9 @@ function LogoPreview({
             <Button variant="secondary" onClick={() => downloadSvg(option.svg, `${brandName}-${option.label}`)} aria-label={`Download ${option.label} SVG`}>
               <Download className="h-4 w-4" />
             </Button>
+            <Button variant="secondary" onClick={() => onDownloadPng(option)} aria-label={`Download ${option.label} PNG`}>
+              <ImageDown className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </CardContent>
@@ -100,6 +153,7 @@ export function LogoGeneratorPage() {
   const [palette, setPalette] = useState<PaletteName>('Forest');
   const [seed, setSeed] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [status, setStatus] = useState('Choose a style and export the SVG concept you like.');
 
   const options = useMemo<LogoOption[]>(() => {
@@ -112,7 +166,14 @@ export function LogoGeneratorPage() {
   }, [brandName, palette, seed, style]);
 
   const copyLogo = async (option: LogoOption) => {
-    await navigator.clipboard.writeText(option.svg);
+    const wasCopied = await copyTextToClipboard(option.svg);
+
+    if (!wasCopied) {
+      setCopiedId(null);
+      setStatus('Clipboard copy failed. Use SVG download instead.');
+      return;
+    }
+
     setCopiedId(option.id);
     setStatus(`${option.label} SVG copied to clipboard.`);
     window.setTimeout(() => setCopiedId(null), 1200);
@@ -126,6 +187,32 @@ export function LogoGeneratorPage() {
   const downloadAll = () => {
     options.forEach((option) => downloadSvg(option.svg, `${brandName}-${option.label}`));
     setStatus('All current SVG variations were queued for download.');
+  };
+
+  const downloadLogoPng = async (option: LogoOption) => {
+    setIsExporting(true);
+    try {
+      await downloadPng(option.svg, `${brandName}-${option.label}`);
+      setStatus(`${option.label} PNG export was queued for download.`);
+    } catch {
+      setStatus('PNG export failed. Try another logo variation.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const downloadAllPng = async () => {
+    setIsExporting(true);
+    try {
+      for (const option of options) {
+        await downloadPng(option.svg, `${brandName}-${option.label}`);
+      }
+      setStatus('All current PNG variations were queued for download.');
+    } catch {
+      setStatus('PNG export failed. Try a smaller batch or another browser.');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -167,6 +254,9 @@ export function LogoGeneratorPage() {
             <Button variant="secondary" onClick={downloadAll} className="w-full justify-center">
               <Download className="h-4 w-4" /> Download all
             </Button>
+            <Button variant="secondary" onClick={downloadAllPng} disabled={isExporting} className="w-full justify-center">
+              <ImageDown className="h-4 w-4" /> Download PNG set
+            </Button>
           </CardContent>
         </Card>
 
@@ -183,6 +273,7 @@ export function LogoGeneratorPage() {
                 brandName={brandName}
                 copied={copiedId === option.id}
                 onCopy={copyLogo}
+                onDownloadPng={downloadLogoPng}
               />
             ))}
           </div>

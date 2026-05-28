@@ -1,4 +1,5 @@
 import type { ExportFormat, ExportQuality, ExportScale } from './types';
+import { SVG_CANVAS_HEIGHT, SVG_CANVAS_WIDTH } from './constants';
 
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
@@ -28,8 +29,8 @@ export async function exportAsset(svgMarkup: string, format: ExportFormat, scale
   });
 
   const canvas = document.createElement('canvas');
-  canvas.width = 800 * scaleValue;
-  canvas.height = 600 * scaleValue;
+  canvas.width = SVG_CANVAS_WIDTH * scaleValue;
+  canvas.height = SVG_CANVAS_HEIGHT * scaleValue;
   const context = canvas.getContext('2d');
 
   if (!context) {

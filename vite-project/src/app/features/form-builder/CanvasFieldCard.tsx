@@ -1,13 +1,16 @@
 import { ChevronDown, ChevronUp, Copy, Settings, Trash2 } from 'lucide-react';
 import { FieldInput } from './FieldInput';
-import type { BuilderField, MoveDirection } from './types';
+import type { BuilderField, BuilderFieldValue, MoveDirection } from './types';
 
 type CanvasFieldCardProps = {
   canMoveDown: boolean;
   canMoveUp: boolean;
+  error?: string;
   field: BuilderField;
+  fieldValue?: BuilderFieldValue;
   isPreview: boolean;
   onDuplicate: (id: number) => void;
+  onFieldValueChange: (fieldId: number, value: BuilderFieldValue) => void;
   onMove: (id: number, direction: MoveDirection) => void;
   onRemove: (id: number) => void;
   onToggleRequired: (id: number) => void;
@@ -18,9 +21,12 @@ type CanvasFieldCardProps = {
 export function CanvasFieldCard({
   canMoveDown,
   canMoveUp,
+  error,
   field,
+  fieldValue,
   isPreview,
   onDuplicate,
+  onFieldValueChange,
   onMove,
   onRemove,
   onToggleRequired,
@@ -28,7 +34,12 @@ export function CanvasFieldCard({
   showLabel,
 }: CanvasFieldCardProps) {
   return (
-    <div className="group rounded-lg border-2 border-dashed border-gray-200 p-4 transition-colors hover:border-green-500 dark:border-gray-700 dark:hover:border-green-400">
+    <div className={`group rounded-lg border-2 border-dashed p-4 transition-colors ${
+      error
+        ? 'border-red-300 bg-red-50/40 dark:border-red-900/70 dark:bg-red-950/10'
+        : 'border-gray-200 hover:border-green-500 dark:border-gray-700 dark:hover:border-green-400'
+    }`}
+    >
       <div className="mb-2 flex items-start justify-between gap-3">
         {showLabel ? (
           <label className="block flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -65,7 +76,12 @@ export function CanvasFieldCard({
         ) : null}
       </div>
 
-      <FieldInput field={field} />
+      <FieldInput
+        error={error}
+        field={field}
+        value={fieldValue}
+        onValueChange={onFieldValueChange}
+      />
     </div>
   );
 }

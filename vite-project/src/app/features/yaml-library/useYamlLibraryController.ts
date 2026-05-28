@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
+import { copyTextToClipboard } from '../../utils/clipboard';
 import { jsonConverterSample, yamlTemplates } from './data';
 import { getLineCount, jsonToYaml, yamlToJson } from './yamlConverter';
 import type { ConverterMode, UploadedYaml } from './types';
@@ -24,7 +25,12 @@ export function useYamlLibraryController() {
 
   const copyText = async (id: string, text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      const copied = await copyTextToClipboard(text);
+
+      if (!copied) {
+        throw new Error('Clipboard copy failed.');
+      }
+
       setCopiedId(id);
       setStatus('YAML copied to clipboard.');
       window.setTimeout(() => setCopiedId(null), 1400);

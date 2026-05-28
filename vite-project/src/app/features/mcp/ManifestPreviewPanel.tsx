@@ -1,9 +1,10 @@
-import { CheckCircle2, Copy, PackageCheck } from 'lucide-react';
+import { CheckCircle2, Copy, Download, PackageCheck } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import type { SupportedPlatform } from './types';
 
 type ManifestPreviewPanelProps = {
   copied: boolean;
+  copyStatus: string;
   manifestPreview: string;
   onCopyManifest: () => void;
   platform: SupportedPlatform;
@@ -11,10 +12,22 @@ type ManifestPreviewPanelProps = {
 
 export function ManifestPreviewPanel({
   copied,
+  copyStatus,
   manifestPreview,
   onCopyManifest,
   platform,
 }: ManifestPreviewPanelProps) {
+  const downloadManifest = () => {
+    const blob = new Blob([manifestPreview], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = `${platform.id}-mcp-manifest.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Card>
       <CardContent className="space-y-4">
@@ -23,16 +36,23 @@ export function ManifestPreviewPanel({
             <h2 className="card-title">Manifest Preview</h2>
             <p className="card-description">{platform.label} package metadata</p>
           </div>
-          <Button variant="secondary" onClick={onCopyManifest} className="shrink-0 whitespace-nowrap">
-            <span className="inline-flex items-center gap-2 whitespace-nowrap">
-              {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              {copied ? 'Copied' : 'Copy'}
-            </span>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={onCopyManifest} className="shrink-0 whitespace-nowrap">
+              <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? 'Copied' : 'Copy'}
+              </span>
+            </Button>
+            <Button variant="secondary" onClick={downloadManifest} className="shrink-0 gap-2 whitespace-nowrap">
+              <Download className="h-4 w-4" />
+              JSON
+            </Button>
+          </div>
         </div>
         <pre className="max-h-80 overflow-auto rounded-lg bg-gray-950 p-4 text-sm text-gray-100">
           <code>{manifestPreview}</code>
         </pre>
+        <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-gray-900 dark:text-gray-400">{copyStatus}</p>
         <div className="grid gap-2 sm:grid-cols-3">
           {platform.assets.map((asset) => (
             <div key={asset} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-300">

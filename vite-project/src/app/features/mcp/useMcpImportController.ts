@@ -1,15 +1,41 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { copyTextToClipboard } from '../../utils/clipboard';
 import { supportedPlatforms } from './data';
 import { parseImportUrl } from './importUrl';
 import type { ImportedSource, PlatformId } from './types';
+
+const importHistoryStorageKey = 'web5:mcp-import-history:v1';
+
+function readStoredImportHistory() {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(importHistoryStorageKey) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((item): item is ImportedSource => (
+      item &&
+      typeof item.id === 'string' &&
+      typeof item.name === 'string' &&
+      typeof item.host === 'string' &&
+      typeof item.protocol === 'string' &&
+      typeof item.url === 'string' &&
+      typeof item.importedAt === 'string' &&
+      supportedPlatforms.some((platform) => platform.id === item.platform)
+    )) : [];
+  } catch {
+    return [];
+  }
+}
 
 export function useMcpImportController() {
   const [importUrl, setImportUrl] = useState('https://github.com/wscodefactory/React-js-Web');
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId>('canvas');
   const [importedSource, setImportedSource] = useState<ImportedSource | null>(null);
-  const [importHistory, setImportHistory] = useState<ImportedSource[]>([]);
+  const [importHistory, setImportHistory] = useState<ImportedSource[]>(() => readStoredImportHistory());
   const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('Manifest metadata is ready to copy.');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    window.localStorage.setItem(importHistoryStorageKey, JSON.stringify(importHistory));
+  }, [importHistory]);
 
   const parsedUrl = useMemo(() => parseImportUrl(importUrl), [importUrl]);
   const selectedPlatformInfo = useMemo(
@@ -44,11 +70,13 @@ export function useMcpImportController() {
   const changeImportUrl = (value: string) => {
     setImportUrl(value);
     setCopied(false);
+    setCopyStatus('Manifest metadata updated.');
   };
 
   const selectPlatform = (platform: PlatformId) => {
     setSelectedPlatform(platform);
     setCopied(false);
+    setCopyStatus('Manifest metadata updated.');
   };
 
   const handleImport = () => {
@@ -70,6 +98,7 @@ export function useMcpImportController() {
 
     setError('');
     setCopied(false);
+    setCopyStatus('Manifest metadata updated.');
     setImportedSource(nextSource);
     setImportHistory((current) => [
       nextSource,
@@ -78,19 +107,40 @@ export function useMcpImportController() {
   };
 
   const copyManifest = async () => {
-    await navigator.clipboard.writeText(manifestPreview);
-    setCopied(true);
+    const wasCopied = await copyTextToClipboard(manifestPreview);
+    setCopied(wasCopied);
+    setCopyStatus(wasCopied ? 'Manifest copied to clipboard.' : 'Clipboard copy failed. Use JSON download instead.');
   };
 
   const restoreImport = (source: ImportedSource) => {
     setImportedSource(source);
+    setImportUrl(source.url);
     setSelectedPlatform(source.platform);
     setCopied(false);
+    setCopyStatus('Manifest metadata restored.');
+    setError('');
+  };
+
+  const removeImportHistoryItem = (id: string) => {
+    setImportHistory((current) => current.filter((item) => item.id !== id));
+
+    if (importedSource?.id === id) {
+      setImportedSource(null);
+    }
+  };
+
+  const clearImportHistory = () => {
+    setImportHistory([]);
+    setImportedSource(null);
+    setCopied(false);
+    setCopyStatus('Import history cleared.');
   };
 
   return {
     changeImportUrl,
+    clearImportHistory,
     copied,
+    copyStatus,
     copyManifest,
     error,
     handleImport,
@@ -98,6 +148,7 @@ export function useMcpImportController() {
     importedSource,
     importUrl,
     manifestPreview,
+    removeImportHistoryItem,
     restoreImport,
     selectPlatform,
     selectedPlatform,

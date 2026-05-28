@@ -1,14 +1,77 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { fieldTypeLabels, initialFields } from './data';
 import { buildExportCode } from './exportCode';
 import type { MetricItem } from '../../types/showcase';
-import type { BuilderField, BuilderFieldType, BuilderMode, MoveDirection } from './types';
+import type { BuilderField, BuilderFieldType, BuilderFieldValue, BuilderMode, FormBuilderDraft, MoveDirection } from './types';
+
+const formBuilderDraftStorageKey = 'web5:form-builder-draft:v1';
+
+const fallbackDraft: FormBuilderDraft = {
+  fields: initialFields,
+  formName: 'Contact Form',
+  showLabels: true,
+  submitText: 'Submit',
+};
+
+function isBuilderField(value: unknown): value is BuilderField {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<BuilderField>;
+  return (
+    typeof candidate.id === 'number'
+    && typeof candidate.label === 'string'
+    && typeof candidate.required === 'boolean'
+    && Boolean(candidate.type)
+    && Object.keys(fieldTypeLabels).includes(candidate.type as BuilderFieldType)
+  );
+}
+
+function isFormBuilderDraft(value: unknown): value is FormBuilderDraft {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<FormBuilderDraft>;
+  return (
+    typeof candidate.formName === 'string'
+    && typeof candidate.submitText === 'string'
+    && typeof candidate.showLabels === 'boolean'
+    && Array.isArray(candidate.fields)
+    && candidate.fields.every(isBuilderField)
+  );
+}
+
+function readStoredDraft() {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(formBuilderDraftStorageKey) ?? 'null');
+    return isFormBuilderDraft(parsed) ? parsed : fallbackDraft;
+  } catch {
+    return fallbackDraft;
+  }
+}
+
+function downloadText(content: string, fileName: string) {
+  const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 export function useFormBuilderController() {
-  const [formName, setFormName] = useState('Contact Form');
-  const [submitText, setSubmitText] = useState('Submit');
-  const [showLabels, setShowLabels] = useState(true);
-  const [fields, setFields] = useState<BuilderField[]>(initialFields);
+  const [draftStatus, setDraftStatus] = useState('Draft is autosaved locally.');
+  const [storedDraft] = useState(() => readStoredDraft());
+  const [formName, setFormName] = useState(storedDraft.formName);
+  const [submitText, setSubmitText] = useState(storedDraft.submitText);
+  const [showLabels, setShowLabels] = useState(storedDraft.showLabels);
+  const [fields, setFields] = useState<BuilderField[]>(storedDraft.fields);
+  const [fieldValues, setFieldValues] = useState<Record<number, BuilderFieldValue>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<number, string>>({});
   const [selectedType, setSelectedType] = useState<BuilderFieldType>('text');
   const [mode, setMode] = useState<BuilderMode>('build');
   const [submitStatus, setSubmitStatus] = useState('');
@@ -20,6 +83,16 @@ export function useFormBuilderController() {
   ], [fields]);
 
   const exportCode = useMemo(() => buildExportCode(formName, submitText, showLabels, fields), [fields, formName, showLabels, submitText]);
+  const exportSchema = useMemo(() => JSON.stringify({
+    formName,
+    submitText,
+    showLabels,
+    fields,
+  }, null, 2), [fields, formName, showLabels, submitText]);
+
+  useEffect(() => {
+    window.localStorage.setItem(formBuilderDraftStorageKey, exportSchema);
+  }, [exportSchema]);
 
   const addField = (type = selectedType) => {
     const nextId = Math.max(0, ...fields.map((field) => field.id)) + 1;
@@ -40,6 +113,16 @@ export function useFormBuilderController() {
 
   const removeField = (id: number) => {
     setFields((current) => current.filter((field) => field.id !== id));
+    setFieldValues((current) => {
+      const nextValues = { ...current };
+      delete nextValues[id];
+      return nextValues;
+    });
+    setFieldErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors[id];
+      return nextErrors;
+    });
     setSubmitStatus('');
   };
 
@@ -85,27 +168,96 @@ export function useFormBuilderController() {
 
   const resetFields = () => {
     setFields(initialFields);
+    setFieldValues({});
+    setFieldErrors({});
+    setFormName(fallbackDraft.formName);
+    setShowLabels(fallbackDraft.showLabels);
+    setSubmitText(fallbackDraft.submitText);
     setSelectedType('text');
     setMode('build');
     setSubmitStatus('Builder reset to the starter form.');
+    setDraftStatus('Starter form saved as the current draft.');
   };
 
   const toggleRequired = (id: number) => {
     setFields((current) => current.map((field) => (field.id === id ? { ...field, required: !field.required } : field)));
+    setFieldErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors[id];
+      return nextErrors;
+    });
   };
 
   const updateFieldLabel = (id: number, label: string) => {
     setFields((current) => current.map((field) => (field.id === id ? { ...field, label } : field)));
   };
 
+  const updateFieldValue = (fieldId: number, value: BuilderFieldValue) => {
+    setFieldValues((current) => ({ ...current, [fieldId]: value }));
+    setFieldErrors((current) => {
+      const nextErrors = { ...current };
+      delete nextErrors[fieldId];
+      return nextErrors;
+    });
+    setSubmitStatus('');
+  };
+
+  const validateRequiredFields = () => {
+    const nextErrors = fields.reduce<Record<number, string>>((errors, field) => {
+      if (!field.required) {
+        return errors;
+      }
+
+      const value = fieldValues[field.id];
+      const hasValue = field.type === 'checkbox' || field.type === 'radio'
+        ? value === true
+        : typeof value === 'string' && value.trim().length > 0;
+
+      if (!hasValue) {
+        errors[field.id] = `${field.label} is required.`;
+      }
+
+      return errors;
+    }, {});
+
+    setFieldErrors(nextErrors);
+    return nextErrors;
+  };
+
   const submitForm = () => {
-    setSubmitStatus(`${formName} submitted with ${fields.length} fields.`);
+    const errors = validateRequiredFields();
+    const errorCount = Object.keys(errors).length;
+
+    if (errorCount > 0) {
+      setMode('preview');
+      setSubmitStatus(`Complete ${errorCount} required field${errorCount === 1 ? '' : 's'} before submitting.`);
+      return;
+    }
+
+    const responseCount = fields.filter((field) => {
+      const value = fieldValues[field.id];
+      return field.type === 'checkbox' || field.type === 'radio'
+        ? value === true
+        : typeof value === 'string' && value.trim().length > 0;
+    }).length;
+
+    setSubmitStatus(`${formName || 'Untitled Form'} submitted with ${responseCount} responses.`);
+  };
+
+  const downloadSchema = () => {
+    downloadText(exportSchema, `${formName.trim().toLowerCase().replace(/[^a-z0-9]+/gi, '-') || 'form'}-schema.json`);
+    setDraftStatus('Form schema queued for download.');
   };
 
   return {
     addField,
     duplicateField,
+    downloadSchema,
+    draftStatus,
     exportCode,
+    exportSchema,
+    fieldErrors,
+    fieldValues,
     fields,
     formName,
     metrics,
@@ -125,5 +277,6 @@ export function useFormBuilderController() {
     submitText,
     toggleRequired,
     updateFieldLabel,
+    updateFieldValue,
   };
 }

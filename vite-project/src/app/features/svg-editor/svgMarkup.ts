@@ -1,4 +1,6 @@
 import type { SvgShape } from './types';
+import { SVG_CANVAS_HEIGHT, SVG_CANVAS_WIDTH } from './constants';
+import { buildPointPathData, getPointBounds, parseStraightPathPoints } from './pathGeometry';
 
 export function buildSvgMarkup(shapes: SvgShape[]) {
   const shapeMarkup = shapes
@@ -7,18 +9,22 @@ export function buildSvgMarkup(shapes: SvgShape[]) {
       const common = `fill="${shape.fill}" stroke="${shape.stroke}" stroke-width="${shape.strokeWidth}" opacity="${shape.opacity / 100}"`;
 
       if (shape.type === 'circle') {
-        return `<circle cx="${shape.x + shape.width / 2}" cy="${shape.y + shape.height / 2}" r="${shape.width / 2}" ${common} />`;
+        return `<ellipse cx="${shape.x + shape.width / 2}" cy="${shape.y + shape.height / 2}" rx="${shape.width / 2}" ry="${shape.height / 2}" ${common} />`;
       }
 
       if (shape.type === 'path') {
-        return `<path d="M${shape.x} ${shape.y + shape.height} C${shape.x + 40} ${shape.y}, ${shape.x + shape.width - 40} ${shape.y}, ${shape.x + shape.width} ${shape.y + shape.height}" ${common} fill="none" />`;
+        const pathData = shape.points?.length
+          ? buildPointPathData(shape.points)
+          : `M${shape.x} ${shape.y + shape.height} L${shape.x + shape.width} ${shape.y}`;
+
+        return `<path d="${pathData}" ${common} fill="none" stroke-linecap="round" stroke-linejoin="round" />`;
       }
 
       return `<rect x="${shape.x}" y="${shape.y}" width="${shape.width}" height="${shape.height}" ${common} />`;
     })
     .join('\n  ');
 
-  return `<svg width="800" height="600" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="${SVG_CANVAS_WIDTH}" height="${SVG_CANVAS_HEIGHT}" viewBox="0 0 ${SVG_CANVAS_WIDTH} ${SVG_CANVAS_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
   ${shapeMarkup}
 </svg>`;
 }
@@ -67,5 +73,50 @@ export function parseImportedSvg(content: string, nextId: number): SvgShape[] {
     };
   });
 
-  return [...rects, ...circles];
+  const ellipses = Array.from(documentNode.querySelectorAll('ellipse')).slice(0, 4).map((ellipse, index) => {
+    const radiusX = Number(ellipse.getAttribute('rx') ?? 40);
+    const radiusY = Number(ellipse.getAttribute('ry') ?? radiusX);
+
+    return {
+      id: nextId + rects.length + circles.length + index,
+      name: `Imported Ellipse ${index + 1}`,
+      type: 'circle' as const,
+      x: Number(ellipse.getAttribute('cx') ?? 160) - radiusX,
+      y: Number(ellipse.getAttribute('cy') ?? 120) - radiusY,
+      width: radiusX * 2,
+      height: radiusY * 2,
+      fill: ellipse.getAttribute('fill') ?? '#3b82f6',
+      stroke: ellipse.getAttribute('stroke') ?? '#000000',
+      strokeWidth: Number(ellipse.getAttribute('stroke-width') ?? 2),
+      opacity: Number(ellipse.getAttribute('opacity') ?? 1) * 100,
+      visible: true,
+      locked: false,
+    };
+  });
+
+  const paths = Array.from(documentNode.querySelectorAll('path')).slice(0, 4).flatMap((path, index) => {
+    const points = parseStraightPathPoints(path.getAttribute('d') ?? '');
+
+    if (points.length < 2) {
+      return [];
+    }
+
+    const bounds = getPointBounds(points);
+
+    return [{
+      id: nextId + rects.length + circles.length + ellipses.length + index,
+      name: `Imported Path ${index + 1}`,
+      type: 'path' as const,
+      ...bounds,
+      fill: 'none',
+      stroke: path.getAttribute('stroke') ?? '#000000',
+      strokeWidth: Number(path.getAttribute('stroke-width') ?? 3),
+      opacity: Number(path.getAttribute('opacity') ?? 1) * 100,
+      points,
+      visible: true,
+      locked: false,
+    }];
+  });
+
+  return [...rects, ...circles, ...ellipses, ...paths];
 }

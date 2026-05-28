@@ -43,6 +43,38 @@
   @apply p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors md:absolute md:right-6;
 }
 
+.header-menu-dropdown {
+  @apply md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900;
+}
+
+.header-menu-dropdown-inner {
+  @apply max-w-[1440px] mx-auto px-4 py-3 max-h-[calc(100vh-4rem)] overflow-y-auto;
+}
+
+.header-menu-section {
+  @apply border-b border-gray-100 dark:border-gray-800 py-2 last:border-b-0;
+}
+
+.header-menu-section-link {
+  @apply flex min-h-11 items-center justify-between gap-3 rounded-md px-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800;
+}
+
+.header-menu-section-link-active {
+  @apply bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300;
+}
+
+.header-menu-child-list {
+  @apply mt-2 grid grid-cols-1 gap-1 pl-2;
+}
+
+.header-menu-child-link {
+  @apply flex min-h-10 items-center gap-2 rounded-md px-3 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white;
+}
+
+.header-menu-child-link-active {
+  @apply bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300;
+}
+
 /* Button Styles */
 .btn {
   @apply px-4 py-2 rounded-lg transition-all duration-200 font-medium focus:outline-none focus:ring-2 focus:ring-offset-2;
