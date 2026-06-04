@@ -3,18 +3,22 @@ import { Button, Card, CardContent } from '../../components/common';
 import type { SupportedPlatform } from './types';
 
 type ManifestPreviewPanelProps = {
+  canDownloadPackage: boolean;
   copied: boolean;
   copyStatus: string;
   manifestPreview: string;
   onCopyManifest: () => void;
+  onDownloadPackage: () => void;
   platform: SupportedPlatform;
 };
 
 export function ManifestPreviewPanel({
+  canDownloadPackage,
   copied,
   copyStatus,
   manifestPreview,
   onCopyManifest,
+  onDownloadPackage,
   platform,
 }: ManifestPreviewPanelProps) {
   const downloadManifest = () => {
@@ -46,6 +50,15 @@ export function ManifestPreviewPanel({
             <Button variant="secondary" onClick={downloadManifest} className="shrink-0 gap-2 whitespace-nowrap">
               <Download className="h-4 w-4" />
               JSON
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={onDownloadPackage}
+              disabled={!canDownloadPackage}
+              className="shrink-0 gap-2 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              Package
             </Button>
           </div>
         </div>

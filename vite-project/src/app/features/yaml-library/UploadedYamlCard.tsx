@@ -1,4 +1,4 @@
-import { Check, Copy, X } from 'lucide-react';
+import { Check, Copy, Download, X } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import { getLineCount } from './yamlConverter';
 import type { UploadedYaml } from './types';
@@ -7,6 +7,7 @@ type UploadedYamlCardProps = {
   copiedId: string | null;
   file: UploadedYaml;
   onCopy: (file: UploadedYaml) => void;
+  onDownload: (file: UploadedYaml) => void;
   onRemove: (id: string) => void;
 };
 
@@ -14,6 +15,7 @@ export function UploadedYamlCard({
   copiedId,
   file,
   onCopy,
+  onDownload,
   onRemove,
 }: UploadedYamlCardProps) {
   const copied = copiedId === file.id;
@@ -29,6 +31,9 @@ export function UploadedYamlCard({
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => onCopy(file)} aria-label={`Copy ${file.name}`}>
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+            <Button variant="secondary" onClick={() => onDownload(file)} aria-label={`Download ${file.name}`}>
+              <Download className="h-4 w-4" />
             </Button>
             <Button variant="secondary" onClick={() => onRemove(file.id)} aria-label={`Remove ${file.name}`}>
               <X className="h-4 w-4" />

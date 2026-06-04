@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Check, Copy } from 'lucide-react';
+import { ArrowLeftRight, Check, Copy, Download } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import type { ConverterMode } from './types';
 
@@ -8,6 +8,7 @@ type YamlConverterPanelProps = {
   mode: ConverterMode;
   onConvert: () => void;
   onCopyOutput: () => void;
+  onDownloadOutput: () => void;
   onInputChange: (input: string) => void;
   onLoadSample: () => void;
   onModeChange: (mode: ConverterMode) => void;
@@ -20,6 +21,7 @@ export function YamlConverterPanel({
   mode,
   onConvert,
   onCopyOutput,
+  onDownloadOutput,
   onInputChange,
   onLoadSample,
   onModeChange,
@@ -68,10 +70,14 @@ export function YamlConverterPanel({
             <pre className="h-64 overflow-auto rounded-xl bg-gray-950 p-4 text-sm text-gray-100">
               <code>{output || 'Converted output will appear here.'}</code>
             </pre>
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex flex-wrap justify-end gap-2">
               <Button variant="secondary" onClick={onCopyOutput} disabled={!output}>
                 {copiedId === 'converter-output' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 Copy output
+              </Button>
+              <Button variant="secondary" onClick={onDownloadOutput} disabled={!output}>
+                <Download className="h-4 w-4" />
+                Download
               </Button>
             </div>
           </div>

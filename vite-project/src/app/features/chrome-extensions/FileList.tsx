@@ -3,8 +3,10 @@ import { CheckCircle, Code2, Copy, Download } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import { copyTextToClipboard } from '../../utils/clipboard';
 import type { ExtensionScaffoldFile } from './scaffold';
+import { createZipBlob } from './zipBundle';
 
 type FileListProps = {
+  bundleName: string;
   files: ExtensionScaffoldFile[];
 };
 
@@ -19,7 +21,21 @@ function downloadTextFile(file: ExtensionScaffoldFile) {
   URL.revokeObjectURL(url);
 }
 
-export function FileList({ files }: FileListProps) {
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function slugify(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'extension-scaffold';
+}
+
+export function FileList({ bundleName, files }: FileListProps) {
   const [selectedPath, setSelectedPath] = useState(files[0]?.path ?? '');
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
   const [status, setStatus] = useState('Select a generated file to inspect or copy.');
@@ -48,8 +64,13 @@ export function FileList({ files }: FileListProps) {
   };
 
   const downloadAllFiles = () => {
-    files.forEach(downloadTextFile);
-    setStatus(`${files.length} scaffold files were queued for download.`);
+    if (files.length === 0) {
+      setStatus('No scaffold files are available to bundle.');
+      return;
+    }
+
+    downloadBlob(createZipBlob(files), `${slugify(bundleName)}.zip`);
+    setStatus(`${files.length} scaffold files bundled into ${slugify(bundleName)}.zip.`);
   };
 
   return (
@@ -58,7 +79,7 @@ export function FileList({ files }: FileListProps) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Generated scaffold</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Copy or download starter files for the selected extension.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Copy a single file or download the extension scaffold as a ZIP bundle.</p>
           </div>
           <Button variant="secondary" onClick={downloadAllFiles} className="w-fit gap-2">
             <Download className="h-4 w-4" />

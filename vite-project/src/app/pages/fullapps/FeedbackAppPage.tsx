@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { CheckCircle2, Download, Filter, MessageSquare, Plus, Search, Send, Star, Trash2, TrendingUp, Users } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, Download, Filter, MessageSquare, Plus, RotateCcw, Search, Send, Star, Trash2, TrendingUp, Users } from 'lucide-react';
 import { Button, Card, CardContent, FormField, Input } from '@/app/components/common';
 import { MetricGrid } from '@/app/components/showcase/MetricGrid';
 import { PageIntro } from '@/app/components/showcase/PageIntro';
@@ -14,12 +14,34 @@ type FeedbackRecord = FeedbackEntry & {
   response?: string;
   status: FeedbackStatus;
 };
+type FeedbackWorkspaceDraft = {
+  draftChannel: FeedbackChannel;
+  draftComment: string;
+  draftRating: number;
+  draftUser: string;
+  items: FeedbackRecord[];
+  responseDraft: string;
+  selectedFeedbackId: number | null;
+};
 
 const initialFeedback: FeedbackRecord[] = feedbackEntries.map((entry, index) => ({
   ...entry,
   channel: index === 0 ? 'Web' : index === 1 ? 'Email' : 'In-app',
   status: index === 0 ? 'new' : 'reviewed',
 }));
+
+const feedbackWorkspaceStorageKey = 'web5:feedback-workspace:v1';
+const feedbackStatuses: FeedbackStatus[] = ['new', 'reviewed', 'resolved'];
+const feedbackChannels: FeedbackChannel[] = ['Web', 'Email', 'In-app'];
+const fallbackFeedbackWorkspace: FeedbackWorkspaceDraft = {
+  draftChannel: 'Web',
+  draftComment: 'Fast response and clear handoff.',
+  draftRating: 5,
+  draftUser: 'New customer',
+  items: initialFeedback,
+  responseDraft: 'Thanks for the thoughtful feedback. We reviewed it with the team and will fold it into the next pass.',
+  selectedFeedbackId: initialFeedback[0]?.id ?? null,
+};
 
 const ratingFilters: Array<{ id: RatingFilter; label: string }> = [
   { id: 'all', label: 'All' },
@@ -33,6 +55,56 @@ const responseTemplates = [
   'Thanks for reporting this. We marked it for follow-up and will keep the handoff notes updated.',
   'Glad to hear this worked well. We appreciate the time you took to share the detail.',
 ];
+
+function isFeedbackRecord(value: unknown): value is FeedbackRecord {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<FeedbackRecord>;
+  return typeof candidate.id === 'number'
+    && typeof candidate.user === 'string'
+    && typeof candidate.comment === 'string'
+    && typeof candidate.date === 'string'
+    && typeof candidate.rating === 'number'
+    && candidate.rating >= 1
+    && candidate.rating <= 5
+    && feedbackChannels.includes(candidate.channel as FeedbackChannel)
+    && feedbackStatuses.includes(candidate.status as FeedbackStatus)
+    && (candidate.response === undefined || typeof candidate.response === 'string');
+}
+
+function readStoredFeedbackWorkspace(): FeedbackWorkspaceDraft {
+  if (typeof window === 'undefined') {
+    return fallbackFeedbackWorkspace;
+  }
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(feedbackWorkspaceStorageKey) ?? 'null') as Partial<FeedbackWorkspaceDraft> | null;
+
+    if (!parsed || !Array.isArray(parsed.items) || !parsed.items.every(isFeedbackRecord)) {
+      return fallbackFeedbackWorkspace;
+    }
+
+    const selectedFeedbackId = parsed.items.some((item) => item.id === parsed.selectedFeedbackId)
+      ? Number(parsed.selectedFeedbackId)
+      : parsed.items[0]?.id ?? null;
+
+    return {
+      draftChannel: feedbackChannels.includes(parsed.draftChannel as FeedbackChannel) ? parsed.draftChannel as FeedbackChannel : fallbackFeedbackWorkspace.draftChannel,
+      draftComment: typeof parsed.draftComment === 'string' ? parsed.draftComment : fallbackFeedbackWorkspace.draftComment,
+      draftRating: typeof parsed.draftRating === 'number' && parsed.draftRating >= 1 && parsed.draftRating <= 5
+        ? Math.round(parsed.draftRating)
+        : fallbackFeedbackWorkspace.draftRating,
+      draftUser: typeof parsed.draftUser === 'string' ? parsed.draftUser : fallbackFeedbackWorkspace.draftUser,
+      items: parsed.items,
+      responseDraft: typeof parsed.responseDraft === 'string' ? parsed.responseDraft : fallbackFeedbackWorkspace.responseDraft,
+      selectedFeedbackId,
+    };
+  } catch {
+    return fallbackFeedbackWorkspace;
+  }
+}
 
 function downloadCsv(items: FeedbackRecord[]) {
   const rows = [
@@ -58,17 +130,31 @@ function downloadCsv(items: FeedbackRecord[]) {
   URL.revokeObjectURL(url);
 }
 
+function downloadJson(content: unknown, fileName: string) {
+  const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export function FeedbackAppPage() {
-  const [items, setItems] = useState<FeedbackRecord[]>(initialFeedback);
+  const [storedWorkspace] = useState(() => readStoredFeedbackWorkspace());
+  const [items, setItems] = useState<FeedbackRecord[]>(storedWorkspace.items);
   const [filter, setFilter] = useState<RatingFilter>('all');
   const [query, setQuery] = useState('');
-  const [selectedFeedbackId, setSelectedFeedbackId] = useState<number | null>(initialFeedback[0]?.id ?? null);
-  const [responseDraft, setResponseDraft] = useState(responseTemplates[0]);
-  const [draftUser, setDraftUser] = useState('New customer');
-  const [draftComment, setDraftComment] = useState('Fast response and clear handoff.');
-  const [draftChannel, setDraftChannel] = useState<FeedbackChannel>('Web');
-  const [draftRating, setDraftRating] = useState(5);
-  const [statusMessage, setStatusMessage] = useState('Ready to collect the next feedback item.');
+  const [selectedFeedbackId, setSelectedFeedbackId] = useState<number | null>(storedWorkspace.selectedFeedbackId);
+  const [responseDraft, setResponseDraft] = useState(storedWorkspace.responseDraft);
+  const [draftUser, setDraftUser] = useState(storedWorkspace.draftUser);
+  const [draftComment, setDraftComment] = useState(storedWorkspace.draftComment);
+  const [draftChannel, setDraftChannel] = useState<FeedbackChannel>(storedWorkspace.draftChannel);
+  const [draftRating, setDraftRating] = useState(storedWorkspace.draftRating);
+  const [statusMessage, setStatusMessage] = useState(storedWorkspace === fallbackFeedbackWorkspace
+    ? 'Ready to collect the next feedback item.'
+    : 'Feedback workspace restored from local storage.');
 
   const selectedFeedback = items.find((item) => item.id === selectedFeedbackId) ?? null;
 
@@ -103,6 +189,18 @@ export function FeedbackAppPage() {
       { label: 'New This Session', value: growth, accent: 'gray' as const, icon: Users },
     ];
   }, [items]);
+
+  useEffect(() => {
+    window.localStorage.setItem(feedbackWorkspaceStorageKey, JSON.stringify({
+      draftChannel,
+      draftComment,
+      draftRating,
+      draftUser,
+      items,
+      responseDraft,
+      selectedFeedbackId,
+    }));
+  }, [draftChannel, draftComment, draftRating, draftUser, items, responseDraft, selectedFeedbackId]);
 
   const addFeedback = () => {
     const user = draftUser.trim();
@@ -165,6 +263,31 @@ export function FeedbackAppPage() {
     setStatusMessage(target ? `${target.user}'s feedback was removed.` : 'Feedback removed.');
   };
 
+  const exportWorkspace = () => {
+    downloadJson({
+      exportedAt: new Date().toISOString(),
+      filter,
+      items,
+      query,
+      selectedFeedbackId,
+    }, 'feedback-workspace.json');
+    setStatusMessage('Feedback workspace queued for download.');
+  };
+
+  const resetWorkspace = () => {
+    setItems(fallbackFeedbackWorkspace.items);
+    setFilter('all');
+    setQuery('');
+    setSelectedFeedbackId(fallbackFeedbackWorkspace.selectedFeedbackId);
+    setResponseDraft(fallbackFeedbackWorkspace.responseDraft);
+    setDraftUser(fallbackFeedbackWorkspace.draftUser);
+    setDraftComment(fallbackFeedbackWorkspace.draftComment);
+    setDraftChannel(fallbackFeedbackWorkspace.draftChannel);
+    setDraftRating(fallbackFeedbackWorkspace.draftRating);
+    window.localStorage.removeItem(feedbackWorkspaceStorageKey);
+    setStatusMessage('Feedback workspace reset to the starter data.');
+  };
+
   return (
     <div className="space-y-8 p-4 md:p-8">
       <PageIntro
@@ -193,10 +316,12 @@ export function FeedbackAppPage() {
           activeFilter={filter}
           items={visibleItems}
           onDelete={deleteFeedback}
-          onExport={() => downloadCsv(visibleItems)}
+          onExportCsv={() => downloadCsv(visibleItems)}
+          onExportJson={exportWorkspace}
           onFilterChange={setFilter}
           onMarkReviewed={markReviewed}
           onQueryChange={setQuery}
+          onReset={resetWorkspace}
           onSelect={(feedback) => {
             setSelectedFeedbackId(feedback.id);
             setResponseDraft(feedback.response ?? responseTemplates[0]);
@@ -307,10 +432,12 @@ function FeedbackInbox({
   activeFilter,
   items,
   onDelete,
-  onExport,
+  onExportCsv,
+  onExportJson,
   onFilterChange,
   onMarkReviewed,
   onQueryChange,
+  onReset,
   onSelect,
   query,
   selectedId,
@@ -318,10 +445,12 @@ function FeedbackInbox({
   activeFilter: RatingFilter;
   items: FeedbackRecord[];
   onDelete: (id: number) => void;
-  onExport: () => void;
+  onExportCsv: () => void;
+  onExportJson: () => void;
   onFilterChange: (value: RatingFilter) => void;
   onMarkReviewed: (id: number) => void;
   onQueryChange: (value: string) => void;
+  onReset: () => void;
   onSelect: (feedback: FeedbackRecord) => void;
   query: string;
   selectedId: number | null;
@@ -334,10 +463,20 @@ function FeedbackInbox({
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Feedback Inbox</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">Filter, review, and resolve incoming feedback.</p>
           </div>
-          <Button variant="secondary" onClick={onExport} className="w-fit gap-2">
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={onExportCsv} className="w-fit gap-2">
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button variant="secondary" onClick={onExportJson} className="w-fit gap-2">
+              <Download className="h-4 w-4" />
+              Export JSON
+            </Button>
+            <Button variant="secondary" onClick={onReset} className="w-fit gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Reset
+            </Button>
+          </div>
         </div>
 
         <label className="relative block">

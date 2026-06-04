@@ -42,7 +42,7 @@ export function ChromeExtensionsPage() {
 
           <div className="grid gap-6 lg:grid-cols-2">
             <ManifestPanel template={selectedTemplate} />
-            <FileList files={scaffoldFiles} />
+            <FileList bundleName={`${selectedTemplate.name} scaffold`} files={scaffoldFiles} />
           </div>
         </section>
       </div>

@@ -1,19 +1,81 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { copyTextToClipboard } from '../../utils/clipboard';
 import { jsonConverterSample, yamlTemplates } from './data';
 import { getLineCount, jsonToYaml, yamlToJson } from './yamlConverter';
-import type { ConverterMode, UploadedYaml } from './types';
+import type { ConverterMode, UploadedYaml, YamlLibraryDraft } from './types';
+
+const yamlLibraryStorageKey = 'web5:yaml-library-draft:v1';
+
+const fallbackDraft: YamlLibraryDraft = {
+  converterInput: yamlTemplates[0].code,
+  converterMode: 'yaml-to-json',
+  converterOutput: '',
+  files: [],
+};
+
+function isUploadedYaml(value: unknown): value is UploadedYaml {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<UploadedYaml>;
+  return typeof candidate.id === 'string'
+    && typeof candidate.name === 'string'
+    && typeof candidate.content === 'string';
+}
+
+function isYamlLibraryDraft(value: unknown): value is YamlLibraryDraft {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<YamlLibraryDraft>;
+  return (
+    typeof candidate.converterInput === 'string'
+    && (candidate.converterMode === 'yaml-to-json' || candidate.converterMode === 'json-to-yaml')
+    && typeof candidate.converterOutput === 'string'
+    && Array.isArray(candidate.files)
+    && candidate.files.every(isUploadedYaml)
+  );
+}
+
+function readStoredDraft() {
+  if (typeof window === 'undefined') {
+    return fallbackDraft;
+  }
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(yamlLibraryStorageKey) ?? 'null');
+    return isYamlLibraryDraft(parsed) ? parsed : fallbackDraft;
+  } catch {
+    return fallbackDraft;
+  }
+}
+
+function downloadText(content: string, fileName: string) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 export function useYamlLibraryController() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<UploadedYaml[]>([]);
+  const [storedDraft] = useState(() => readStoredDraft());
+  const [files, setFiles] = useState<UploadedYaml[]>(storedDraft.files);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [templateQuery, setTemplateQuery] = useState('');
-  const [converterMode, setConverterMode] = useState<ConverterMode>('yaml-to-json');
-  const [converterInput, setConverterInput] = useState(yamlTemplates[0].code);
-  const [converterOutput, setConverterOutput] = useState('');
-  const [status, setStatus] = useState('Upload YAML files or copy a starter template.');
+  const [converterMode, setConverterMode] = useState<ConverterMode>(storedDraft.converterMode);
+  const [converterInput, setConverterInput] = useState(storedDraft.converterInput);
+  const [converterOutput, setConverterOutput] = useState(storedDraft.converterOutput);
+  const [status, setStatus] = useState(storedDraft.files.length > 0
+    ? `Restored ${storedDraft.files.length} uploaded YAML file${storedDraft.files.length === 1 ? '' : 's'} from local storage.`
+    : 'Upload YAML files or copy a starter template.');
 
   const visibleTemplates = useMemo(() => {
     const query = templateQuery.trim().toLowerCase();
@@ -22,6 +84,17 @@ export function useYamlLibraryController() {
 
     return yamlTemplates.filter((template) => `${template.title} ${template.description} ${template.code}`.toLowerCase().includes(query));
   }, [templateQuery]);
+
+  const draft = useMemo<YamlLibraryDraft>(() => ({
+    converterInput,
+    converterMode,
+    converterOutput,
+    files,
+  }), [converterInput, converterMode, converterOutput, files]);
+
+  useEffect(() => {
+    window.localStorage.setItem(yamlLibraryStorageKey, JSON.stringify(draft));
+  }, [draft]);
 
   const copyText = async (id: string, text: string) => {
     try {
@@ -76,6 +149,21 @@ export function useYamlLibraryController() {
     setStatus('Uploaded YAML list cleared.');
   };
 
+  const downloadUploadedFile = (file: UploadedYaml) => {
+    downloadText(file.content, file.name);
+    setStatus(`${file.name} queued for download.`);
+  };
+
+  const downloadUploads = () => {
+    if (files.length === 0) {
+      setStatus('Upload YAML files before downloading them.');
+      return;
+    }
+
+    files.forEach((file) => downloadText(file.content, file.name));
+    setStatus(`${files.length} uploaded YAML file${files.length === 1 ? '' : 's'} queued for download.`);
+  };
+
   const handleConvert = () => {
     try {
       const output = converterMode === 'yaml-to-json'
@@ -108,6 +196,17 @@ export function useYamlLibraryController() {
     setConverterOutput('');
   };
 
+  const downloadConverterOutput = () => {
+    if (!converterOutput.trim()) {
+      setStatus('Convert content before downloading output.');
+      return;
+    }
+
+    const extension = converterMode === 'yaml-to-json' ? 'json' : 'yaml';
+    downloadText(converterOutput, `converted-output.${extension}`);
+    setStatus(`Converted ${extension.toUpperCase()} output queued for download.`);
+  };
+
   return {
     changeConverterMode,
     clearUploads,
@@ -116,6 +215,9 @@ export function useYamlLibraryController() {
     converterOutput,
     copiedId,
     copyText,
+    downloadConverterOutput,
+    downloadUploadedFile,
+    downloadUploads,
     files,
     handleConvert,
     handleFileChange,

@@ -12,3 +12,10 @@ export type YamlTemplate = {
 };
 
 export type ConverterMode = 'yaml-to-json' | 'json-to-yaml';
+
+export type YamlLibraryDraft = {
+  converterInput: string;
+  converterMode: ConverterMode;
+  converterOutput: string;
+  files: UploadedYaml[];
+};

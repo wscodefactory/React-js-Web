@@ -31,10 +31,12 @@ export function McpPage() {
 
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <ManifestPreviewPanel
+          canDownloadPackage={Boolean(mcpImport.importedSource)}
           copied={mcpImport.copied}
           copyStatus={mcpImport.copyStatus}
           manifestPreview={mcpImport.manifestPreview}
           onCopyManifest={mcpImport.copyManifest}
+          onDownloadPackage={mcpImport.downloadPackage}
           platform={mcpImport.selectedPlatformInfo}
         />
         <ImportHistoryPanel

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { copyTextToClipboard } from '../../utils/clipboard';
 import { supportedPlatforms } from './data';
 import { parseImportUrl } from './importUrl';
-import type { ImportedSource, PlatformId } from './types';
+import type { ImportedSource, McpManifest, McpPackage, PlatformId } from './types';
 
 const importHistoryStorageKey = 'web5:mcp-import-history:v1';
 
@@ -24,6 +24,21 @@ function readStoredImportHistory() {
   }
 }
 
+function downloadText(content: string, fileName: string) {
+  const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function slugify(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'mcp-package';
+}
+
 export function useMcpImportController() {
   const [importUrl, setImportUrl] = useState('https://github.com/wscodefactory/React-js-Web');
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId>('canvas');
@@ -43,7 +58,7 @@ export function useMcpImportController() {
     [selectedPlatform],
   );
 
-  const manifestPreview = useMemo(() => {
+  const manifest = useMemo<McpManifest>(() => {
     const source = importedSource ?? {
       name: parsedUrl.name || 'pending-source',
       host: parsedUrl.host || 'pending-host',
@@ -53,19 +68,39 @@ export function useMcpImportController() {
       importedAt: 'Not imported',
     };
 
-    return JSON.stringify(
-      {
-        name: source.name,
-        source: source.url,
-        platform: selectedPlatformInfo.label,
-        status: selectedPlatformInfo.status,
-        importedAt: source.importedAt,
-        assets: selectedPlatformInfo.assets,
-      },
-      null,
-      2,
-    );
+    return {
+      assets: selectedPlatformInfo.assets,
+      importedAt: source.importedAt,
+      name: source.name,
+      platform: selectedPlatformInfo.label,
+      source: source.url,
+      status: selectedPlatformInfo.status,
+    };
   }, [importUrl, importedSource, parsedUrl.href, parsedUrl.host, parsedUrl.name, parsedUrl.protocol, selectedPlatform, selectedPlatformInfo]);
+  const manifestPreview = useMemo(() => JSON.stringify(manifest, null, 2), [manifest]);
+
+  const buildPackage = (): McpPackage | null => {
+    if (!importedSource) {
+      return null;
+    }
+
+    return {
+      history: importHistory,
+      install: {
+        assets: selectedPlatformInfo.assets,
+        checklist: [
+          `Review ${importedSource.name} source before publishing.`,
+          `Map imported assets to ${selectedPlatformInfo.label}.`,
+          'Verify usage notes, permissions, and preview metadata.',
+          'Publish the package manifest after review.',
+        ],
+        target: selectedPlatformInfo.label,
+      },
+      manifest,
+      packageVersion: 1,
+      source: importedSource,
+    };
+  };
 
   const changeImportUrl = (value: string) => {
     setImportUrl(value);
@@ -112,6 +147,18 @@ export function useMcpImportController() {
     setCopyStatus(wasCopied ? 'Manifest copied to clipboard.' : 'Clipboard copy failed. Use JSON download instead.');
   };
 
+  const downloadPackage = () => {
+    const packagePayload = buildPackage();
+
+    if (!packagePayload) {
+      setCopyStatus('Import a source before downloading an MCP package.');
+      return;
+    }
+
+    downloadText(JSON.stringify(packagePayload, null, 2), `${slugify(`${packagePayload.source.name}-${selectedPlatformInfo.id}`)}.mcp-package.json`);
+    setCopyStatus('MCP package queued for download.');
+  };
+
   const restoreImport = (source: ImportedSource) => {
     setImportedSource(source);
     setImportUrl(source.url);
@@ -142,6 +189,7 @@ export function useMcpImportController() {
     copied,
     copyStatus,
     copyManifest,
+    downloadPackage,
     error,
     handleImport,
     importHistory,

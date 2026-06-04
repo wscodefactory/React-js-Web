@@ -22,6 +22,7 @@ export function YamlLibraryPage() {
         filesCount={yamlLibrary.files.length}
         inputRef={yamlLibrary.inputRef}
         onClearUploads={yamlLibrary.clearUploads}
+        onDownloadUploads={yamlLibrary.downloadUploads}
         onFileChange={yamlLibrary.handleFileChange}
       />
 
@@ -33,6 +34,7 @@ export function YamlLibraryPage() {
         mode={yamlLibrary.converterMode}
         onConvert={yamlLibrary.handleConvert}
         onCopyOutput={() => yamlLibrary.copyText('converter-output', yamlLibrary.converterOutput)}
+        onDownloadOutput={yamlLibrary.downloadConverterOutput}
         onInputChange={yamlLibrary.setConverterInput}
         onLoadSample={yamlLibrary.loadConverterSample}
         onModeChange={yamlLibrary.changeConverterMode}
@@ -43,6 +45,7 @@ export function YamlLibraryPage() {
         copiedId={yamlLibrary.copiedId}
         files={yamlLibrary.files}
         onCopy={(item) => yamlLibrary.copyText(item.id, item.content)}
+        onDownload={yamlLibrary.downloadUploadedFile}
         onRemove={yamlLibrary.removeFile}
       />
 

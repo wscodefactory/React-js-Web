@@ -13,6 +13,27 @@ export type ImportedSource = {
   importedAt: string;
 };
 
+export type McpManifest = {
+  assets: readonly string[];
+  importedAt: string;
+  name: string;
+  platform: string;
+  source: string;
+  status: string;
+};
+
+export type McpPackage = {
+  history: ImportedSource[];
+  install: {
+    assets: readonly string[];
+    checklist: string[];
+    target: string;
+  };
+  manifest: McpManifest;
+  packageVersion: 1;
+  source: ImportedSource;
+};
+
 export type ParsedImportUrl = {
   valid: boolean;
   name: string;

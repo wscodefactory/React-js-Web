@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2, Clock, Filter, Flag, Plus, Trash2, Users } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, CheckCircle2, Clock, Download, Filter, Flag, Plus, RotateCcw, Trash2, Users } from 'lucide-react';
 import { Button, Card, CardContent, FormField, Input } from '@/app/components/common';
 import { MetricGrid } from '@/app/components/showcase/MetricGrid';
 import { PageIntro } from '@/app/components/showcase/PageIntro';
@@ -15,6 +15,16 @@ type ProjectTask = TaskItem & {
   priority: TaskPriority;
   dueDate: string;
 };
+type ProjectWorkspaceDraft = {
+  projects: ProjectOverview[];
+  selectedProjectId: number;
+  tasks: ProjectTask[];
+};
+
+const projectWorkspaceStorageKey = 'web5:project-management-workspace:v1';
+const projectStatuses: ProjectStatus[] = ['Planning', 'In Progress', 'Completed'];
+const taskStatuses: TaskStatus[] = ['pending', 'in-progress', 'completed'];
+const taskPriorities: TaskPriority[] = ['High', 'Medium', 'Low'];
 
 const projectStatusClassMap: Record<ProjectStatus, string> = {
   Completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
@@ -48,6 +58,81 @@ const initialTasks: ProjectTask[] = projectManagementTasks.map((task, index) => 
   dueDate: index % 2 === 0 ? '2026-05-24' : '2026-05-30',
 }));
 
+const fallbackWorkspace: ProjectWorkspaceDraft = {
+  projects: projectManagementProjects,
+  selectedProjectId: projectManagementProjects[0].id,
+  tasks: initialTasks,
+};
+
+function isProjectOverview(value: unknown): value is ProjectOverview {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<ProjectOverview>;
+  return typeof candidate.id === 'number'
+    && typeof candidate.name === 'string'
+    && projectStatuses.includes(candidate.status as ProjectStatus)
+    && typeof candidate.progress === 'number'
+    && typeof candidate.team === 'number'
+    && typeof candidate.deadline === 'string';
+}
+
+function isProjectTask(value: unknown): value is ProjectTask {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<ProjectTask>;
+  return typeof candidate.id === 'number'
+    && typeof candidate.projectId === 'number'
+    && typeof candidate.title === 'string'
+    && typeof candidate.assignee === 'string'
+    && taskStatuses.includes(candidate.status as TaskStatus)
+    && taskPriorities.includes(candidate.priority as TaskPriority)
+    && typeof candidate.dueDate === 'string';
+}
+
+function readStoredWorkspace(): ProjectWorkspaceDraft {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(projectWorkspaceStorageKey) ?? 'null') as Partial<ProjectWorkspaceDraft> | null;
+
+    if (
+      !parsed
+      || !Array.isArray(parsed.projects)
+      || !Array.isArray(parsed.tasks)
+      || parsed.projects.length === 0
+      || !parsed.projects.every(isProjectOverview)
+      || !parsed.tasks.every(isProjectTask)
+    ) {
+      return fallbackWorkspace;
+    }
+
+    const selectedProjectId = parsed.projects.some((project) => project.id === parsed.selectedProjectId)
+      ? Number(parsed.selectedProjectId)
+      : parsed.projects[0].id;
+
+    return {
+      projects: parsed.projects,
+      selectedProjectId,
+      tasks: parsed.tasks.filter((task) => parsed.projects?.some((project) => project.id === task.projectId)),
+    };
+  } catch {
+    return fallbackWorkspace;
+  }
+}
+
+function downloadJson(content: unknown, fileName: string) {
+  const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 function nextProjectStatus(status: ProjectStatus): ProjectStatus {
   if (status === 'Planning') return 'In Progress';
   if (status === 'In Progress') return 'Completed';
@@ -66,9 +151,10 @@ function getProjectTaskProgress(tasks: ProjectTask[]) {
 }
 
 export function ProjectManagementAppPage() {
-  const [projects, setProjects] = useState<ProjectOverview[]>(projectManagementProjects);
-  const [tasks, setTasks] = useState<ProjectTask[]>(initialTasks);
-  const [selectedProjectId, setSelectedProjectId] = useState(projectManagementProjects[0].id);
+  const [storedWorkspace] = useState(() => readStoredWorkspace());
+  const [projects, setProjects] = useState<ProjectOverview[]>(storedWorkspace.projects);
+  const [tasks, setTasks] = useState<ProjectTask[]>(storedWorkspace.tasks);
+  const [selectedProjectId, setSelectedProjectId] = useState(storedWorkspace.selectedProjectId);
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [newTaskTitle, setNewTaskTitle] = useState('Prepare stakeholder update');
   const [newTaskAssignee, setNewTaskAssignee] = useState('Mina');
@@ -76,7 +162,9 @@ export function ProjectManagementAppPage() {
   const [newProjectName, setNewProjectName] = useState('Customer Portal');
   const [newProjectTeam, setNewProjectTeam] = useState(4);
   const [newProjectDeadline, setNewProjectDeadline] = useState('2026-06-30');
-  const [statusMessage, setStatusMessage] = useState('Select a project to edit progress and task flow.');
+  const [statusMessage, setStatusMessage] = useState(storedWorkspace === fallbackWorkspace
+    ? 'Select a project to edit progress and task flow.'
+    : 'Project workspace restored from local storage.');
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0];
   const selectedProjectTasks = tasks.filter((task) => task.projectId === selectedProject.id);
@@ -95,6 +183,14 @@ export function ProjectManagementAppPage() {
       { label: 'Avg. Progress', value: `${averageProgress}%`, accent: 'yellow' as const, icon: Clock },
     ];
   }, [projects, tasks]);
+
+  useEffect(() => {
+    window.localStorage.setItem(projectWorkspaceStorageKey, JSON.stringify({
+      projects,
+      selectedProjectId,
+      tasks,
+    }));
+  }, [projects, selectedProjectId, tasks]);
 
   const updateSelectedProject = (updates: Partial<ProjectOverview>) => {
     setProjects((current) => current.map((project) => (project.id === selectedProjectId ? { ...project, ...updates } : project)));
@@ -183,6 +279,25 @@ export function ProjectManagementAppPage() {
     setStatusMessage(task ? `${task.title} removed from the queue.` : 'Task removed.');
   };
 
+  const exportWorkspace = () => {
+    downloadJson({
+      exportedAt: new Date().toISOString(),
+      projects,
+      selectedProjectId,
+      tasks,
+    }, 'project-management-workspace.json');
+    setStatusMessage('Project workspace queued for download.');
+  };
+
+  const resetWorkspace = () => {
+    setProjects(fallbackWorkspace.projects);
+    setTasks(fallbackWorkspace.tasks);
+    setSelectedProjectId(fallbackWorkspace.selectedProjectId);
+    setTaskFilter('all');
+    window.localStorage.removeItem(projectWorkspaceStorageKey);
+    setStatusMessage('Project workspace reset to the starter data.');
+  };
+
   return (
     <div className="space-y-8 p-4 md:p-8">
       <PageIntro
@@ -218,6 +333,7 @@ export function ProjectManagementAppPage() {
           onAddTask={addTask}
           onCycleProject={cycleProject}
           onDeleteProject={deleteSelectedProject}
+          onExportWorkspace={exportWorkspace}
           onNewProjectDeadlineChange={setNewProjectDeadline}
           onNewProjectNameChange={setNewProjectName}
           onNewProjectTeamChange={setNewProjectTeam}
@@ -225,6 +341,7 @@ export function ProjectManagementAppPage() {
           onNewTaskPriorityChange={setNewTaskPriority}
           onNewTaskTitleChange={setNewTaskTitle}
           onProgressChange={(progress) => updateSelectedProject({ progress })}
+          onResetWorkspace={resetWorkspace}
           projectTasks={selectedProjectTasks}
           selectedProject={selectedProject}
           statusMessage={statusMessage}
@@ -317,6 +434,7 @@ function ProjectControls({
   onAddTask,
   onCycleProject,
   onDeleteProject,
+  onExportWorkspace,
   onNewProjectDeadlineChange,
   onNewProjectNameChange,
   onNewProjectTeamChange,
@@ -324,6 +442,7 @@ function ProjectControls({
   onNewTaskPriorityChange,
   onNewTaskTitleChange,
   onProgressChange,
+  onResetWorkspace,
   projectTasks,
   selectedProject,
   statusMessage,
@@ -338,6 +457,7 @@ function ProjectControls({
   onAddTask: () => void;
   onCycleProject: () => void;
   onDeleteProject: () => void;
+  onExportWorkspace: () => void;
   onNewProjectDeadlineChange: (value: string) => void;
   onNewProjectNameChange: (value: string) => void;
   onNewProjectTeamChange: (value: number) => void;
@@ -345,6 +465,7 @@ function ProjectControls({
   onNewTaskPriorityChange: (value: TaskPriority) => void;
   onNewTaskTitleChange: (value: string) => void;
   onProgressChange: (value: number) => void;
+  onResetWorkspace: () => void;
   projectTasks: ProjectTask[];
   selectedProject: ProjectOverview;
   statusMessage: string;
@@ -395,6 +516,17 @@ function ProjectControls({
               Delete
             </Button>
           </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button variant="secondary" onClick={onExportWorkspace} className="justify-center gap-2">
+            <Download className="h-4 w-4" />
+            Export Workspace
+          </Button>
+          <Button variant="secondary" onClick={onResetWorkspace} className="justify-center gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Reset Workspace
+          </Button>
         </div>
 
         <div className="space-y-3">
