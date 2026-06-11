@@ -26,7 +26,7 @@ export function ChromeExtensionsPage() {
       <div className="grid gap-6 xl:grid-cols-[300px_1fr]">
         <aside className="space-y-4">
           <TemplateSelector selectedId={selectedId} onSelect={setSelectedId} />
-          <BuildChecklist />
+          <BuildChecklist templateId={selectedTemplate.id} templateName={selectedTemplate.name} />
         </aside>
 
         <section className="space-y-6">

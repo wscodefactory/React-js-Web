@@ -1,15 +1,86 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle, Circle } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import { checklistItems } from './data';
 
-export function BuildChecklist() {
-  const [completedItems, setCompletedItems] = useState<string[]>([]);
+type BuildChecklistProps = {
+  templateId: string;
+  templateName: string;
+};
+type ChecklistProgress = Record<string, string[]>;
+
+const checklistStorageKey = 'web5:chrome-extension-checklists:v1';
+
+function isChecklistProgress(value: unknown): value is ChecklistProgress {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.values(value).every((items) => Array.isArray(items) && items.every((item) => typeof item === 'string'));
+}
+
+function readStoredChecklistProgress(): ChecklistProgress {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(checklistStorageKey) ?? '{}') as unknown;
+
+    if (!isChecklistProgress(parsed)) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(parsed).map(([templateId, items]) => [
+        templateId,
+        items.filter((item) => checklistItems.includes(item)),
+      ]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+export function BuildChecklist({ templateId, templateName }: BuildChecklistProps) {
+  const [progressByTemplate, setProgressByTemplate] = useState<ChecklistProgress>(() => readStoredChecklistProgress());
+  const completedItems = useMemo(() => progressByTemplate[templateId] ?? [], [progressByTemplate, templateId]);
   const completedCount = completedItems.length;
   const progress = Math.round((completedCount / checklistItems.length) * 100);
+  const allComplete = completedCount === checklistItems.length;
+
+  useEffect(() => {
+    window.localStorage.setItem(checklistStorageKey, JSON.stringify(progressByTemplate));
+  }, [progressByTemplate]);
 
   const toggleItem = (item: string) => {
-    setCompletedItems((current) => (current.includes(item) ? current.filter((entry) => entry !== item) : [...current, item]));
+    setProgressByTemplate((current) => {
+      const templateItems = current[templateId] ?? [];
+      const nextItems = templateItems.includes(item)
+        ? templateItems.filter((entry) => entry !== item)
+        : [...templateItems, item];
+
+      return {
+        ...current,
+        [templateId]: nextItems,
+      };
+    });
+  };
+
+  const completeAll = () => {
+    setProgressByTemplate((current) => ({
+      ...current,
+      [templateId]: checklistItems,
+    }));
+  };
+
+  const resetChecklist = () => {
+    setProgressByTemplate((current) => {
+      const nextProgress = { ...current };
+      delete nextProgress[templateId];
+
+      return nextProgress;
+    });
   };
 
   return (
@@ -19,7 +90,7 @@ export function BuildChecklist() {
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white">Build checklist</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {completedCount} of {checklistItems.length} complete
+              {templateName} / {completedCount} of {checklistItems.length} complete
             </p>
           </div>
           <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-300">
@@ -46,10 +117,18 @@ export function BuildChecklist() {
             );
           })}
         </div>
-        {completedCount > 0 ? (
-          <Button variant="secondary" onClick={() => setCompletedItems([])} className="w-full justify-center">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button variant="secondary" onClick={completeAll} disabled={allComplete} className="w-full justify-center disabled:cursor-not-allowed disabled:opacity-50">
+            Mark all done
+          </Button>
+          <Button variant="secondary" onClick={resetChecklist} disabled={completedCount === 0} className="w-full justify-center disabled:cursor-not-allowed disabled:opacity-50">
             Reset checklist
           </Button>
+        </div>
+        {completedCount > 0 ? (
+          <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-gray-900 dark:text-gray-400">
+            Checklist progress is saved for this template.
+          </p>
         ) : null}
       </CardContent>
     </Card>

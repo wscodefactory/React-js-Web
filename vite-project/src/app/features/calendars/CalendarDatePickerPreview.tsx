@@ -1,14 +1,35 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { monthLabels, weekdayLabels } from "./data";
-import { formatFullDate, getMonthMatrix, isSameDate, normalizeDate } from "./calendarUtils";
+import { formatDateKey, formatFullDate, getMonthMatrix, isSameDate, normalizeDate, parseDateKey } from "./calendarUtils";
+
+const datePickerStorageKey = "web5:calendar-date-picker:v1";
+
+function readStoredDate() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(datePickerStorageKey) ?? "null") as { selectedDateKey?: unknown } | null;
+    return parseDateKey(typeof parsed?.selectedDateKey === "string" ? parsed.selectedDateKey : undefined);
+  } catch {
+    window.localStorage.removeItem(datePickerStorageKey);
+    return null;
+  }
+}
 
 export function CalendarDatePickerPreview() {
   const today = useMemo(() => normalizeDate(new Date()), []);
-  const [viewDate, setViewDate] = useState(() => normalizeDate(new Date()));
-  const [selectedDate, setSelectedDate] = useState(() => normalizeDate(new Date()));
+  const [initialDate] = useState(readStoredDate);
+  const [viewDate, setViewDate] = useState(() => initialDate ?? normalizeDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(() => initialDate ?? normalizeDate(new Date()));
 
   const monthCells = useMemo(() => getMonthMatrix(viewDate), [viewDate]);
+
+  useEffect(() => {
+    window.localStorage.setItem(datePickerStorageKey, JSON.stringify({ selectedDateKey: formatDateKey(selectedDate) }));
+  }, [selectedDate]);
 
   function moveMonth(offset: number) {
     setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));

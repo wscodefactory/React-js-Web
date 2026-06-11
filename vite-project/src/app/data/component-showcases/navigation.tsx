@@ -1,15 +1,67 @@
 import type { ComponentShowcaseConfig } from '@/app/types/component-showcase';
 import { GhostPanel } from './helpers';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const segmentedOptions = ['Overview', 'Activity', 'Files'] as const;
+const dropdownActions = ['Rename', 'Duplicate', 'Share', 'Archive'] as const;
+const dropdownActionStates = ['No action selected', ...dropdownActions] as const;
+const navLinks = ['Components', 'Templates', 'Pricing'] as const;
+const tabItems = [
+  { label: 'Overview', content: 'Overview metrics and summary cards appear here.' },
+  { label: 'Details', content: 'Detailed properties, owner notes, and configuration appear here.' },
+  { label: 'History', content: 'Recent updates and audit trail entries appear here.' },
+] as const;
+
+type SegmentedOption = typeof segmentedOptions[number];
+type DropdownActionState = typeof dropdownActionStates[number];
+type NavLink = typeof navLinks[number];
+type TabLabel = typeof tabItems[number]['label'];
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === 'boolean';
+}
+
+function isStringOption<T extends string>(options: readonly T[], value: unknown): value is T {
+  return typeof value === 'string' && options.includes(value as T);
+}
+
+function useStoredPreviewState<T>(
+  storageKey: string,
+  fallbackValue: T,
+  isValue: (value: unknown) => value is T,
+) {
+  const [value, setValue] = useState<T>(() => {
+    if (typeof window === 'undefined') {
+      return fallbackValue;
+    }
+
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(storageKey) ?? 'null') as unknown;
+      return isValue(parsed) ? parsed : fallbackValue;
+    } catch {
+      window.localStorage.removeItem(storageKey);
+      return fallbackValue;
+    }
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKey, JSON.stringify(value));
+  }, [storageKey, value]);
+
+  return [value, setValue] as const;
+}
 
 function SegmentedControlsPreview() {
-  const options = ['Overview', 'Activity', 'Files'];
-  const [active, setActive] = useState(options[0]);
+  const [active, setActive] = useStoredPreviewState<SegmentedOption>(
+    'web5:component-preview:button-group-active:v1',
+    segmentedOptions[0],
+    (value): value is SegmentedOption => isStringOption(segmentedOptions, value),
+  );
 
   return (
     <div className="space-y-4">
       <div className="inline-flex overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-        {options.map((option) => (
+        {segmentedOptions.map((option) => (
           <button
             key={option}
             type="button"
@@ -30,9 +82,12 @@ function SegmentedControlsPreview() {
 }
 
 function DropdownPreview() {
-  const actions = ['Rename', 'Duplicate', 'Share', 'Archive'];
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedAction, setSelectedAction] = useState('No action selected');
+  const [selectedAction, setSelectedAction] = useStoredPreviewState<DropdownActionState>(
+    'web5:component-preview:dropdown-action:v1',
+    'No action selected',
+    (value): value is DropdownActionState => isStringOption(dropdownActionStates, value),
+  );
 
   return (
     <div className="relative max-w-xs">
@@ -47,7 +102,7 @@ function DropdownPreview() {
       </button>
       {isOpen ? (
         <GhostPanel className="absolute left-0 top-14 z-10 w-full space-y-2 bg-white shadow-xl dark:bg-gray-900">
-          {actions.map((action) => (
+          {dropdownActions.map((action) => (
             <button
               key={action}
               type="button"
@@ -68,16 +123,23 @@ function DropdownPreview() {
 }
 
 function NavigationBarPreview() {
-  const links = ['Components', 'Templates', 'Pricing'];
-  const [activeLink, setActiveLink] = useState(links[0]);
-  const [started, setStarted] = useState(false);
+  const [activeLink, setActiveLink] = useStoredPreviewState<NavLink>(
+    'web5:component-preview:navigation-link:v1',
+    navLinks[0],
+    (value): value is NavLink => isStringOption(navLinks, value),
+  );
+  const [started, setStarted] = useStoredPreviewState(
+    'web5:component-preview:navigation-started:v1',
+    false,
+    isBoolean,
+  );
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-gray-100 px-4 py-3 dark:bg-gray-800">
         <span className="font-semibold text-gray-900 dark:text-white">Power UI</span>
         <div className="flex gap-2 text-sm text-gray-600 dark:text-gray-300">
-          {links.map((link) => (
+          {navLinks.map((link) => (
             <button
               key={link}
               type="button"
@@ -102,18 +164,17 @@ function NavigationBarPreview() {
 }
 
 function TabsPreview() {
-  const tabs = [
-    { label: 'Overview', content: 'Overview metrics and summary cards appear here.' },
-    { label: 'Details', content: 'Detailed properties, owner notes, and configuration appear here.' },
-    { label: 'History', content: 'Recent updates and audit trail entries appear here.' },
-  ];
-  const [activeTab, setActiveTab] = useState(tabs[0].label);
-  const activeContent = tabs.find((tab) => tab.label === activeTab)?.content ?? tabs[0].content;
+  const [activeTab, setActiveTab] = useStoredPreviewState<TabLabel>(
+    'web5:component-preview:tabs-active:v1',
+    tabItems[0].label,
+    (value): value is TabLabel => isStringOption(tabItems.map((tab) => tab.label), value),
+  );
+  const activeContent = tabItems.find((tab) => tab.label === activeTab)?.content ?? tabItems[0].content;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
-        {tabs.map((tab) => (
+        {tabItems.map((tab) => (
           <button
             key={tab.label}
             type="button"

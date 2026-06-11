@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, Copy, Download, Heart, Home, Mail, Search, SearchX, Settings, ShoppingCart, Star, Trash2, Upload, UserCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
 import { PageIntro } from '../../components/showcase/PageIntro';
 import { copyTextToClipboard } from '../../utils/clipboard';
+import { createZipBlob } from '../../utils/zip';
 
 export type IconAsset = {
   id: string;
@@ -11,6 +12,15 @@ export type IconAsset = {
   category: string;
   Icon?: LucideIcon;
   svg?: string;
+};
+type StoredIconAsset = Pick<IconAsset, 'category' | 'id' | 'name'> & {
+  svg: string;
+};
+type SvgLibraryDraft = {
+  color: string;
+  customIcons: StoredIconAsset[];
+  selectedCategory: string;
+  size: number;
 };
 
 const iconAssets: IconAsset[] = [
@@ -23,6 +33,14 @@ const iconAssets: IconAsset[] = [
   { id: 'mail', name: 'Mail', category: 'Communication', Icon: Mail },
   { id: 'calendar', name: 'Calendar', category: 'Time', Icon: Calendar },
 ];
+const customSvgLibraryStorageKey = 'web5:custom-svg-library:v1';
+const svgSizeOptions = [16, 24, 32, 48];
+const fallbackSvgLibraryDraft: SvgLibraryDraft = {
+  color: '#16a34a',
+  customIcons: [],
+  selectedCategory: 'All',
+  size: 32,
+};
 
 const lucidePaths: Record<string, string> = {
   'User Circle': '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20c1.2-2.4 3-3.5 5-3.5s3.8 1.1 5 3.5"/>',
@@ -66,14 +84,77 @@ function getAssetSvg(asset: IconAsset, color: string, size: number) {
   return asset.svg ?? createLucideSvg(asset.name, color, size);
 }
 
+function isStoredIconAsset(value: unknown): value is StoredIconAsset {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<StoredIconAsset>;
+  return typeof candidate.id === 'string'
+    && typeof candidate.name === 'string'
+    && typeof candidate.category === 'string'
+    && typeof candidate.svg === 'string';
+}
+
+function readStoredSvgLibrary() {
+  if (typeof window === 'undefined') {
+    return { restored: false, draft: fallbackSvgLibraryDraft };
+  }
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(customSvgLibraryStorageKey) ?? 'null') as Partial<SvgLibraryDraft> | null;
+
+    if (!parsed || !Array.isArray(parsed.customIcons) || !parsed.customIcons.every(isStoredIconAsset)) {
+      return { restored: false, draft: fallbackSvgLibraryDraft };
+    }
+
+    const customIcons = parsed.customIcons.flatMap((asset) => {
+      const svg = sanitizeSvg(asset.svg);
+
+      return svg ? [{ ...asset, svg }] : [];
+    });
+    const availableCategories = new Set(['All', ...iconAssets.map((asset) => asset.category), ...(customIcons.length > 0 ? ['Custom'] : [])]);
+    const size = typeof parsed.size === 'number' && svgSizeOptions.includes(parsed.size) ? parsed.size : fallbackSvgLibraryDraft.size;
+
+    return {
+      restored: true,
+      draft: {
+        color: typeof parsed.color === 'string' ? parsed.color : fallbackSvgLibraryDraft.color,
+        customIcons,
+        selectedCategory: typeof parsed.selectedCategory === 'string' && availableCategories.has(parsed.selectedCategory)
+          ? parsed.selectedCategory
+          : fallbackSvgLibraryDraft.selectedCategory,
+        size,
+      },
+    };
+  } catch {
+    return { restored: false, draft: fallbackSvgLibraryDraft };
+  }
+}
+
 function downloadText(content: string, fileName: string) {
   const blob = new Blob([content], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
+
   anchor.href = url;
   anchor.download = fileName;
   anchor.click();
   URL.revokeObjectURL(url);
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function slugify(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 function IconCard({
@@ -116,13 +197,16 @@ function IconCard({
 
 export function CustomSvgLibraryPage() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [customIcons, setCustomIcons] = useState<IconAsset[]>([]);
+  const [storedLibrary] = useState(() => readStoredSvgLibrary());
+  const [customIcons, setCustomIcons] = useState<IconAsset[]>(storedLibrary.draft.customIcons);
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('All');
-  const [color, setColor] = useState('#16a34a');
-  const [size, setSize] = useState(32);
+  const [category, setCategory] = useState(storedLibrary.draft.selectedCategory);
+  const [color, setColor] = useState(storedLibrary.draft.color);
+  const [size, setSize] = useState(storedLibrary.draft.size);
   const [copied, setCopied] = useState<string | null>(null);
-  const [status, setStatus] = useState('Import SVG files or use the built-in icon set.');
+  const [status, setStatus] = useState(storedLibrary.restored
+    ? 'Custom SVG library restored from local storage.'
+    : 'Import SVG files or use the built-in icon set.');
 
   const allIcons = useMemo(() => [...customIcons, ...iconAssets], [customIcons]);
   const categories = useMemo(() => ['All', ...Array.from(new Set(allIcons.map((asset) => asset.category)))], [allIcons]);
@@ -136,6 +220,22 @@ export function CustomSvgLibraryPage() {
       return matchesCategory && matchesQuery;
     });
   }, [allIcons, category, query]);
+
+  useEffect(() => {
+    const draft: SvgLibraryDraft = {
+      color,
+      customIcons: customIcons.flatMap((asset) => (asset.svg ? [{
+        category: asset.category,
+        id: asset.id,
+        name: asset.name,
+        svg: asset.svg,
+      }] : [])),
+      selectedCategory: category,
+      size,
+    };
+
+    window.localStorage.setItem(customSvgLibraryStorageKey, JSON.stringify(draft));
+  }, [category, color, customIcons, size]);
 
   const copySvg = async (asset: IconAsset) => {
     const wasCopied = await copyTextToClipboard(getAssetSvg(asset, color, size));
@@ -201,8 +301,18 @@ export function CustomSvgLibraryPage() {
       return;
     }
 
-    filteredIcons.forEach((asset) => downloadText(getAssetSvg(asset, color, size), `${asset.id}.svg`));
-    setStatus(`${filteredIcons.length} visible SVG files were queued for download.`);
+    const files = filteredIcons.map((asset, index) => {
+      const categoryFolder = slugify(asset.category) || 'icons';
+      const fileName = slugify(asset.name) || asset.id || `icon-${index + 1}`;
+
+      return {
+        content: getAssetSvg(asset, color, size),
+        path: `${categoryFolder}/${String(index + 1).padStart(2, '0')}-${fileName}.svg`,
+      };
+    });
+
+    downloadBlob(createZipBlob(files), 'custom-svg-visible-icons.zip');
+    setStatus(`${filteredIcons.length} visible SVG files were bundled into a ZIP download.`);
   };
 
   return (
@@ -221,7 +331,7 @@ export function CustomSvgLibraryPage() {
           </select>
           <input type="color" value={color} onChange={(event) => setColor(event.target.value)} className="h-10 w-full rounded-lg border border-gray-300 bg-white dark:border-gray-700" aria-label="Icon color" />
           <select value={size} onChange={(event) => setSize(Number(event.target.value))} className="rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white" aria-label="Icon size">
-            {[16, 24, 32, 48].map((value) => <option key={value} value={value}>{value}px</option>)}
+            {svgSizeOptions.map((value) => <option key={value} value={value}>{value}px</option>)}
           </select>
           <div>
             <input ref={inputRef} type="file" accept=".svg,image/svg+xml" multiple onChange={handleSvgUpload} className="hidden" />
@@ -241,7 +351,7 @@ export function CustomSvgLibraryPage() {
             <div className="flex flex-wrap gap-2">
               <Button variant="secondary" onClick={downloadVisibleIcons} className="gap-2">
                 <Download className="h-4 w-4" />
-                Download visible
+                Download ZIP
               </Button>
               <Button variant="secondary" onClick={clearCustomIcons} className="gap-2 text-red-600 dark:text-red-300">
                 <Trash2 className="h-4 w-4" />

@@ -2,7 +2,7 @@ import { ActivityList } from '@/app/components/showcase/ActivityList';
 import { MetricGrid } from '@/app/components/showcase/MetricGrid';
 import { PageIntro } from '@/app/components/showcase/PageIntro';
 import { ResourceGrid } from '@/app/components/showcase/ResourceGrid';
-import { QuickToolPanel, usePowerTsToolkitController } from '@/app/features/power-ts-toolkit';
+import { HistoryPanel, QuickToolPanel, usePowerTsToolkitController } from '@/app/features/power-ts-toolkit';
 import { powerToolkitMetrics, powerToolkitRecentActivity, powerToolkitResources } from '@/app/data/showcase';
 
 export function PowerTsToolkitPage() {
@@ -39,6 +39,13 @@ export function PowerTsToolkitPage() {
         result={toolkit.result}
         selectedHelp={toolkit.selectedHelp}
         selectedTool={toolkit.selectedTool}
+      />
+
+      <HistoryPanel
+        history={toolkit.history}
+        onClearHistory={toolkit.clearHistory}
+        onDeleteHistoryItem={toolkit.deleteHistoryItem}
+        onLoadHistoryItem={toolkit.loadHistoryItem}
       />
     </div>
   );

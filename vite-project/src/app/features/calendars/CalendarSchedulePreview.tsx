@@ -1,17 +1,96 @@
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Clock3, MapPin, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Clock3, Download, MapPin, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { eventPalette, monthLabels, weekdayLabels } from "./data";
-import { formatDateKey, formatFullDate, getEventsForDate, normalizeDate } from "./calendarUtils";
+import { formatDateKey, formatFullDate, getEventsForDate, normalizeDate, parseDateKey } from "./calendarUtils";
 import type { CalendarEvent } from "./types";
 
+type StoredScheduleDraft = {
+  customEvents: Record<string, CalendarEvent[]>;
+  draftLocation: string;
+  draftTime: string;
+  draftTitle: string;
+  selectedDateKey: string;
+};
+
+const scheduleStorageKey = "web5:calendar-schedule-board:v1";
+
+function isCalendarEvent(value: unknown): value is CalendarEvent {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const event = value as CalendarEvent;
+  return (
+    typeof event.id === "string" &&
+    typeof event.title === "string" &&
+    typeof event.time === "string" &&
+    typeof event.location === "string"
+  );
+}
+
+function readStoredScheduleDraft(): StoredScheduleDraft | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(scheduleStorageKey) ?? "null") as Partial<StoredScheduleDraft> | null;
+    if (!parsed) {
+      return null;
+    }
+
+    const selectedDateKey = typeof parsed.selectedDateKey === "string" ? parsed.selectedDateKey : undefined;
+
+    if (!selectedDateKey || !parseDateKey(selectedDateKey)) {
+      return null;
+    }
+
+    const customEvents = Object.entries(parsed.customEvents ?? {}).reduce<Record<string, CalendarEvent[]>>((eventsByDate, [dateKey, events]) => {
+      if (parseDateKey(dateKey) && Array.isArray(events)) {
+        const validEvents = events.filter(isCalendarEvent);
+        if (validEvents.length > 0) {
+          eventsByDate[dateKey] = validEvents;
+        }
+      }
+
+      return eventsByDate;
+    }, {});
+
+    return {
+      customEvents,
+      draftLocation: typeof parsed.draftLocation === "string" ? parsed.draftLocation : "Project room",
+      draftTime: typeof parsed.draftTime === "string" ? parsed.draftTime : "13:00 - 13:30",
+      draftTitle: typeof parsed.draftTitle === "string" ? parsed.draftTitle : "Stakeholder review",
+      selectedDateKey,
+    };
+  } catch {
+    window.localStorage.removeItem(scheduleStorageKey);
+    return null;
+  }
+}
+
+function countCustomEvents(customEvents: Record<string, CalendarEvent[]>) {
+  return Object.values(customEvents).reduce((total, events) => total + events.length, 0);
+}
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export function CalendarSchedulePreview() {
-  const [viewDate, setViewDate] = useState(() => normalizeDate(new Date()));
-  const [selectedDate, setSelectedDate] = useState(() => normalizeDate(new Date()));
-  const [customEvents, setCustomEvents] = useState<Record<string, CalendarEvent[]>>({});
-  const [draftTitle, setDraftTitle] = useState("Stakeholder review");
-  const [draftTime, setDraftTime] = useState("13:00 - 13:30");
-  const [draftLocation, setDraftLocation] = useState("Project room");
-  const [status, setStatus] = useState("Add an agenda item to the selected date.");
+  const [initialDraft] = useState(readStoredScheduleDraft);
+  const [viewDate, setViewDate] = useState(() => parseDateKey(initialDraft?.selectedDateKey) ?? normalizeDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(() => parseDateKey(initialDraft?.selectedDateKey) ?? normalizeDate(new Date()));
+  const [customEvents, setCustomEvents] = useState<Record<string, CalendarEvent[]>>(() => initialDraft?.customEvents ?? {});
+  const [draftTitle, setDraftTitle] = useState(initialDraft?.draftTitle ?? "Stakeholder review");
+  const [draftTime, setDraftTime] = useState(initialDraft?.draftTime ?? "13:00 - 13:30");
+  const [draftLocation, setDraftLocation] = useState(initialDraft?.draftLocation ?? "Project room");
+  const [status, setStatus] = useState(() => (initialDraft ? "Schedule board restored from local storage." : "Add an agenda item to the selected date."));
 
   const weekDates = useMemo(() => {
     const start = new Date(selectedDate);
@@ -25,10 +104,23 @@ export function CalendarSchedulePreview() {
   }, [selectedDate]);
 
   const selectedDateKey = formatDateKey(selectedDate);
+  const customEventCount = useMemo(() => countCustomEvents(customEvents), [customEvents]);
   const events = useMemo(
     () => [...getEventsForDate(selectedDate), ...(customEvents[selectedDateKey] ?? [])],
     [customEvents, selectedDate, selectedDateKey],
   );
+
+  useEffect(() => {
+    const draft: StoredScheduleDraft = {
+      customEvents,
+      draftLocation,
+      draftTime,
+      draftTitle,
+      selectedDateKey,
+    };
+
+    window.localStorage.setItem(scheduleStorageKey, JSON.stringify(draft));
+  }, [customEvents, draftLocation, draftTime, draftTitle, selectedDateKey]);
 
   function moveWeek(offset: number) {
     setSelectedDate((current) => {
@@ -65,11 +157,42 @@ export function CalendarSchedulePreview() {
   }
 
   function handleRemoveEvent(eventId: string) {
-    setCustomEvents((current) => ({
-      ...current,
-      [selectedDateKey]: (current[selectedDateKey] ?? []).filter((event) => event.id !== eventId),
-    }));
+    setCustomEvents((current) => {
+      const nextEvents = (current[selectedDateKey] ?? []).filter((event) => event.id !== eventId);
+      const nextCustomEvents = { ...current };
+
+      if (nextEvents.length > 0) {
+        nextCustomEvents[selectedDateKey] = nextEvents;
+      } else {
+        delete nextCustomEvents[selectedDateKey];
+      }
+
+      return nextCustomEvents;
+    });
     setStatus("Agenda item removed from the selected date.");
+  }
+
+  function handleDownloadSchedule() {
+    const payload = {
+      customEvents,
+      exportedAt: new Date().toISOString(),
+      selectedDate: selectedDateKey,
+      selectedDateEvents: events,
+      totalCustomEvents: customEventCount,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    downloadBlob(blob, `calendar-schedule-${selectedDateKey}.json`);
+    setStatus(`${customEventCount} custom agenda item${customEventCount === 1 ? "" : "s"} exported.`);
+  }
+
+  function handleClearCustomEvents() {
+    if (customEventCount === 0) {
+      setStatus("No custom agenda items to clear.");
+      return;
+    }
+
+    setCustomEvents({});
+    setStatus("Custom agenda items cleared.");
   }
 
   return (
@@ -132,10 +255,20 @@ export function CalendarSchedulePreview() {
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Build schedule dashboards, booking sidebars, or staff rosters from the same layout.
         </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+          <button type="button" onClick={handleDownloadSchedule} className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+            <Download className="h-4 w-4" />
+            Export JSON
+          </button>
+          <button type="button" onClick={handleClearCustomEvents} className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" disabled={customEventCount === 0}>
+            <RotateCcw className="h-4 w-4" />
+            Clear custom
+          </button>
+        </div>
 
         <div className="mt-5 space-y-3">
           {events.map((event, index) => (
-            <div key={`${event.title}-${event.time}`} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+            <div key={event.id} className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
               <div className="mb-2 flex items-center justify-between gap-3">
                 <h5 className="font-semibold text-gray-900 dark:text-white">{event.title}</h5>
                 <div className="flex items-center gap-2">
@@ -180,7 +313,7 @@ export function CalendarSchedulePreview() {
         </div>
 
         <div className="mt-4 rounded-2xl border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-          Week of {monthLabels[viewDate.getMonth()]} {viewDate.getDate()}, {viewDate.getFullYear()}
+          Week of {monthLabels[viewDate.getMonth()]} {viewDate.getDate()}, {viewDate.getFullYear()} · {customEventCount} custom saved
         </div>
       </aside>
     </div>

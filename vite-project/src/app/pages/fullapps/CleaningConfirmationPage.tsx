@@ -1,10 +1,97 @@
-import { useMemo, useState } from 'react';
-import { CalendarDays, CheckCircle2, ClipboardCheck, Plus, RotateCcw, Trash2, User } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, CheckCircle2, ClipboardCheck, Download, Plus, RotateCcw, Trash2, User } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, FormField, Input } from '@/app/components/common';
 import { PageIntro } from '@/app/components/showcase/PageIntro';
 import { cleaningAppointments, cleaningSessionDetails, cleaningTasks } from '@/app/data/showcase';
 import type { CleaningAppointment, CleaningTask } from '@/app/types/showcase';
 import { copyTextToClipboard } from '@/app/utils/clipboard';
+
+type CleaningAppointmentStatus = CleaningAppointment['status'];
+type CleaningWorkspaceDraft = {
+  appointments: CleaningAppointment[];
+  confirmed: boolean;
+  newAppointmentCleaner: string;
+  newAppointmentDate: string;
+  newAppointmentLocation: string;
+  newRoom: string;
+  notes: string;
+  tasks: CleaningTask[];
+};
+
+const cleaningWorkspaceStorageKey = 'web5:cleaning-confirmation-workspace:v1';
+const appointmentStatuses: CleaningAppointmentStatus[] = ['Confirmed', 'Pending'];
+const fallbackCleaningWorkspace: CleaningWorkspaceDraft = {
+  appointments: cleaningAppointments,
+  confirmed: false,
+  newAppointmentCleaner: 'Sarah Johnson',
+  newAppointmentDate: '2026-05-28',
+  newAppointmentLocation: 'Retail Floor Refresh',
+  newRoom: 'Laundry Room',
+  notes: 'Entryway supplies restocked. Bedrooms pending final inspection.',
+  tasks: cleaningTasks,
+};
+
+function isCleaningTask(value: unknown): value is CleaningTask {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<CleaningTask>;
+  return typeof candidate.id === 'number'
+    && typeof candidate.room === 'string'
+    && typeof candidate.completed === 'boolean'
+    && typeof candidate.time === 'string';
+}
+
+function isCleaningAppointment(value: unknown): value is CleaningAppointment {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<CleaningAppointment>;
+  return typeof candidate.id === 'number'
+    && typeof candidate.date === 'string'
+    && typeof candidate.location === 'string'
+    && typeof candidate.cleaner === 'string'
+    && appointmentStatuses.includes(candidate.status as CleaningAppointmentStatus);
+}
+
+function readStoredCleaningWorkspace() {
+  if (typeof window === 'undefined') {
+    return { restored: false, workspace: fallbackCleaningWorkspace };
+  }
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(cleaningWorkspaceStorageKey) ?? 'null') as Partial<CleaningWorkspaceDraft> | null;
+
+    if (
+      !parsed
+      || !Array.isArray(parsed.tasks)
+      || parsed.tasks.length === 0
+      || !Array.isArray(parsed.appointments)
+      || !parsed.tasks.every(isCleaningTask)
+      || !parsed.appointments.every(isCleaningAppointment)
+    ) {
+      return { restored: false, workspace: fallbackCleaningWorkspace };
+    }
+
+    return {
+      restored: true,
+      workspace: {
+        appointments: parsed.appointments,
+        confirmed: typeof parsed.confirmed === 'boolean' ? parsed.confirmed : fallbackCleaningWorkspace.confirmed,
+        newAppointmentCleaner: typeof parsed.newAppointmentCleaner === 'string' ? parsed.newAppointmentCleaner : fallbackCleaningWorkspace.newAppointmentCleaner,
+        newAppointmentDate: typeof parsed.newAppointmentDate === 'string' ? parsed.newAppointmentDate : fallbackCleaningWorkspace.newAppointmentDate,
+        newAppointmentLocation: typeof parsed.newAppointmentLocation === 'string' ? parsed.newAppointmentLocation : fallbackCleaningWorkspace.newAppointmentLocation,
+        newRoom: typeof parsed.newRoom === 'string' ? parsed.newRoom : fallbackCleaningWorkspace.newRoom,
+        notes: typeof parsed.notes === 'string' ? parsed.notes : fallbackCleaningWorkspace.notes,
+        tasks: parsed.tasks,
+      },
+    };
+  } catch {
+    return { restored: false, workspace: fallbackCleaningWorkspace };
+  }
+}
 
 function buildSessionSummary(tasks: CleaningTask[], notes: string, confirmed: boolean) {
   const completedRooms = tasks.filter((task) => task.completed).map((task) => `${task.room} (${task.time})`);
@@ -18,26 +105,57 @@ function buildSessionSummary(tasks: CleaningTask[], notes: string, confirmed: bo
   ].join('\n');
 }
 
+function downloadText(content: string, fileName: string, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadJson(content: unknown, fileName: string) {
+  downloadText(JSON.stringify(content, null, 2), fileName, 'application/json;charset=utf-8');
+}
+
 export function CleaningConfirmationPage() {
-  const [tasks, setTasks] = useState<CleaningTask[]>(cleaningTasks);
-  const [appointments, setAppointments] = useState<CleaningAppointment[]>(cleaningAppointments);
-  const [notes, setNotes] = useState('Entryway supplies restocked. Bedrooms pending final inspection.');
-  const [newRoom, setNewRoom] = useState('Laundry Room');
-  const [newAppointmentDate, setNewAppointmentDate] = useState('2026-05-28');
-  const [newAppointmentLocation, setNewAppointmentLocation] = useState('Retail Floor Refresh');
-  const [newAppointmentCleaner, setNewAppointmentCleaner] = useState('Sarah Johnson');
-  const [confirmed, setConfirmed] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('Tap checklist items as rooms are completed.');
+  const [storedWorkspace] = useState(() => readStoredCleaningWorkspace());
+  const [tasks, setTasks] = useState<CleaningTask[]>(storedWorkspace.workspace.tasks);
+  const [appointments, setAppointments] = useState<CleaningAppointment[]>(storedWorkspace.workspace.appointments);
+  const [notes, setNotes] = useState(storedWorkspace.workspace.notes);
+  const [newRoom, setNewRoom] = useState(storedWorkspace.workspace.newRoom);
+  const [newAppointmentDate, setNewAppointmentDate] = useState(storedWorkspace.workspace.newAppointmentDate);
+  const [newAppointmentLocation, setNewAppointmentLocation] = useState(storedWorkspace.workspace.newAppointmentLocation);
+  const [newAppointmentCleaner, setNewAppointmentCleaner] = useState(storedWorkspace.workspace.newAppointmentCleaner);
+  const [confirmed, setConfirmed] = useState(storedWorkspace.workspace.confirmed);
+  const [statusMessage, setStatusMessage] = useState(storedWorkspace.restored
+    ? 'Cleaning workspace restored from local storage.'
+    : 'Tap checklist items as rooms are completed.');
 
   const completedCount = tasks.filter((task) => task.completed).length;
-  const progressPercent = Math.round((completedCount / tasks.length) * 100);
-  const allComplete = completedCount === tasks.length;
+  const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+  const allComplete = tasks.length > 0 && completedCount === tasks.length;
 
   const sessionBadge = useMemo(() => {
     if (confirmed) return 'Confirmed';
     if (allComplete) return 'Ready to Confirm';
     return 'In Progress';
   }, [allComplete, confirmed]);
+
+  useEffect(() => {
+    window.localStorage.setItem(cleaningWorkspaceStorageKey, JSON.stringify({
+      appointments,
+      confirmed,
+      newAppointmentCleaner,
+      newAppointmentDate,
+      newAppointmentLocation,
+      newRoom,
+      notes,
+      tasks,
+    }));
+  }, [appointments, confirmed, newAppointmentCleaner, newAppointmentDate, newAppointmentLocation, newRoom, notes, tasks]);
 
   const toggleTask = (id: number) => {
     setTasks((current) => current.map((task) => {
@@ -96,10 +214,16 @@ export function CleaningConfirmationPage() {
   };
 
   const resetSession = () => {
-    setTasks(cleaningTasks);
-    setNotes('Entryway supplies restocked. Bedrooms pending final inspection.');
-    setConfirmed(false);
-    setStatusMessage('Cleaning session reset to the starter checklist.');
+    setTasks(fallbackCleaningWorkspace.tasks);
+    setAppointments(fallbackCleaningWorkspace.appointments);
+    setNotes(fallbackCleaningWorkspace.notes);
+    setNewRoom(fallbackCleaningWorkspace.newRoom);
+    setNewAppointmentDate(fallbackCleaningWorkspace.newAppointmentDate);
+    setNewAppointmentLocation(fallbackCleaningWorkspace.newAppointmentLocation);
+    setNewAppointmentCleaner(fallbackCleaningWorkspace.newAppointmentCleaner);
+    setConfirmed(fallbackCleaningWorkspace.confirmed);
+    window.localStorage.removeItem(cleaningWorkspaceStorageKey);
+    setStatusMessage('Cleaning workspace reset to the starter data.');
   };
 
   const toggleAppointmentStatus = (id: number) => {
@@ -155,6 +279,23 @@ export function CleaningConfirmationPage() {
     setStatusMessage(wasCopied ? 'Cleaning summary copied to clipboard.' : 'Clipboard copy failed. Use the notes panel instead.');
   };
 
+  const downloadSummary = () => {
+    downloadText(buildSessionSummary(tasks, notes, confirmed), 'cleaning-confirmation-summary.txt', 'text/plain;charset=utf-8');
+    setStatusMessage('Cleaning summary queued for download.');
+  };
+
+  const exportWorkspace = () => {
+    downloadJson({
+      appointments,
+      confirmed,
+      exportedAt: new Date().toISOString(),
+      notes,
+      summary: buildSessionSummary(tasks, notes, confirmed),
+      tasks,
+    }, 'cleaning-confirmation-workspace.json');
+    setStatusMessage('Cleaning workspace queued for download.');
+  };
+
   return (
     <div className="space-y-8 p-4 md:p-8">
       <PageIntro
@@ -207,6 +348,14 @@ export function CleaningConfirmationPage() {
               <Button variant="secondary" onClick={copySummary} className="justify-center gap-2">
                 <ClipboardCheck className="h-4 w-4" />
                 Copy Summary
+              </Button>
+              <Button variant="secondary" onClick={downloadSummary} className="justify-center gap-2">
+                <Download className="h-4 w-4" />
+                Download Summary
+              </Button>
+              <Button variant="secondary" onClick={exportWorkspace} className="justify-center gap-2">
+                <Download className="h-4 w-4" />
+                Export Workspace
               </Button>
             </div>
             <p className={`rounded-lg px-3 py-2 text-sm ${confirmed ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' : 'bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-400'}`}>
