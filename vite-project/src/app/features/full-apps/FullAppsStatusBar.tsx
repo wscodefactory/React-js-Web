@@ -1,4 +1,6 @@
 import { Button } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
+import { fullAppsUiText } from '../../i18n';
 
 type FullAppsStatusBarProps = {
   favoritesCount: number;
@@ -17,17 +19,20 @@ export function FullAppsStatusBar({
   statusMessage,
   totalCount,
 }: FullAppsStatusBarProps) {
+  const { language } = useLanguage();
+  const text = fullAppsUiText[language];
+
   return (
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {filteredCount} of {totalCount} apps / {favoritesCount} saved
+          {text.count(filteredCount, totalCount, favoritesCount)}
         </p>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{statusMessage}</p>
       </div>
       {showClearFilters ? (
         <Button variant="secondary" onClick={onClearFilters}>
-          Clear filters
+          {text.clearFilters}
         </Button>
       ) : null}
     </div>

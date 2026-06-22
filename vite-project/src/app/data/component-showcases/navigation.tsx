@@ -1,4 +1,5 @@
 import type { ComponentShowcaseConfig } from '@/app/types/component-showcase';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { GhostPanel } from './helpers';
 import { useEffect, useState } from 'react';
 
@@ -11,6 +12,25 @@ const tabItems = [
   { label: 'Details', content: 'Detailed properties, owner notes, and configuration appear here.' },
   { label: 'History', content: 'Recent updates and audit trail entries appear here.' },
 ] as const;
+
+const buttonGroupPreviewText = {
+  en: {
+    options: {
+      Activity: 'Activity',
+      Files: 'Files',
+      Overview: 'Overview',
+    },
+    selectedSegment: 'Selected segment',
+  },
+  ko: {
+    options: {
+      Activity: '활동',
+      Files: '파일',
+      Overview: '개요',
+    },
+    selectedSegment: '선택된 세그먼트',
+  },
+} as const;
 
 type SegmentedOption = typeof segmentedOptions[number];
 type DropdownActionState = typeof dropdownActionStates[number];
@@ -52,6 +72,8 @@ function useStoredPreviewState<T>(
 }
 
 function SegmentedControlsPreview() {
+  const { language } = useLanguage();
+  const text = buttonGroupPreviewText[language];
   const [active, setActive] = useStoredPreviewState<SegmentedOption>(
     'web5:component-preview:button-group-active:v1',
     segmentedOptions[0],
@@ -72,11 +94,11 @@ function SegmentedControlsPreview() {
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
             }`}
           >
-            {option}
+            {text.options[option]}
           </button>
         ))}
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400">Selected segment: {active}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{text.selectedSegment}: {text.options[active]}</p>
     </div>
   );
 }

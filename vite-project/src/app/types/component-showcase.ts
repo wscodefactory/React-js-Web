@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 export type ShowcaseBadgeTone = "free" | "pro" | "new" | "featured";
 
 export interface ComponentPreviewItem {
+  id?: string;
   title: string;
   description: string;
   badge?: {

@@ -3,19 +3,21 @@
  * Handles primary navigation, dark-mode toggle, and the global search modal shortcut.
  */
 import { Link, useLocation } from 'react-router';
-import { ChevronDown, ChevronRight, Menu, Moon, Sun } from 'lucide-react';
+import { ChevronDown, ChevronRight, Languages, Menu, Moon, Sun } from 'lucide-react';
 import { useDarkMode } from '../context/DarkModeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useState, useEffect } from 'react';
 import { SearchModal } from './SearchModal';
 import { IconButton } from './common';
 import { routeSections, topNavigationItems } from '../config/navigation';
+import { localizeBadge, localizeRouteLabel, shellText } from '../i18n';
 import type { NavigationLinkItem } from '../types/navigation';
 
-function BrandLogo() {
+function BrandLogo({ brand }: { brand: string }) {
   return (
     <Link to="/" className="header-brand">
       <div className="header-brand-icon" />
-      <span className="header-brand-text">솔루시오네모스</span>
+      <span className="header-brand-text">{brand}</span>
     </Link>
   );
 }
@@ -23,14 +25,15 @@ function BrandLogo() {
 export interface NavLinkProps {
   item: NavigationLinkItem;
   isActive: boolean;
+  label: string;
 }
 
-function NavLink({ item, isActive }: NavLinkProps) {
+function NavLink({ item, isActive, label }: NavLinkProps) {
   const activeClass = isActive ? 'header-nav-link-active' : 'header-nav-link-inactive';
 
   return (
     <Link to={item.path} className={`header-nav-link ${activeClass}`}>
-      {item.name}
+      {label}
     </Link>
   );
 }
@@ -41,12 +44,15 @@ function isPathActive(currentPath: string, path: string) {
 
 export interface HeaderMenuDropdownProps {
   currentPath: string;
+  language: ReturnType<typeof useLanguage>['language'];
   onNavigate: () => void;
 }
 
-function HeaderMenuDropdown({ currentPath, onNavigate }: HeaderMenuDropdownProps) {
+function HeaderMenuDropdown({ currentPath, language, onNavigate }: HeaderMenuDropdownProps) {
+  const text = shellText[language];
+
   return (
-    <nav id="header-mobile-menu" className="header-menu-dropdown" aria-label="Mobile navigation">
+    <nav id="header-mobile-menu" className="header-menu-dropdown" aria-label={text.mobileNav}>
       <div className="header-menu-dropdown-inner">
         {routeSections.map((section) => {
           const sectionActive = isPathActive(currentPath, section.basePath);
@@ -61,7 +67,7 @@ function HeaderMenuDropdown({ currentPath, onNavigate }: HeaderMenuDropdownProps
                 aria-current={sectionCurrent ? 'page' : undefined}
                 className={`header-menu-section-link ${sectionActive ? 'header-menu-section-link-active' : ''}`}
               >
-                <span>{section.label}</span>
+                <span>{localizeRouteLabel(language, section.key, section.label)}</span>
                 <ChevronDown className="icon-sm" />
               </Link>
 
@@ -84,8 +90,8 @@ function HeaderMenuDropdown({ currentPath, onNavigate }: HeaderMenuDropdownProps
                         className={`header-menu-child-link ${childActive ? 'header-menu-child-link-active' : ''}`}
                       >
                         <ChevronRight className="icon-sm shrink-0" />
-                        <span className="min-w-0 flex-1 truncate">{child.label}</span>
-                        {child.badge && <span className="badge badge-success shrink-0">{child.badge}</span>}
+                        <span className="min-w-0 flex-1 truncate">{localizeRouteLabel(language, childPath, child.label)}</span>
+                        {child.badge && <span className="badge badge-success shrink-0">{localizeBadge(language, child.badge)}</span>}
                       </Link>
                     )];
                   })}
@@ -102,8 +108,10 @@ function HeaderMenuDropdown({ currentPath, onNavigate }: HeaderMenuDropdownProps
 export function Header() {
   const location = useLocation();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { language, toggleLanguage } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const text = shellText[language];
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -131,14 +139,14 @@ export function Header() {
         <div className="header-container">
           <IconButton
             icon={<Menu className="icon" />}
-            label="Toggle menu"
+            label={text.menu}
             onClick={() => setIsMenuOpen((current) => !current)}
             aria-expanded={isMenuOpen}
             aria-controls="header-mobile-menu"
             className="header-menu-btn"
           />
 
-          <BrandLogo />
+          <BrandLogo brand={text.brand} />
 
           <nav className="header-nav">
             {topNavigationItems.map((item) => (
@@ -146,19 +154,32 @@ export function Header() {
                 key={item.path}
                 item={item}
                 isActive={item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)}
+                label={localizeRouteLabel(language, item.path.slice(1), item.name)}
               />
             ))}
           </nav>
 
-          <IconButton
-            icon={isDarkMode ? <Sun className="icon" /> : <Moon className="icon" />}
-            label="Toggle dark mode"
-            onClick={toggleDarkMode}
-            className="header-theme-toggle"
-          />
+          <div className="header-actions">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="header-language-toggle"
+              aria-label={text.language}
+              title={text.nextLanguageTitle}
+            >
+              <Languages className="icon-sm" />
+              <span>{text.languageShort}</span>
+            </button>
+            <IconButton
+              icon={isDarkMode ? <Sun className="icon" /> : <Moon className="icon" />}
+              label={text.darkMode}
+              onClick={toggleDarkMode}
+              className="header-theme-toggle"
+            />
+          </div>
         </div>
 
-        {isMenuOpen && <HeaderMenuDropdown currentPath={location.pathname} onNavigate={() => setIsMenuOpen(false)} />}
+        {isMenuOpen && <HeaderMenuDropdown currentPath={location.pathname} language={language} onNavigate={() => setIsMenuOpen(false)} />}
       </header>
 
       <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />

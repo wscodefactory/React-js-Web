@@ -1,6 +1,8 @@
 import type { MouseEvent, RefObject } from 'react';
 import { Clock, Search, X } from 'lucide-react';
 import { Link } from 'react-router';
+import { useLanguage } from '../../context/LanguageContext';
+import { catalogText, getCatalogItemCopy } from '../../i18n';
 import type { CatalogItem } from '../../types/catalog';
 
 export interface CatalogSearchProps {
@@ -32,6 +34,8 @@ export function CatalogSearch({
   onClearAllRecent,
   onClearSearch,
 }: CatalogSearchProps) {
+  const { language } = useLanguage();
+  const text = catalogText[language];
   const searchableItems = searchQuery.trim() === '' ? [] : items;
 
   return (
@@ -51,7 +55,7 @@ export function CatalogSearch({
             type="button"
             onClick={onClearSearch}
             className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-            aria-label="Clear search"
+            aria-label={text.clearSearch}
           >
             <X className="icon-sm" />
           </button>
@@ -66,63 +70,72 @@ export function CatalogSearch({
                 <header className="flex items-center justify-between px-4 py-2">
                   <div className="flex items-center gap-2 text-sm text-muted">
                     <Clock className="icon-sm" />
-                    <span>Recent Searches</span>
+                    <span>{text.recent}</span>
                   </div>
-                  <button onClick={onClearAllRecent} className="text-xs text-primary hover:underline">
-                    Clear all
+                  <button type="button" onClick={onClearAllRecent} className="text-xs text-primary hover:underline">
+                    {text.clearAll}
                   </button>
                 </header>
-                {recentSearches.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => onResultClick(item)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
-                  >
-                    <Clock className="icon text-gray-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <span className="block text-gray-900 dark:text-white">{item.name}</span>
-                      {item.category && <span className="text-xs text-muted">{item.category}</span>}
-                    </div>
-                    <button
-                      onClick={(event) => onRemoveRecent(item.path, event)}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
+                {recentSearches.map((item) => {
+                  const itemCopy = getCatalogItemCopy(language, item);
+
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => onResultClick(item)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
                     >
-                      <X className="icon-sm text-gray-500 dark:text-gray-400" />
-                    </button>
-                  </Link>
-                ))}
+                      <Clock className="icon text-gray-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <span className="block text-gray-900 dark:text-white">{itemCopy.name}</span>
+                        {itemCopy.category && <span className="text-xs text-muted">{itemCopy.category}</span>}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(event) => onRemoveRecent(item.path, event)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
+                      >
+                        <X className="icon-sm text-gray-500 dark:text-gray-400" />
+                      </button>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">
                 <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No recent searches</p>
-                <p className="text-xs mt-1">Start searching to see your history</p>
+                <p className="text-sm">{text.noRecent}</p>
+                <p className="text-xs mt-1">{text.noRecentHelp}</p>
               </div>
             )
           ) : searchableItems.length > 0 ? (
             <div className="py-2">
-              {searchableItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => onResultClick(item)}
-                  className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Search className="icon text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-gray-900 dark:text-white">{item.name}</h3>
-                    <p className="text-sm text-muted mt-0.5">{item.description}</p>
-                  </div>
-                </Link>
-              ))}
+              {searchableItems.map((item) => {
+                const itemCopy = getCatalogItemCopy(language, item);
+
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => onResultClick(item)}
+                    className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  >
+                    <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Search className="icon text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 dark:text-white">{itemCopy.name}</h3>
+                      <p className="text-sm text-muted mt-0.5">{itemCopy.description}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <div className="px-4 py-8 text-center text-muted">
-              <p>No results found for &quot;{searchQuery}&quot;</p>
-              <p className="text-sm mt-1">Try searching with different keywords</p>
+              <p>{text.noResults(searchQuery)}</p>
+              <p className="text-sm mt-1">{text.searchAgain}</p>
             </div>
           )}
         </div>

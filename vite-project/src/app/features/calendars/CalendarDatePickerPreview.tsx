@@ -1,9 +1,34 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { monthLabels, weekdayLabels } from "./data";
-import { formatDateKey, formatFullDate, getMonthMatrix, isSameDate, normalizeDate, parseDateKey } from "./calendarUtils";
+import { useLanguage } from "@/app/context/LanguageContext";
+import { formatDateKey, getMonthMatrix, isSameDate, normalizeDate, parseDateKey } from "./calendarUtils";
 
 const datePickerStorageKey = "web5:calendar-date-picker:v1";
+
+const datePickerText = {
+  en: {
+    connectedPanel: 'Current selection updates the monthly grid and any connected schedule panels.',
+    description: 'Use this block for reservation forms, booking flows, and dashboard filters.',
+    interactivePicker: 'Interactive Picker',
+    jumpToday: 'Jump to today',
+    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    quickActions: 'Quick actions',
+    ready: 'Ready',
+    selectedDate: 'Selected date',
+    weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  },
+  ko: {
+    connectedPanel: '현재 선택값은 월간 그리드와 연결된 일정 패널에 함께 반영됩니다.',
+    description: '예약 폼, 예약 흐름, 대시보드 필터에 이 블록을 사용할 수 있습니다.',
+    interactivePicker: '인터랙티브 선택기',
+    jumpToday: '오늘로 이동',
+    months: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+    quickActions: '빠른 동작',
+    ready: '준비됨',
+    selectedDate: '선택한 날짜',
+    weekdays: ['일', '월', '화', '수', '목', '금', '토'],
+  },
+} as const;
 
 function readStoredDate() {
   if (typeof window === "undefined") {
@@ -20,6 +45,8 @@ function readStoredDate() {
 }
 
 export function CalendarDatePickerPreview() {
+  const { language } = useLanguage();
+  const text = datePickerText[language];
   const today = useMemo(() => normalizeDate(new Date()), []);
   const [initialDate] = useState(readStoredDate);
   const [viewDate, setViewDate] = useState(() => initialDate ?? normalizeDate(new Date()));
@@ -45,9 +72,9 @@ export function CalendarDatePickerPreview() {
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-950">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">Interactive Picker</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">{text.interactivePicker}</p>
             <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {monthLabels[viewDate.getMonth()]} {viewDate.getFullYear()}
+              {language === 'ko' ? `${viewDate.getFullYear()}년 ${text.months[viewDate.getMonth()]}` : `${text.months[viewDate.getMonth()]} ${viewDate.getFullYear()}`}
             </h4>
           </div>
           <div className="flex items-center gap-2">
@@ -61,7 +88,7 @@ export function CalendarDatePickerPreview() {
         </div>
 
         <div className="mb-2 grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-400">
-          {weekdayLabels.map((label) => (
+          {text.weekdays.map((label) => (
             <span key={label}>{label}</span>
           ))}
         </div>
@@ -87,7 +114,7 @@ export function CalendarDatePickerPreview() {
                   isToday && !isSelected ? "ring-2 ring-green-200 dark:ring-green-900" : "",
                 ].join(" ")}
               >
-                <span className="text-xs opacity-70">{weekdayLabels[date.getDay()].slice(0, 1)}</span>
+                <span className="text-xs opacity-70">{text.weekdays[date.getDay()].slice(0, 1)}</span>
                 <span className="text-base">{date.getDate()}</span>
               </button>
             );
@@ -96,17 +123,24 @@ export function CalendarDatePickerPreview() {
       </div>
 
       <aside className="rounded-2xl border border-gray-200 bg-gradient-to-b from-green-50 to-white p-4 shadow-sm dark:border-gray-700 dark:from-gray-900 dark:to-gray-950">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-600 dark:text-green-400">Selected date</p>
-        <h4 className="mt-2 text-xl font-semibold text-gray-900 dark:text-white">{formatFullDate(selectedDate)}</h4>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-600 dark:text-green-400">{text.selectedDate}</p>
+        <h4 className="mt-2 text-xl font-semibold text-gray-900 dark:text-white">
+          {selectedDate.toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
+            day: 'numeric',
+            month: 'long',
+            weekday: 'long',
+            year: 'numeric',
+          })}
+        </h4>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Use this block for reservation forms, booking flows, and dashboard filters.
+          {text.description}
         </p>
 
         <div className="mt-5 space-y-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Quick actions</span>
+            <span className="text-gray-500 dark:text-gray-400">{text.quickActions}</span>
             <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
-              Ready
+              {text.ready}
             </span>
           </div>
           <button
@@ -117,10 +151,10 @@ export function CalendarDatePickerPreview() {
             }}
             className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 dark:bg-white dark:text-gray-900"
           >
-            Jump to today
+            {text.jumpToday}
           </button>
           <div className="rounded-xl bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-950 dark:text-gray-300">
-            Current selection updates the monthly grid and any connected schedule panels.
+            {text.connectedPanel}
           </div>
         </div>
       </aside>

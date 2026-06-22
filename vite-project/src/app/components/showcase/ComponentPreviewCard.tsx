@@ -1,5 +1,7 @@
 import { Link2, MoreVertical, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLanguage } from "@/app/context/LanguageContext";
+import { componentShowcaseText, localizeBadge } from "@/app/i18n";
 import type { ComponentPreviewItem } from "@/app/types/component-showcase";
 import { copyTextToClipboard } from "@/app/utils/clipboard";
 
@@ -30,8 +32,10 @@ export function getPreviewSectionId(value: string) {
  * Includes a lightweight action menu so each showcase block can expose a shareable deep link.
  */
 export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
+  const { language } = useLanguage();
+  const text = componentShowcaseText[language];
   const tone = item.badge?.tone ?? "free";
-  const sectionId = useMemo(() => getPreviewSectionId(item.title), [item.title]);
+  const sectionId = useMemo(() => getPreviewSectionId(item.id ?? item.title), [item.id, item.title]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -97,10 +101,10 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
       }
 
       setIsMenuOpen(false);
-      showToast("Link copied.");
+      showToast(text.linkCopied);
     } catch {
       setIsMenuOpen(false);
-      showToast("Copy failed.");
+      showToast(text.copyFailed);
     }
   }
 
@@ -115,10 +119,10 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
       window.dispatchEvent(new CustomEvent("web5:saved-preview-change", { detail: nextSaved }));
       setIsSaved(!isSaved);
       setIsMenuOpen(false);
-      showToast(isSaved ? "Preview removed." : "Preview saved.");
+      showToast(isSaved ? text.previewRemoved : text.previewSaved);
     } catch {
       setIsMenuOpen(false);
-      showToast("Save failed.");
+      showToast(text.saveFailed);
     }
   }
 
@@ -133,13 +137,13 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h3>
             {item.badge ? (
               <span className={`rounded-full px-3 py-1 text-xs font-medium ${badgeToneClasses[tone]}`}>
-                {item.badge.label}
+                {localizeBadge(language, item.badge.label)}
               </span>
             ) : null}
             {isSaved ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
                 <Star className="h-3 w-3 fill-current" />
-                Saved
+                {text.saved}
               </span>
             ) : null}
           </div>
@@ -149,7 +153,7 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
         <div ref={menuRef} className="relative shrink-0">
           <button
             type="button"
-            aria-label="More options"
+            aria-label={text.moreOptions}
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen((current) => !current)}
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
@@ -165,7 +169,7 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
                 className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <Star className={`h-4 w-4 ${isSaved ? "fill-current text-amber-500" : ""}`} />
-                <span>{isSaved ? "Remove Saved" : "Save Preview"}</span>
+                <span>{isSaved ? text.removeSaved : text.savePreview}</span>
               </button>
               <button
                 type="button"
@@ -173,7 +177,7 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
                 className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <Link2 className="h-4 w-4" />
-                <span>Copy Link</span>
+                <span>{text.copyLink}</span>
               </button>
             </div>
           ) : null}

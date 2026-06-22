@@ -1,9 +1,39 @@
 import type { ComponentShowcaseConfig } from '@/app/types/component-showcase';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { GhostPanel } from './helpers';
 import { useState } from 'react';
 
+const appShellPreviewText = {
+  en: {
+    comfortShell: 'Comfort shell',
+    compact: 'Compact',
+    compactShell: 'Compact shell',
+    navItems: {
+      Dashboard: 'Dashboard',
+      Reports: 'Reports',
+      Settings: 'Settings',
+      Team: 'Team',
+    },
+    wide: 'Wide',
+  },
+  ko: {
+    comfortShell: '여유 셸',
+    compact: '압축',
+    compactShell: '압축 셸',
+    navItems: {
+      Dashboard: '대시보드',
+      Reports: '보고서',
+      Settings: '설정',
+      Team: '팀',
+    },
+    wide: '넓게',
+  },
+} as const;
+
 function AppShellPreview() {
   const navItems = ['Dashboard', 'Reports', 'Team', 'Settings'];
+  const { language } = useLanguage();
+  const text = appShellPreviewText[language];
   const [activeNav, setActiveNav] = useState(navItems[0]);
   const [compact, setCompact] = useState(false);
 
@@ -17,7 +47,7 @@ function AppShellPreview() {
             onClick={() => setCompact((current) => !current)}
             className="rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-300"
           >
-            {compact ? 'Wide' : 'Compact'}
+            {compact ? text.wide : text.compact}
           </button>
         </div>
         {navItems.map((item) => (
@@ -29,15 +59,15 @@ function AppShellPreview() {
               activeNav === item ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
             }`}
           >
-            {item}
+            {text.navItems[item as keyof typeof text.navItems]}
           </button>
         ))}
       </GhostPanel>
       <GhostPanel className="space-y-3">
         <div className="flex h-12 items-center justify-between rounded-xl bg-gray-200 px-4 dark:bg-gray-700">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{activeNav}</span>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{text.navItems[activeNav as keyof typeof text.navItems]}</span>
           <span className="rounded-full bg-white px-3 py-1 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-            {compact ? 'Compact shell' : 'Comfort shell'}
+            {compact ? text.compactShell : text.comfortShell}
           </span>
         </div>
         <div className="grid gap-3 md:grid-cols-3">

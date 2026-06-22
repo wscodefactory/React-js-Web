@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type RefObject } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { getCatalogSearchText } from '../i18n';
 import type { CatalogItem } from '../types/catalog';
 import { loadStoredList, saveStoredList } from '../utils/storage';
 
@@ -17,6 +19,7 @@ export interface SearchState {
 }
 
 export function useCatalogSearch(items: CatalogItem[], storageKey: string): SearchState {
+  const { language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState<CatalogItem[]>([]);
@@ -29,11 +32,11 @@ export function useCatalogSearch(items: CatalogItem[], storageKey: string): Sear
 
     const normalizedQuery = searchQuery.toLowerCase();
     return items.filter((item) => {
-      return [item.name, item.description, item.category]
+      return getCatalogSearchText(language, item)
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalizedQuery));
     });
-  }, [items, searchQuery]);
+  }, [items, language, searchQuery]);
 
   useEffect(() => {
     setRecentSearches(loadStoredList(storageKey, isCatalogItem));

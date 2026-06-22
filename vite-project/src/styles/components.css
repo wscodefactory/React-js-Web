@@ -4,7 +4,7 @@
 }
 
 .header-container {
-  @apply max-w-[1440px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between md:justify-center relative;
+  @apply max-w-[1440px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-3 md:justify-center relative;
 }
 
 .header-menu-btn {
@@ -12,7 +12,7 @@
 }
 
 .header-brand {
-  @apply flex items-center gap-2 md:absolute md:left-6 hover:opacity-80 transition-opacity;
+  @apply min-w-0 flex items-center gap-2 md:absolute md:left-6 hover:opacity-80 transition-opacity;
 }
 
 .header-brand-icon {
@@ -20,15 +20,15 @@
 }
 
 .header-brand-text {
-  @apply font-semibold text-gray-900 dark:text-white text-sm md:text-base;
+  @apply max-w-[9rem] truncate font-semibold text-gray-900 dark:text-white text-sm md:max-w-[12rem] md:text-base;
 }
 
 .header-nav {
-  @apply hidden md:flex items-center gap-1;
+  @apply hidden md:flex max-w-[calc(100%-24rem)] items-center gap-1 overflow-x-auto;
 }
 
 .header-nav-link {
-  @apply px-3 lg:px-4 py-2 rounded-md transition-colors text-sm lg:text-base;
+  @apply shrink-0 px-3 lg:px-4 py-2 rounded-md transition-colors text-sm lg:text-base;
 }
 
 .header-nav-link-active {
@@ -39,8 +39,16 @@
   @apply text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-green-800;
 }
 
+.header-actions {
+  @apply flex shrink-0 items-center gap-1 md:absolute md:right-6;
+}
+
+.header-language-toggle {
+  @apply inline-flex h-10 min-w-14 items-center justify-center gap-1 rounded-md border border-gray-200 px-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-green-800;
+}
+
 .header-theme-toggle {
-  @apply p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors md:absolute md:right-6;
+  @apply p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors;
 }
 
 .header-menu-dropdown {

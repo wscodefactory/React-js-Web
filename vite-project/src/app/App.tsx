@@ -4,15 +4,18 @@
  */
 import { RouterProvider } from 'react-router';
 import { DarkModeProvider } from './context/DarkModeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { SidebarProvider } from './context/SidebarContext';
 import { router } from './routes';
 
 export default function App() {
   return (
-    <DarkModeProvider>
-      <SidebarProvider>
-        <RouterProvider router={router} />
-      </SidebarProvider>
-    </DarkModeProvider>
+    <LanguageProvider>
+      <DarkModeProvider>
+        <SidebarProvider>
+          <RouterProvider router={router} />
+        </SidebarProvider>
+      </DarkModeProvider>
+    </LanguageProvider>
   );
 }

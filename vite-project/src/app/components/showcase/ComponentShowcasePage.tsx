@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, SearchX, Star, X } from "lucide-react";
 import type { ComponentShowcaseConfig } from "@/app/types/component-showcase";
 import { Button, Card, CardContent } from "@/app/components/common";
+import { useLanguage } from "@/app/context/LanguageContext";
+import { componentShowcaseText, getComponentShowcaseConfigCopy } from "@/app/i18n";
 import { ComponentPreviewCard, getPreviewSectionId, savedPreviewStorageKey } from "./ComponentPreviewCard";
 
 export interface ComponentShowcasePageProps {
@@ -21,22 +23,25 @@ function readSavedPreviewIds() {
  * Detailed preview content is injected through the config object so page files stay tiny.
  */
 export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
+  const { language } = useLanguage();
+  const text = componentShowcaseText[language];
+  const localizedConfig = useMemo(() => getComponentShowcaseConfigCopy(language, config), [config, language]);
   const [savedPreviewIds, setSavedPreviewIds] = useState<string[]>([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [query, setQuery] = useState("");
 
   const savedInPageCount = useMemo(
-    () => config.sections.filter((section) => savedPreviewIds.includes(getPreviewSectionId(section.title))).length,
-    [config.sections, savedPreviewIds],
+    () => localizedConfig.sections.filter((section) => savedPreviewIds.includes(getPreviewSectionId(section.id ?? section.title))).length,
+    [localizedConfig.sections, savedPreviewIds],
   );
   const matchingSections = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
     if (!normalizedQuery) {
-      return config.sections;
+      return localizedConfig.sections;
     }
 
-    return config.sections.filter((section) => {
+    return localizedConfig.sections.filter((section) => {
       const searchableText = [
         section.title,
         section.description,
@@ -45,10 +50,10 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
 
       return searchableText.includes(normalizedQuery);
     });
-  }, [config.sections, query]);
+  }, [localizedConfig.sections, query]);
   const visibleSections = useMemo(
     () => showSavedOnly
-      ? matchingSections.filter((section) => savedPreviewIds.includes(getPreviewSectionId(section.title)))
+      ? matchingSections.filter((section) => savedPreviewIds.includes(getPreviewSectionId(section.id ?? section.title)))
       : matchingSections,
     [matchingSections, savedPreviewIds, showSavedOnly],
   );
@@ -78,17 +83,17 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
     <div className="p-4 md:p-8">
       <header className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
-          {config.eyebrow ? (
+          {localizedConfig.eyebrow ? (
             <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
-              {config.eyebrow}
+              {localizedConfig.eyebrow}
             </p>
           ) : null}
           <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white md:text-4xl">
-            {config.title} <span className="text-green-600 dark:text-green-400">{config.titleHighlight}</span>
+            {localizedConfig.title} <span className="text-green-600 dark:text-green-400">{localizedConfig.titleHighlight}</span>
           </h1>
-          <p className="mb-2 text-gray-600 dark:text-gray-400">{config.description}</p>
-          {config.updatedAt ? (
-            <p className="text-sm text-gray-500 dark:text-gray-500">Last updated: {config.updatedAt}</p>
+          <p className="mb-2 text-gray-600 dark:text-gray-400">{localizedConfig.description}</p>
+          {localizedConfig.updatedAt ? (
+            <p className="text-sm text-gray-500 dark:text-gray-500">{text.lastUpdated(localizedConfig.updatedAt)}</p>
           ) : null}
         </div>
         <div className="flex w-full flex-col gap-2 lg:max-w-md">
@@ -97,14 +102,14 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search previews"
+              placeholder={text.searchPlaceholder}
               className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-10 pr-10 text-sm text-gray-900 outline-none transition focus:border-green-400 focus:ring-2 focus:ring-green-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:focus:border-green-700 dark:focus:ring-green-950"
             />
             {query ? (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                aria-label="Clear preview search"
+                aria-label={text.clearPreviewSearch}
                 className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
               >
                 <X className="h-4 w-4" />
@@ -112,22 +117,22 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
             ) : null}
           </label>
           <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-            {savedInPageCount} saved
-          </span>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-            {visibleSections.length} showing
-          </span>
-          <Button
-            type="button"
-            variant={showSavedOnly ? "primary" : "secondary"}
-            onClick={() => setShowSavedOnly((current) => !current)}
-            disabled={savedInPageCount === 0 && !showSavedOnly}
-            className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap"
-          >
-            <Star className={`h-4 w-4 ${showSavedOnly ? "fill-current" : ""}`} />
-            Saved only
-          </Button>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+              {text.savedCount(savedInPageCount)}
+            </span>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+              {text.showingCount(visibleSections.length)}
+            </span>
+            <Button
+              type="button"
+              variant={showSavedOnly ? "primary" : "secondary"}
+              onClick={() => setShowSavedOnly((current) => !current)}
+              disabled={savedInPageCount === 0 && !showSavedOnly}
+              className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap"
+            >
+              <Star className={`h-4 w-4 ${showSavedOnly ? "fill-current" : ""}`} />
+              {text.savedOnly}
+            </Button>
           </div>
         </div>
       </header>
@@ -143,10 +148,10 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
           <CardContent className="flex flex-col items-center justify-center py-14 text-center">
             <SearchX className="mb-4 h-10 w-10 text-gray-400" />
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {query ? "No previews match this search" : "No saved previews here"}
+              {query ? text.noSearchTitle : text.noSavedTitle}
             </h2>
             <p className="mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
-              {query ? "Clear the search or try another component name." : "Save a preview from the card menu to keep it visible in this filtered view."}
+              {query ? text.noSearchDescription : text.noSavedDescription}
             </p>
             <Button
               variant="secondary"
@@ -156,7 +161,7 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
               }}
               className="mt-5"
             >
-              Show all previews
+              {text.showAllPreviews}
             </Button>
           </CardContent>
         </Card>

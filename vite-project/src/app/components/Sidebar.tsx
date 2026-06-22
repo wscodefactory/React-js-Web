@@ -11,10 +11,12 @@
  */
 import { ChevronRight, X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
+import { useLanguage } from '../context/LanguageContext';
 import { useSidebar } from '../context/SidebarContext';
 import { useEffect } from 'react';
 import { IconButton } from './common';
 import { getSidebarItems } from '../config/navigation';
+import { localizeBadge, localizeRouteLabel, shellText } from '../i18n';
 import type { SidebarItem } from '../types/navigation';
 
 export interface SidebarLinkProps {
@@ -46,11 +48,11 @@ function SidebarLink({ item, isActive, onClose }: SidebarLinkProps) {
       className={`sidebar-link w-full text-left ${activeClass}`}
     >
       <span className="flex items-center justify-between w-full">
-        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 items-center gap-2">
           <ChevronRight className="icon-sm" />
-          {item.name}
+          <span className="truncate">{item.name}</span>
         </span>
-        {item.badge && <span className="badge badge-success">{item.badge}</span>}
+        {item.badge && <span className="badge badge-success shrink-0">{item.badge}</span>}
       </span>
     </button>
   );
@@ -70,17 +72,28 @@ export interface SidebarContentProps {
  * 하나의 컴포넌트로 두 환경을 모두 처리할 수 있다.
  */
 function SidebarContent({ items, currentPath, onClose }: SidebarContentProps) {
+  const { language } = useLanguage();
+  const text = shellText[language];
+
   return (
     <nav className="sidebar-nav">
       {onClose && (
         <div className="flex justify-end mb-4 md:hidden">
-          <IconButton icon={<X className="icon" />} label="Close sidebar" onClick={onClose} />
+          <IconButton icon={<X className="icon" />} label={text.closeSidebar} onClick={onClose} />
         </div>
       )}
       <div className="space-y-1">
-        {items.map((item) => (
-          <SidebarLink key={item.path} item={item} isActive={currentPath === item.path} onClose={onClose} />
-        ))}
+        {items.map((item) => {
+          const localizedItem = {
+            ...item,
+            badge: localizeBadge(language, item.badge),
+            name: localizeRouteLabel(language, item.path, item.name),
+          };
+
+          return (
+            <SidebarLink key={item.path} item={localizedItem} isActive={currentPath === item.path} onClose={onClose} />
+          );
+        })}
       </div>
     </nav>
   );

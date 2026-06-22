@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useLanguage } from '../../context/LanguageContext';
 import { fullAppCatalog } from '../../data/catalog/full-apps';
+import { fullAppsUiText, getCatalogItemCopy, getCatalogSearchText } from '../../i18n';
 import type { FullAppItem, ViewMode } from './types';
 
 const favoritesStorageKey = 'web5:full-app-favorites:v1';
@@ -32,12 +34,14 @@ function readStoredLastOpened() {
 
 export function useFullAppsController() {
   const navigate = useNavigate();
+  const { language } = useLanguage();
+  const text = fullAppsUiText[language];
   const [query, setQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>(() => readStoredViewMode());
   const [favorites, setFavorites] = useState<string[]>(() => readStoredFavorites());
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [lastOpened, setLastOpened] = useState<Record<string, string>>(() => readStoredLastOpened());
-  const [statusMessage, setStatusMessage] = useState('Choose an app to open or save it for later.');
+  const [statusMessage, setStatusMessage] = useState<string>(text.initialStatus);
 
   useEffect(() => {
     window.localStorage.setItem(favoritesStorageKey, JSON.stringify(favorites));
@@ -51,30 +55,37 @@ export function useFullAppsController() {
     window.localStorage.setItem(lastOpenedStorageKey, JSON.stringify(lastOpened));
   }, [lastOpened]);
 
+  useEffect(() => {
+    setStatusMessage(text.initialStatus);
+  }, [text.initialStatus]);
+
   const filteredApps = useMemo(() => {
     const keyword = query.trim().toLowerCase();
 
     return fullAppCatalog.filter((app) => {
-      const searchableText = `${app.name} ${app.description} ${app.category}`.toLowerCase();
+      const searchableText = getCatalogSearchText(language, app).join(' ').toLowerCase();
       const matchesKeyword = !keyword || searchableText.includes(keyword);
       const matchesFavorite = !favoritesOnly || favorites.includes(app.path);
 
       return matchesKeyword && matchesFavorite;
     });
-  }, [favorites, favoritesOnly, query]);
+  }, [favorites, favoritesOnly, language, query]);
 
   const openApp = (app: FullAppItem) => {
     const openedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const appName = getCatalogItemCopy(language, app).name;
 
     setLastOpened((current) => ({ ...current, [app.path]: openedAt }));
-    setStatusMessage(`${app.name} opened at ${openedAt}.`);
+    setStatusMessage(text.opened(appName, openedAt));
     navigate(app.path);
   };
 
   const toggleFavorite = (app: FullAppItem) => {
     setFavorites((current) => {
       const exists = current.includes(app.path);
-      setStatusMessage(exists ? `${app.name} removed from saved apps.` : `${app.name} saved for quick access.`);
+      const appName = getCatalogItemCopy(language, app).name;
+
+      setStatusMessage(exists ? text.removed(appName) : text.savedForQuickAccess(appName));
 
       return exists ? current.filter((path) => path !== app.path) : [...current, app.path];
     });

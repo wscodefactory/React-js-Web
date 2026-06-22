@@ -1,4 +1,6 @@
 import { UploadedYamlCard } from './UploadedYamlCard';
+import { useLanguage } from '../../context/LanguageContext';
+import { yamlLibraryText } from '../../i18n';
 import type { UploadedYaml } from './types';
 
 type UploadedYamlSectionProps = {
@@ -16,13 +18,16 @@ export function UploadedYamlSection({
   onDownload,
   onRemove,
 }: UploadedYamlSectionProps) {
+  const { language } = useLanguage();
+  const text = yamlLibraryText[language];
+
   if (files.length === 0) {
     return null;
   }
 
   return (
     <section className="mb-10 space-y-4">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Uploaded files</h2>
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{text.uploadedFiles}</h2>
       {files.map((file) => (
         <UploadedYamlCard
           key={file.id}

@@ -1,4 +1,5 @@
 import { PageIntro } from '../../components/showcase/PageIntro';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   UploadedYamlSection,
   YamlConverterPanel,
@@ -8,13 +9,16 @@ import {
   YamlUploadActions,
   useYamlLibraryController,
 } from '../../features/yaml-library';
+import { yamlLibraryText } from '../../i18n';
 
 export function YamlLibraryPage() {
   const yamlLibrary = useYamlLibraryController();
+  const { language } = useLanguage();
+  const text = yamlLibraryText[language];
 
   return (
     <main className="p-4 md:p-8">
-      <PageIntro highlight="YAML" title="Library" description="Upload, preview, and reuse configuration snippets in a React-friendly asset library." />
+      <PageIntro highlight={text.highlight} title={text.title} description={text.description} />
 
       <YamlFeatureCards />
 

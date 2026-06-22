@@ -3,7 +3,9 @@ import { SearchX } from 'lucide-react';
 import { CatalogCard } from './CatalogCard';
 import { CatalogSearch } from './CatalogSearch';
 import { Button, Card, CardContent, SectionHeader } from '../common';
+import { useLanguage } from '../../context/LanguageContext';
 import { useCatalogSearch } from '../../hooks/useCatalogSearch';
+import { catalogText, localizeCategory } from '../../i18n';
 import type { CatalogItem } from '../../types/catalog';
 
 export interface CatalogPageProps {
@@ -16,6 +18,8 @@ export interface CatalogPageProps {
 }
 
 export function CatalogPage({ title, titleHighlight, description, searchPlaceholder, items, storageKey }: CatalogPageProps) {
+  const { language } = useLanguage();
+  const text = catalogText[language];
   const [activeCategory, setActiveCategory] = useState('All');
   const {
     searchQuery,
@@ -87,11 +91,11 @@ export function CatalogPage({ title, titleHighlight, description, searchPlacehol
                   : 'border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
               }`}
             >
-              {category}
+              {category === 'All' ? text.all : localizeCategory(language, category)}
             </button>
           ))}
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{visibleItems.length} of {items.length} items</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{text.count(visibleItems.length, items.length)}</p>
       </div>
 
       {visibleItems.length > 0 ? (
@@ -104,12 +108,12 @@ export function CatalogPage({ title, titleHighlight, description, searchPlacehol
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-14 text-center">
             <SearchX className="mb-4 h-10 w-10 text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">No matching items</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{text.noMatching}</h2>
             <p className="mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
-              Try a different keyword or reset the category filter.
+              {text.resetHint}
             </p>
             <Button variant="secondary" onClick={clearFilters} className="mt-5">
-              Clear filters
+              {text.clearFilters}
             </Button>
           </CardContent>
         </Card>
