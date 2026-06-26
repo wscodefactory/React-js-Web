@@ -242,7 +242,7 @@ export const componentShowcaseText = {
     savePreview: '미리보기 저장',
     saved: '저장됨',
     savedCount: (count: number) => `${count}개 저장됨`,
-    savedOnly: '저장한 것만',
+    savedOnly: '저장됨만 보기',
     searchPlaceholder: '미리보기 검색',
     showAllPreviews: '모든 미리보기 보기',
     showingCount: (count: number) => `${count}개 표시 중`,
