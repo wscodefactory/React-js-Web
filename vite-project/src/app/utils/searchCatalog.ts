@@ -3,7 +3,9 @@ import { searchItems } from "@/app/config/navigation";
 import { localizeSearchItem } from "@/app/i18n";
 import type { SearchItem } from "@/app/types/navigation";
 
-export const searchablePageCount = searchItems.length;
+export function getSearchablePageCount() {
+  return searchItems.length;
+}
 
 export function getLocalizedNavigationSearchResults(query: string, language: AppLanguage, limit?: number): SearchItem[] {
   const normalizedQuery = query.trim().toLowerCase();

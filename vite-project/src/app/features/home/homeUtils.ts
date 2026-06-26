@@ -1,7 +1,7 @@
 import type { AppLanguage } from "@/app/context/LanguageContext";
 import { routeSections } from "@/app/config/navigation";
 import { localizeRouteDescription, localizeRouteLabel } from "@/app/i18n";
-import { getLocalizedNavigationSearchResults, searchablePageCount } from "@/app/utils/searchCatalog";
+import { getLocalizedNavigationSearchResults, getSearchablePageCount } from "@/app/utils/searchCatalog";
 import type { RouteSectionDefinition } from "@/app/types/navigation";
 
 export function getMainRouteSections() {
@@ -23,4 +23,4 @@ export function getLocalizedSearchResults(query: string, language: AppLanguage) 
   return getLocalizedNavigationSearchResults(query, language, 8);
 }
 
-export { searchablePageCount };
+export { getSearchablePageCount };

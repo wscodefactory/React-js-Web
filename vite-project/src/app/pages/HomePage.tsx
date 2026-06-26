@@ -11,7 +11,7 @@ import {
   countReadySections,
   getLocalizedSearchResults,
   getMainRouteSections,
-  searchablePageCount,
+  getSearchablePageCount,
 } from "../features/home/homeUtils";
 import type { SearchItem } from "../types/navigation";
 
@@ -23,6 +23,7 @@ export function HomePage() {
 
   const mainSections = useMemo(getMainRouteSections, []);
   const readySectionCount = useMemo(() => countReadySections(mainSections), [mainSections]);
+  const totalPageCount = useMemo(getSearchablePageCount, []);
   const searchResults = useMemo(
     () => getLocalizedSearchResults(searchQuery, language),
     [language, searchQuery],
@@ -78,7 +79,7 @@ export function HomePage() {
             readySectionCount={readySectionCount}
             sections={mainSections}
             text={text}
-            totalPages={searchablePageCount}
+            totalPages={totalPageCount}
           />
         </div>
       </section>
