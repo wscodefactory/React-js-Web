@@ -1,5 +1,7 @@
 import { Card, CardContent, FormField, Select } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
 import { svgExportFormats, svgQualityOptions, svgScaleOptions } from '../../data/showcase';
+import { svgEditorCopy } from './copy';
 import type { ExportFormat, ExportQuality, ExportScale } from './types';
 
 type ExportSettingsProps = {
@@ -19,19 +21,25 @@ export function ExportSettings({
   quality,
   scale,
 }: ExportSettingsProps) {
+  const { language } = useLanguage();
+  const text = svgEditorCopy[language].exportSettings;
+  const formatOptions = svgExportFormats.map((option) => ({ ...option, label: text.formatOptions[option.value as ExportFormat] }));
+  const qualityOptions = svgQualityOptions.map((option) => ({ ...option, label: text.qualityOptions[option.value as ExportQuality] }));
+  const scaleOptions = svgScaleOptions.map((option) => ({ ...option, label: text.scaleOptions[option.value as ExportScale] }));
+
   return (
     <Card>
       <CardContent>
-        <h3 className="card-title">Export Settings</h3>
+        <h3 className="card-title">{text.title}</h3>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <FormField label="Format">
-            <Select options={svgExportFormats} value={format} onChange={(event) => onFormatChange(event.target.value as ExportFormat)} />
+          <FormField label={text.format}>
+            <Select options={formatOptions} value={format} onChange={(event) => onFormatChange(event.target.value as ExportFormat)} />
           </FormField>
-          <FormField label="Quality">
-            <Select options={svgQualityOptions} value={quality} onChange={(event) => onQualityChange(event.target.value as ExportQuality)} />
+          <FormField label={text.quality}>
+            <Select options={qualityOptions} value={quality} onChange={(event) => onQualityChange(event.target.value as ExportQuality)} />
           </FormField>
-          <FormField label="Scale">
-            <Select options={svgScaleOptions} value={scale} onChange={(event) => onScaleChange(event.target.value as ExportScale)} />
+          <FormField label={text.scale}>
+            <Select options={scaleOptions} value={scale} onChange={(event) => onScaleChange(event.target.value as ExportScale)} />
           </FormField>
         </div>
       </CardContent>

@@ -1,334 +1,46 @@
-import { useState } from 'react';
-import { useLanguage } from '@/app/context/LanguageContext';
-import type { ComponentShowcaseConfig } from '@/app/types/component-showcase';
-import { GhostPanel, PreviewStack } from './helpers';
-
-const corePreviewText = {
-  en: {
-    accordion: {
-      openPanel: 'This panel is open. Click another row to move the active state or click this row again to collapse it.',
-      questions: {
-        'Are accordions difficult to implement in Power Apps?': 'Are accordions difficult to implement in Power Apps?',
-        'How do accordions improve mobile responsiveness?': 'How do accordions improve mobile responsiveness?',
-        'How do I import custom icons?': 'How do I import custom icons?',
-        'Where can I learn more Power Apps design tricks?': 'Where can I learn more Power Apps design tricks?',
-        'Why do most Power Apps look outdated?': 'Why do most Power Apps look outdated?',
-        'Why should I use accordions in my Power Apps?': 'Why should I use accordions in my Power Apps?',
-      },
-    },
-    buttons: {
-      actions: {
-        'Add New': 'Add New',
-        Confirm: 'Confirm',
-        Danger: 'Danger',
-        Delete: 'Delete',
-        Primary: 'Primary',
-        Secondary: 'Secondary',
-        Success: 'Success',
-      },
-      lastAction: 'Last action',
-    },
-    input: {
-      charactersReady: (count: number) => `${count} characters ready for use.`,
-      label: 'Project name',
-      placeholder: 'Enter a project name',
-      tooShort: 'Project name must be at least 3 characters.',
-      value: 'Launch dashboard',
-    },
-    status: {
-      increment: 'Increment',
-      items: (count: number) => `${count} items`,
-      selected: 'Selected status',
-      values: {
-        Active: 'Active',
-        Blocked: 'Blocked',
-        Pending: 'Pending',
-        Reviewed: 'Reviewed',
-      },
-    },
-    toggle: {
-      label: 'Notifications',
-      off: 'Off',
-      on: 'On',
-    },
-  },
-  ko: {
-    accordion: {
-      openPanel: '현재 패널이 열려 있습니다. 다른 행을 누르면 활성 상태가 이동하고, 같은 행을 다시 누르면 접힙니다.',
-      questions: {
-        'Are accordions difficult to implement in Power Apps?': 'Power Apps에서 아코디언 구현이 어렵나요?',
-        'How do accordions improve mobile responsiveness?': '아코디언은 모바일 반응형을 어떻게 개선하나요?',
-        'How do I import custom icons?': '커스텀 아이콘은 어떻게 가져오나요?',
-        'Where can I learn more Power Apps design tricks?': 'Power Apps 디자인 팁은 어디서 더 볼 수 있나요?',
-        'Why do most Power Apps look outdated?': '많은 Power Apps 화면이 오래돼 보이는 이유는 무엇인가요?',
-        'Why should I use accordions in my Power Apps?': 'Power Apps에서 아코디언을 왜 써야 하나요?',
-      },
-    },
-    buttons: {
-      actions: {
-        'Add New': '새로 추가',
-        Confirm: '확인',
-        Danger: '위험',
-        Delete: '삭제',
-        Primary: '주요',
-        Secondary: '보조',
-        Success: '성공',
-      },
-      lastAction: '마지막 동작',
-    },
-    input: {
-      charactersReady: (count: number) => `${count}자 입력되어 사용할 수 있습니다.`,
-      label: '프로젝트 이름',
-      placeholder: '프로젝트 이름 입력',
-      tooShort: '프로젝트 이름은 최소 3자 이상이어야 합니다.',
-      value: '대시보드 출시',
-    },
-    status: {
-      increment: '증가',
-      items: (count: number) => `${count}개 항목`,
-      selected: '선택된 상태',
-      values: {
-        Active: '활성',
-        Blocked: '차단',
-        Pending: '대기',
-        Reviewed: '검토 완료',
-      },
-    },
-    toggle: {
-      label: '알림',
-      off: '끔',
-      on: '켬',
-    },
-  },
-} as const;
-
-type ButtonAction = 'Add New' | 'Confirm' | 'Danger' | 'Delete' | 'Primary' | 'Secondary' | 'Success';
-type StatusKey = 'Active' | 'Blocked' | 'Pending' | 'Reviewed';
-
-function InteractiveAccordionPreview({ items, variant }: { items: string[]; variant: 'plus' | 'classic' }) {
-  const { language } = useLanguage();
-  const text = corePreviewText[language].accordion;
-  const [openIndex, setOpenIndex] = useState(0);
-
-  return (
-    <PreviewStack>
-      {items.map((label, index) => {
-        const isOpen = openIndex === index;
-
-        return (
-          <GhostPanel key={label}>
-            <button
-              type="button"
-              aria-expanded={isOpen}
-              onClick={() => setOpenIndex((current) => (current === index ? -1 : index))}
-              className="flex w-full items-center justify-between gap-4 text-left"
-            >
-              <span className="font-medium text-gray-900 dark:text-white">{text.questions[label as keyof typeof text.questions] ?? label}</span>
-              <span className="text-xl text-gray-500">{variant === 'plus' ? (isOpen ? '-' : '+') : isOpen ? 'v' : '>'}</span>
-            </button>
-            {isOpen ? (
-              <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-400">
-                {text.openPanel}
-              </p>
-            ) : null}
-          </GhostPanel>
-        );
-      })}
-    </PreviewStack>
-  );
-}
-
-function ButtonActionPreview({ variant }: { variant: 'solid' | 'outline' | 'icon' }) {
-  const { language } = useLanguage();
-  const text = corePreviewText[language].buttons;
-  const [activeAction, setActiveAction] = useState<ButtonAction>('Primary');
-  const solidActions: ButtonAction[] = ['Primary', 'Secondary', 'Success', 'Danger'];
-  const outlineActions: ButtonAction[] = ['Primary', 'Secondary', 'Success'];
-  const iconActions: ButtonAction[] = ['Add New', 'Delete', 'Confirm'];
-  const actions = variant === 'solid' ? solidActions : variant === 'outline' ? outlineActions : iconActions;
-
-  const baseClass = 'rounded-md px-6 py-2 transition focus:outline-none focus:ring-2 focus:ring-blue-400';
-  const solidClassMap: Record<ButtonAction, string> = {
-    'Add New': '',
-    Confirm: '',
-    Danger: 'bg-red-600 text-white',
-    Delete: '',
-    Primary: 'bg-blue-600 text-white',
-    Secondary: 'bg-gray-600 text-white',
-    Success: 'bg-green-600 text-white',
-  };
-  const outlineClassMap: Record<ButtonAction, string> = {
-    'Add New': '',
-    Confirm: '',
-    Danger: '',
-    Delete: '',
-    Primary: 'border-2 border-blue-600 text-blue-600',
-    Secondary: 'border-2 border-gray-500 text-gray-600 dark:text-gray-300',
-    Success: 'border-2 border-green-600 text-green-600',
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        {actions.map((action) => (
-          <button
-            key={action}
-            type="button"
-            onClick={() => setActiveAction(action)}
-            className={[
-              baseClass,
-              variant === 'solid' ? solidClassMap[action] : '',
-              variant === 'outline' ? outlineClassMap[action] : '',
-              variant === 'icon' ? 'flex items-center gap-2 bg-blue-600 text-white' : '',
-              activeAction === action ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900' : '',
-            ].join(' ')}
-          >
-            {variant === 'icon' ? <span aria-hidden="true">{action === 'Add New' ? '+' : action === 'Delete' ? '-' : 'OK'}</span> : null}
-            {text.actions[action]}
-          </button>
-        ))}
-      </div>
-      <p className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-        {text.lastAction}: <span className="font-semibold">{text.actions[activeAction]}</span>
-      </p>
-    </div>
-  );
-}
-
-function EditableInputPreview() {
-  const { language } = useLanguage();
-  const text = corePreviewText[language].input;
-  const [value, setValue] = useState<string>(text.value);
-  const isValid = value.trim().length >= 3;
-
-  return (
-    <div className="max-w-lg space-y-3">
-      <div>
-        <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">{text.label}</label>
-        <input
-          className={`w-full rounded-xl border bg-white px-4 py-3 text-gray-900 outline-none transition dark:bg-gray-900 dark:text-white ${
-            isValid ? 'border-green-500 focus:ring-2 focus:ring-green-200' : 'border-red-500 focus:ring-2 focus:ring-red-200'
-          }`}
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          placeholder={text.placeholder}
-        />
-      </div>
-      <p className={`text-sm ${isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-        {isValid ? text.charactersReady(value.trim().length) : text.tooShort}
-      </p>
-    </div>
-  );
-}
-
-function TogglePreview() {
-  const { language } = useLanguage();
-  const text = corePreviewText[language].toggle;
-  const [enabled, setEnabled] = useState(true);
-
-  return (
-    <div className="flex items-center gap-4">
-      <span className="text-sm text-gray-600 dark:text-gray-300">{text.label}</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={enabled}
-        onClick={() => setEnabled((current) => !current)}
-        className={`flex h-8 w-14 items-center rounded-full px-1 transition ${enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-700'}`}
-      >
-        <span className={`h-6 w-6 rounded-full bg-white transition ${enabled ? 'translate-x-6' : 'translate-x-0'}`} />
-      </button>
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{enabled ? text.on : text.off}</span>
-    </div>
-  );
-}
-
-function StatusBadgePreview() {
-  const { language } = useLanguage();
-  const text = corePreviewText[language].status;
-  const statuses: Array<{ className: string; key: StatusKey; label: string }> = [
-    { key: 'Active', label: text.values.Active, className: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' },
-    { key: 'Pending', label: text.values.Pending, className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300' },
-    { key: 'Blocked', label: text.values.Blocked, className: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' },
-    { key: 'Reviewed', label: text.values.Reviewed, className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' },
-  ];
-  const [activeStatus, setActiveStatus] = useState<StatusKey>('Active');
-  const [reviewCount, setReviewCount] = useState(12);
-  const activeStatusItem = statuses.find((status) => status.key === activeStatus) ?? statuses[0];
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3">
-        {statuses.map((status) => (
-          <button
-            key={status.key}
-            type="button"
-            onClick={() => setActiveStatus(status.key)}
-            className={`rounded-full px-3 py-1 text-sm font-medium transition ${status.className} ${
-              activeStatus === status.key ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900' : ''
-            }`}
-          >
-            {status.label}
-          </button>
-        ))}
-      </div>
-      <GhostPanel className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{text.selected}</p>
-          <span className={`mt-1 inline-flex rounded-full px-3 py-1 text-sm font-semibold ${activeStatusItem.className}`}>{activeStatusItem.label}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-gray-900 px-3 py-1 text-sm font-semibold text-white dark:bg-white dark:text-gray-900">
-            {text.items(reviewCount)}
-          </span>
-          <button
-            type="button"
-            onClick={() => setReviewCount((count) => count + 1)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            {text.increment}
-          </button>
-        </div>
-      </GhostPanel>
-    </div>
-  );
-}
+import type { ComponentShowcaseConfig } from "@/app/types/component-showcase";
+import {
+  ButtonActionPreview,
+  EditableInputPreview,
+  InteractiveAccordionPreview,
+  StatusBadgePreview,
+  TogglePreview,
+} from "./corePreviews";
 
 export const coreComponentShowcases = {
   accordions: {
-    eyebrow: 'Power Apps UI',
-    title: 'Power Apps',
-    titleHighlight: 'Accordion Components',
-    description:
-      'Collapsible content sections for FAQs, settings panels, and organized information layouts.',
-    updatedAt: 'Sep 1, 2025',
+    eyebrow: "Power Apps UI",
+    title: "Power Apps",
+    titleHighlight: "Accordion Components",
+    description: "Keep long content tidy while letting users open only what they need.",
+    updatedAt: "Sep 1, 2025",
     sections: [
       {
-        title: 'Accordion Plus',
-        description: 'Animated plus/minus accordions for dense settings or help content.',
-        badge: { label: 'PRO', tone: 'pro' },
+        title: "Accordion Plus",
+        description: "A clear plus/minus accordion for dense settings or help content.",
+        badge: { label: "PRO", tone: "pro" },
         preview: (
           <InteractiveAccordionPreview
             variant="plus"
             items={[
-              'Why should I use accordions in my Power Apps?',
-              'How do accordions improve mobile responsiveness?',
-              'Are accordions difficult to implement in Power Apps?',
+              "Why should I use accordions in my Power Apps?",
+              "How do accordions improve mobile responsiveness?",
+              "Are accordions difficult to implement in Power Apps?",
             ]}
           />
         ),
       },
       {
-        title: 'Classic Accordion',
-        description: 'Simple stacked headings for documentation and answers.',
-        badge: { label: 'FREE', tone: 'free' },
+        title: "Classic Accordion",
+        description: "A quiet stacked layout for documentation, help, and answers.",
+        badge: { label: "FREE", tone: "free" },
         preview: (
           <InteractiveAccordionPreview
             variant="classic"
             items={[
-              'How do I import custom icons?',
-              'Where can I learn more Power Apps design tricks?',
-              'Why do most Power Apps look outdated?',
+              "How do I import custom icons?",
+              "Where can I learn more Power Apps design tricks?",
+              "Why do most Power Apps look outdated?",
             ]}
           />
         ),
@@ -336,69 +48,69 @@ export const coreComponentShowcases = {
     ],
   },
   badge: {
-    eyebrow: 'Status Indicators',
-    title: 'Badge',
-    titleHighlight: 'Component',
-    description: 'Compact status labels for priorities, system states, and release markers.',
+    eyebrow: "Status Indicators",
+    title: "Badge",
+    titleHighlight: "Component",
+    description: "Small labels that make state, priority, and review status easy to scan.",
     sections: [
       {
-        title: 'Status Badges',
-        description: 'Reusable badges for success, warning, draft, and reviewed states.',
-        badge: { label: 'NEW', tone: 'new' },
+        title: "Status Badges",
+        description: "Reusable badges for success, pending, blocked, and reviewed states.",
+        badge: { label: "NEW", tone: "new" },
         preview: <StatusBadgePreview />,
       },
     ],
   },
   buttons: {
-    eyebrow: 'Action Library',
-    title: 'Power Apps',
-    titleHighlight: 'Button Components',
-    description: 'Primary, secondary, and icon button patterns for common app actions.',
-    updatedAt: 'Sep 1, 2025',
+    eyebrow: "Action Library",
+    title: "Power Apps",
+    titleHighlight: "Button Components",
+    description: "Button patterns that make the next action feel obvious.",
+    updatedAt: "Sep 1, 2025",
     sections: [
       {
-        title: 'Primary Button',
-        description: 'Main action buttons with distinct priority styling.',
-        badge: { label: 'FREE', tone: 'free' },
+        title: "Primary Button",
+        description: "Strong buttons for the action users should notice first.",
+        badge: { label: "FREE", tone: "free" },
         preview: <ButtonActionPreview variant="solid" />,
       },
       {
-        title: 'Outline Buttons',
-        description: 'Lighter emphasis buttons for secondary flows.',
-        badge: { label: 'PRO', tone: 'pro' },
+        title: "Outline Buttons",
+        description: "Softer buttons for secondary choices and supporting actions.",
+        badge: { label: "PRO", tone: "pro" },
         preview: <ButtonActionPreview variant="outline" />,
       },
       {
-        title: 'Icon Buttons',
-        description: 'Buttons that combine icon hints with action labels.',
-        badge: { label: 'PRO', tone: 'pro' },
+        title: "Icon Buttons",
+        description: "Compact buttons that pair an icon cue with a readable label.",
+        badge: { label: "PRO", tone: "pro" },
         preview: <ButtonActionPreview variant="icon" />,
       },
     ],
   },
   inputFields: {
-    eyebrow: 'Form Controls',
-    title: 'Input Fields',
-    titleHighlight: 'Component',
-    description: 'Input controls for forms, search, validation, and user data entry.',
+    eyebrow: "Form Controls",
+    title: "Input Fields",
+    titleHighlight: "Component",
+    description: "Input controls that guide users while they type.",
     sections: [
       {
-        title: 'Text Input',
-        description: 'A standard text field with validation status and helper text support.',
-        badge: { label: 'NEW', tone: 'new' },
+        title: "Text Input",
+        description: "A text field that gives helpful validation feedback right away.",
+        badge: { label: "NEW", tone: "new" },
         preview: <EditableInputPreview />,
       },
     ],
   },
   toggles: {
-    eyebrow: 'Binary Controls',
-    title: 'Toggles',
-    titleHighlight: 'Component',
-    description: 'Toggle controls for preference changes, feature flags, and small configuration states.',
+    eyebrow: "Binary Controls",
+    title: "Toggles",
+    titleHighlight: "Component",
+    description: "Simple switches for settings that are either on or off.",
     sections: [
       {
-        title: 'Switch Toggle',
-        description: 'A standard binary switch with clear enabled and disabled states.',
+        title: "Switch Toggle",
+        description: "A clear switch for notification, preference, and feature settings.",
         preview: <TogglePreview />,
       },
     ],

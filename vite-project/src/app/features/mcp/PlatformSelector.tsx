@@ -1,6 +1,7 @@
 import { CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Card, CardContent } from '../../components/common';
-import { supportedPlatforms } from './data';
+import { useLanguage } from '../../context/LanguageContext';
+import { getLocalizedPlatforms, mcpCopy } from './copy';
 import type { PlatformId } from './types';
 
 type PlatformSelectorProps = {
@@ -12,12 +13,16 @@ export function PlatformSelector({
   onSelectPlatform,
   selectedPlatform,
 }: PlatformSelectorProps) {
+  const { language } = useLanguage();
+  const text = mcpCopy[language];
+  const platforms = getLocalizedPlatforms(language);
+
   return (
     <Card>
       <CardContent className="space-y-4">
-        <h2 className="card-title">Works with</h2>
+        <h2 className="card-title">{text.worksWith}</h2>
         <div className="grid gap-3 md:grid-cols-3">
-          {supportedPlatforms.map((platform) => (
+          {platforms.map((platform) => (
             <button
               key={platform.id}
               type="button"

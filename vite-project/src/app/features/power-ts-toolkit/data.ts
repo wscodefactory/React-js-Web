@@ -5,7 +5,7 @@ export const quickToolHelp: Record<QuickToolValue, string> = {
   validator: 'Checks whether the pasted content is valid JSON.',
   converter: 'Converts key=value lines into a JSON object.',
   command: 'Generates package scripts and run commands from task settings.',
-  config: 'Builds typed app config and environment values from key=value lines.',
+  config: 'Builds app config and environment values from key=value lines.',
   performance: 'Scans React or TypeScript snippets for common performance signals.',
   powerfx: 'Converts common Power Fx actions into React handlers or plain JavaScript.',
 };

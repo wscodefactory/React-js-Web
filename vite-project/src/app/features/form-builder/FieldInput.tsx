@@ -1,4 +1,6 @@
 import { Input } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
+import { formBuilderCopy } from './copy';
 import type { BuilderField, BuilderFieldValue } from './types';
 
 type FieldInputProps = {
@@ -18,6 +20,8 @@ export function FieldInput({
   onValueChange,
   value,
 }: FieldInputProps) {
+  const { language } = useLanguage();
+  const text = formBuilderCopy[language].fieldInput;
   const inputClassName = `w-full rounded-lg border bg-white px-3 py-2 text-gray-900 dark:bg-gray-800 dark:text-white ${
     error ? 'border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-950' : 'border-gray-300 dark:border-gray-600'
   }`;
@@ -26,7 +30,7 @@ export function FieldInput({
     return (
       <>
         <textarea
-          placeholder={`Enter ${field.label.toLowerCase()}`}
+          placeholder={text.placeholder(field.label)}
           rows={3}
           value={stringValue(value)}
           onChange={(event) => onValueChange(field.id, event.target.value)}
@@ -45,9 +49,9 @@ export function FieldInput({
           onChange={(event) => onValueChange(field.id, event.target.value)}
           className={inputClassName}
         >
-          <option value="">Select an option</option>
-          <option value="Option 1">Option 1</option>
-          <option value="Option 2">Option 2</option>
+          <option value="">{text.selectOption}</option>
+          <option value="Option 1">{text.option1}</option>
+          <option value="Option 2">{text.option2}</option>
         </select>
         {error ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       </>
@@ -76,7 +80,7 @@ export function FieldInput({
     <>
       <Input
         type={field.type}
-        placeholder={`Enter ${field.label.toLowerCase()}`}
+        placeholder={text.placeholder(field.label)}
         value={stringValue(value)}
         onChange={(event) => onValueChange(field.id, event.target.value)}
         aria-invalid={Boolean(error)}

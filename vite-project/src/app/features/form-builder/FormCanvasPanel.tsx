@@ -1,6 +1,8 @@
 import { Plus } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
 import { CanvasFieldCard } from './CanvasFieldCard';
+import { formBuilderCopy } from './copy';
 import type { BuilderField, BuilderFieldValue, MoveDirection } from './types';
 
 type FormCanvasPanelProps = {
@@ -40,22 +42,25 @@ export function FormCanvasPanel({
   submitStatus,
   submitText,
 }: FormCanvasPanelProps) {
+  const { language } = useLanguage();
+  const text = formBuilderCopy[language].canvas;
+
   return (
     <Card>
       <CardHeader
-        title={isPreview ? 'Form Preview' : 'Form Canvas'}
-        description={isPreview ? 'Test the generated form before exporting.' : 'Arrange fields visually and review the final submission flow.'}
+        title={isPreview ? text.previewTitle : text.canvasTitle}
+        description={isPreview ? text.previewDescription : text.canvasDescription}
         badge={
           <Button className="gap-2 px-4 py-2 text-sm" onClick={onAddField}>
             <Plus className="h-4 w-4" />
-            Add Field
+            {text.addField}
           </Button>
         }
       />
       <CardContent className="space-y-4">
         <div>
-          <h3 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">{formName || 'Untitled Form'}</h3>
-          <p className="text-gray-600 dark:text-gray-400">Please fill out the form below.</p>
+          <h3 className="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">{formName || text.untitled}</h3>
+          <p className="text-gray-600 dark:text-gray-400">{text.fillPrompt}</p>
         </div>
 
         {fields.map((field, index) => (
@@ -84,12 +89,12 @@ export function FormCanvasPanel({
             className="w-full rounded-lg border-2 border-dashed border-gray-300 p-8 text-gray-500 transition-colors hover:border-green-500 hover:text-green-600 dark:border-gray-600 dark:text-gray-400 dark:hover:border-green-400 dark:hover:text-green-400"
           >
             <Plus className="mx-auto mb-2 h-6 w-6" />
-            <span>Click to add the selected field type</span>
+            <span>{text.addSelected}</span>
           </button>
         ) : null}
 
         <Button className="w-full justify-center" onClick={onSubmit}>
-          {submitText || 'Submit'}
+          {submitText || text.submitFallback}
         </Button>
         {submitStatus ? (
           <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-300">{submitStatus}</p>

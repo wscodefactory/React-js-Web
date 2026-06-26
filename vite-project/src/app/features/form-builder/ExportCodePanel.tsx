@@ -1,27 +1,31 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
 import { copyTextToClipboard } from '../../utils/clipboard';
+import { formBuilderCopy } from './copy';
 
 type ExportCodePanelProps = {
   code: string;
 };
 
 export function ExportCodePanel({ code }: ExportCodePanelProps) {
+  const { language } = useLanguage();
+  const text = formBuilderCopy[language].code;
   const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState('Generated code is ready to copy or download.');
+  const [status, setStatus] = useState(text.initialStatus);
 
   const copyCode = async () => {
     const wasCopied = await copyTextToClipboard(code);
 
     if (!wasCopied) {
       setCopied(false);
-      setStatus('Clipboard copy failed. Use HTML download instead.');
+      setStatus(text.copyBlocked);
       return;
     }
 
     setCopied(true);
-    setStatus('Code copied to clipboard.');
+    setStatus(text.copiedStatus);
     window.setTimeout(() => setCopied(false), 1400);
   };
 
@@ -34,17 +38,17 @@ export function ExportCodePanel({ code }: ExportCodePanelProps) {
     anchor.download = 'generated-form.html';
     anchor.click();
     URL.revokeObjectURL(url);
-    setStatus('Generated form markup queued for download.');
+    setStatus(text.downloadReady);
   };
 
   return (
     <Card>
       <CardHeader
-        title="Export Code"
-        description="Generated HTML-style form markup based on the current builder state."
+        title={text.title}
+        description={text.description}
         badge={(
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={copyCode}>{copied ? 'Copied' : 'Copy Code'}</Button>
+            <Button variant="secondary" onClick={copyCode}>{copied ? text.copied : text.copyCode}</Button>
             <Button variant="secondary" onClick={downloadCode} className="gap-2">
               <Download className="h-4 w-4" />
               HTML

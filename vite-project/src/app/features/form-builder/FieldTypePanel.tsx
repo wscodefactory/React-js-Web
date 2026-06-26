@@ -11,8 +11,10 @@ import {
   Type,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
 import { formFieldTemplates } from '../../data/showcase';
 import { fieldTypeFromTemplate } from './data';
+import { formBuilderCopy, getFormBuilderFieldTypeLabel } from './copy';
 import type { BuilderFieldType } from './types';
 
 const fieldTypeIcons: Record<BuilderFieldType, ComponentType<{ className?: string }>> = {
@@ -37,14 +39,18 @@ export function FieldTypePanel({
   onSelectType,
   selectedType,
 }: FieldTypePanelProps) {
+  const { language } = useLanguage();
+  const text = formBuilderCopy[language].fieldTypes;
+
   return (
     <Card>
-      <CardHeader title="Field Types" description="Click a field type to add it to the canvas." />
+      <CardHeader title={text.title} description={text.description} />
       <CardContent className="space-y-2">
         {formFieldTemplates.map((field) => {
           const type = fieldTypeFromTemplate(field.id);
           const Icon = fieldTypeIcons[type];
           const isSelected = selectedType === type;
+          const label = getFormBuilderFieldTypeLabel(language, type);
 
           return (
             <button
@@ -62,7 +68,7 @@ export function FieldTypePanel({
             >
               <span className="flex items-center gap-2">
                 <Icon className="h-4 w-4" />
-                <span className="text-sm font-medium">{field.label}</span>
+                <span className="text-sm font-medium">{label}</span>
               </span>
               <Plus className="h-4 w-4" />
             </button>

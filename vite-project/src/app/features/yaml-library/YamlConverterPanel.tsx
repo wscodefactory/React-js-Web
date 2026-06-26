@@ -48,8 +48,8 @@ export function YamlConverterPanel({
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
             aria-label={text.converterModeLabel}
           >
-            <option value="yaml-to-json">YAML to JSON</option>
-            <option value="json-to-yaml">JSON to YAML</option>
+            <option value="yaml-to-json">{language === 'ko' ? 'YAML -> JSON' : 'YAML to JSON'}</option>
+            <option value="json-to-yaml">{language === 'ko' ? 'JSON -> YAML' : 'JSON to YAML'}</option>
           </select>
         </div>
 

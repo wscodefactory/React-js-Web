@@ -4,6 +4,7 @@ import { useLanguage } from "@/app/context/LanguageContext";
 import { componentShowcaseText, localizeBadge } from "@/app/i18n";
 import type { ComponentPreviewItem } from "@/app/types/component-showcase";
 import { copyTextToClipboard } from "@/app/utils/clipboard";
+import { readSavedPreviewIds, toggleSavedPreviewId } from "./savedPreviews";
 
 const badgeToneClasses = {
   free: "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300",
@@ -11,8 +12,6 @@ const badgeToneClasses = {
   new: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
   featured: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
 } as const;
-
-export const savedPreviewStorageKey = "web5:saved-component-previews";
 
 export interface ComponentPreviewCardProps {
   item: ComponentPreviewItem;
@@ -43,12 +42,7 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
   const hideToastTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    try {
-      const savedPreviews = JSON.parse(window.localStorage.getItem(savedPreviewStorageKey) ?? "[]") as string[];
-      setIsSaved(savedPreviews.includes(sectionId));
-    } catch {
-      setIsSaved(false);
-    }
+    setIsSaved(readSavedPreviewIds().includes(sectionId));
   }, [sectionId]);
 
   useEffect(() => {
@@ -110,13 +104,7 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
 
   function handleToggleSave() {
     try {
-      const savedPreviews = JSON.parse(window.localStorage.getItem(savedPreviewStorageKey) ?? "[]") as string[];
-      const nextSaved = isSaved
-        ? savedPreviews.filter((id) => id !== sectionId)
-        : [...new Set([...savedPreviews, sectionId])];
-
-      window.localStorage.setItem(savedPreviewStorageKey, JSON.stringify(nextSaved));
-      window.dispatchEvent(new CustomEvent("web5:saved-preview-change", { detail: nextSaved }));
+      toggleSavedPreviewId(sectionId, isSaved);
       setIsSaved(!isSaved);
       setIsMenuOpen(false);
       showToast(isSaved ? text.previewRemoved : text.previewSaved);
@@ -129,7 +117,7 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
   return (
     <section
       id={sectionId}
-      className="scroll-mt-24 rounded-2xl border border-gray-200 bg-gray-50 p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+      className="min-w-0 scroll-mt-24 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6"
     >
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
@@ -190,8 +178,8 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
         </div>
       </div>
 
-      <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
-        <div className="rounded-xl bg-white p-4 dark:bg-gray-900">{item.preview}</div>
+      <div className="min-w-0 border-t border-gray-200 pt-4 dark:border-gray-700">
+        <div className="min-w-0 overflow-x-auto rounded-xl bg-white p-4 dark:bg-gray-900">{item.preview}</div>
       </div>
     </section>
   );

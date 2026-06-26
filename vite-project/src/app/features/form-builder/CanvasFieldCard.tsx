@@ -1,5 +1,7 @@
 import { ChevronDown, ChevronUp, Copy, Settings, Trash2 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import { FieldInput } from './FieldInput';
+import { formBuilderCopy } from './copy';
 import type { BuilderField, BuilderFieldValue, MoveDirection } from './types';
 
 type CanvasFieldCardProps = {
@@ -33,6 +35,9 @@ export function CanvasFieldCard({
   onUpdateLabel,
   showLabel,
 }: CanvasFieldCardProps) {
+  const { language } = useLanguage();
+  const text = formBuilderCopy[language].fieldCard;
+
   return (
     <div className={`group rounded-lg border-2 border-dashed p-4 transition-colors ${
       error
@@ -57,19 +62,19 @@ export function CanvasFieldCard({
         ) : null}
         {!isPreview ? (
           <div className="flex gap-1 opacity-100 transition-opacity">
-            <button type="button" onClick={() => onMove(field.id, -1)} disabled={!canMoveUp} className="rounded p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-gray-700" aria-label={`Move ${field.label} up`}>
+            <button type="button" onClick={() => onMove(field.id, -1)} disabled={!canMoveUp} className="rounded p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-gray-700" aria-label={text.moveUp(field.label)}>
               <ChevronUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </button>
-            <button type="button" onClick={() => onMove(field.id, 1)} disabled={!canMoveDown} className="rounded p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-gray-700" aria-label={`Move ${field.label} down`}>
+            <button type="button" onClick={() => onMove(field.id, 1)} disabled={!canMoveDown} className="rounded p-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-gray-700" aria-label={text.moveDown(field.label)}>
               <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </button>
-            <button type="button" onClick={() => onDuplicate(field.id)} className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={`Duplicate ${field.label}`}>
+            <button type="button" onClick={() => onDuplicate(field.id)} className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={text.duplicate(field.label)}>
               <Copy className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </button>
-            <button type="button" onClick={() => onToggleRequired(field.id)} className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={`Toggle required for ${field.label}`}>
+            <button type="button" onClick={() => onToggleRequired(field.id)} className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={text.toggleRequired(field.label)}>
               <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </button>
-            <button type="button" onClick={() => onRemove(field.id)} className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={`Delete ${field.label}`}>
+            <button type="button" onClick={() => onRemove(field.id)} className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label={text.delete(field.label)}>
               <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
             </button>
           </div>

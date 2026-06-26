@@ -26,6 +26,7 @@ export const shellText = {
     menu: 'Toggle menu',
     mobileNav: 'Mobile navigation',
     nextLanguageTitle: 'Switch to Korean',
+    sectionOverview: 'View section overview',
   },
   ko: {
     brand: '솔루시오모스',
@@ -36,6 +37,7 @@ export const shellText = {
     menu: '메뉴 열기',
     mobileNav: '모바일 내비게이션',
     nextLanguageTitle: '영어로 전환',
+    sectionOverview: '섹션 전체 보기',
   },
 } as const;
 
@@ -45,28 +47,28 @@ export const searchModalText = {
     clearSearch: 'Clear search',
     closeSearch: 'Close search',
     closeSearchModal: 'Close search modal',
-    empty: 'Type to search for pages and components...',
+    empty: 'Search any page or component to jump there quickly.',
     noRecent: 'No recent searches',
     noResults: (query: string) => `No results found for "${query}"`,
-    placeholder: 'Search for components, pages...',
+    placeholder: 'Search pages, components, and tools...',
     recent: 'Recent Searches',
     removeRecent: (name: string) => `Remove ${name} from recent searches`,
-    tryDifferent: 'Try searching with different keywords',
-    tryExamples: 'Try "button", "modal", "svg", or "project"',
+    tryDifferent: 'Try a simpler keyword or a different page name.',
+    tryExamples: 'Try "button", "modal", "svg", or "project".',
   },
   ko: {
     clearAll: '전체 삭제',
     clearSearch: '검색어 지우기',
     closeSearch: '검색 닫기',
     closeSearchModal: '검색 창 닫기',
-    empty: '페이지와 컴포넌트를 검색해보세요...',
+    empty: '찾고 싶은 화면이나 컴포넌트를 바로 검색해보세요.',
     noRecent: '최근 검색이 없습니다',
     noResults: (query: string) => `"${query}"에 대한 결과가 없습니다`,
-    placeholder: '컴포넌트, 페이지 검색...',
+    placeholder: '페이지, 컴포넌트, 도구 검색...',
     recent: '최근 검색',
     removeRecent: (name: string) => `${name} 최근 검색에서 제거`,
-    tryDifferent: '다른 키워드로 다시 검색해보세요',
-    tryExamples: '"버튼", "모달", "svg", "프로젝트"로 검색해보세요',
+    tryDifferent: '더 짧은 키워드나 다른 화면 이름으로 다시 찾아보세요',
+    tryExamples: '"버튼", "모달", "svg", "프로젝트"처럼 입력해보세요',
   },
 } as const;
 
@@ -84,7 +86,7 @@ export const catalogText = {
     preview: 'Preview',
     recent: 'Recent Searches',
     resetHint: 'Try a different keyword or reset the category filter.',
-    searchAgain: 'Try searching with different keywords',
+    searchAgain: 'Try a different keyword.',
   },
   ko: {
     all: '전체',
@@ -106,38 +108,38 @@ export const catalogText = {
 export const catalogPageText = {
   en: {
     components: {
-      description: 'Browse and search through our collection of pre-built components.',
+      description: 'Browse ready-to-use UI pieces and open the exact pattern you need.',
       searchPlaceholder: 'Search components...',
       title: 'Library',
       titleHighlight: 'Component',
     },
     libraries: {
-      description: 'Discover and manage reusable libraries, asset packs, and shared building blocks.',
+      description: 'Keep shared assets, snippets, and reusable building blocks easy to find.',
       searchPlaceholder: 'Search libraries...',
       title: 'Libraries',
       titleHighlight: 'Your',
     },
     tools: {
-      description: 'Use focused generators and editors to speed up implementation work across the library.',
+      description: 'Open small, focused tools for editing assets and speeding up build work.',
       searchPlaceholder: 'Search tools...',
       title: 'Tools',
     },
   },
   ko: {
     components: {
-      description: '미리 만들어진 컴포넌트를 검색하고 바로 탐색하세요.',
+      description: '필요한 UI 조각을 빠르게 찾고, 바로 열어 확인하세요.',
       searchPlaceholder: '컴포넌트 검색...',
       title: '라이브러리',
       titleHighlight: '컴포넌트',
     },
     libraries: {
-      description: '재사용 가능한 라이브러리, 에셋 팩, 공용 빌딩 블록을 관리하세요.',
+      description: '공용 에셋과 스니펫을 한곳에 모아 다시 쓰기 쉽게 정리하세요.',
       searchPlaceholder: '라이브러리 검색...',
       title: '라이브러리',
       titleHighlight: '내',
     },
     tools: {
-      description: '생성기와 편집 도구로 구현 작업 속도를 높이세요.',
+      description: '에셋 편집과 제작 보조 도구를 열어 작업 속도를 높이세요.',
       searchPlaceholder: '도구 검색...',
       title: '도구',
     },
@@ -146,12 +148,12 @@ export const catalogPageText = {
 
 export const fullAppsPageText = {
   en: {
-    description: 'Explore production-style application pages built from reusable React components and shared catalog data.',
+    description: 'Open complete app-style screens and see how the shared pieces work together.',
     highlight: 'Full',
     title: 'Apps',
   },
   ko: {
-    description: '재사용 가능한 React 컴포넌트와 공용 카탈로그 데이터로 구성한 완성형 화면을 살펴보세요.',
+    description: '공용 컴포넌트를 조합한 완성형 화면을 열어 실제 흐름을 확인하세요.',
     highlight: '전체',
     title: '앱',
   },
@@ -206,9 +208,9 @@ export const componentShowcaseText = {
     lastUpdated: (date: string) => `Last updated: ${date}`,
     linkCopied: 'Link copied.',
     moreOptions: 'More options',
-    noSavedDescription: 'Save a preview from the card menu to keep it visible in this filtered view.',
-    noSavedTitle: 'No saved previews here',
-    noSearchDescription: 'Clear the search or try another component name.',
+    noSavedDescription: 'Use the card menu to pin previews you want to revisit.',
+    noSavedTitle: 'No saved previews yet',
+    noSearchDescription: 'Clear the search or try the name of another component.',
     noSearchTitle: 'No previews match this search',
     previewRemoved: 'Preview removed.',
     previewSaved: 'Preview saved.',
@@ -217,7 +219,7 @@ export const componentShowcaseText = {
     savePreview: 'Save Preview',
     saved: 'Saved',
     savedCount: (count: number) => `${count} saved`,
-    savedOnly: 'Saved only',
+    savedOnly: 'Only saved',
     searchPlaceholder: 'Search previews',
     showAllPreviews: 'Show all previews',
     showingCount: (count: number) => `${count} showing`,
@@ -229,10 +231,10 @@ export const componentShowcaseText = {
     lastUpdated: (date: string) => `마지막 업데이트: ${date}`,
     linkCopied: '링크를 복사했습니다.',
     moreOptions: '더보기',
-    noSavedDescription: '카드 메뉴에서 미리보기를 저장하면 이 필터에서 계속 볼 수 있습니다.',
-    noSavedTitle: '저장된 미리보기가 없습니다',
-    noSearchDescription: '검색어를 지우거나 다른 컴포넌트 이름으로 검색해보세요.',
-    noSearchTitle: '검색과 일치하는 미리보기가 없습니다',
+    noSavedDescription: '다시 보고 싶은 미리보기는 카드 메뉴에서 저장해두세요.',
+    noSavedTitle: '아직 저장한 미리보기가 없습니다',
+    noSearchDescription: '검색어를 지우거나 다른 컴포넌트 이름으로 찾아보세요.',
+    noSearchTitle: '검색어와 맞는 미리보기가 없습니다',
     previewRemoved: '미리보기를 저장 목록에서 제거했습니다.',
     previewSaved: '미리보기를 저장했습니다.',
     removeSaved: '저장 해제',
@@ -240,7 +242,7 @@ export const componentShowcaseText = {
     savePreview: '미리보기 저장',
     saved: '저장됨',
     savedCount: (count: number) => `${count}개 저장됨`,
-    savedOnly: '저장 항목만',
+    savedOnly: '저장한 것만',
     searchPlaceholder: '미리보기 검색',
     showAllPreviews: '모든 미리보기 보기',
     showingCount: (count: number) => `${count}개 표시 중`,
@@ -259,110 +261,242 @@ const componentShowcaseCopy: Record<AppLanguage, Record<string, ComponentShowcas
   en: {},
   ko: {
     'Power Apps|Accordion Components': {
-      description: 'FAQ, 설정 패널, 정리된 정보 레이아웃에 쓰기 좋은 접이식 콘텐츠 섹션입니다.',
+      description: '긴 설명을 접어두고, 사용자가 필요한 내용만 차분히 열어볼 수 있게 합니다.',
       eyebrow: 'Power Apps UI',
       title: 'Power Apps',
-      titleHighlight: '아코디언 컴포넌트',
+      titleHighlight: '아코디언',
       sections: {
         'Accordion Plus': {
-          description: '설정이나 도움말처럼 밀도 높은 콘텐츠에 어울리는 플러스/마이너스 아코디언입니다.',
+          description: '설정이나 도움말처럼 내용이 많은 화면에서 현재 열린 항목을 분명하게 보여줍니다.',
           title: '플러스 아코디언',
         },
         'Classic Accordion': {
-          description: '문서와 답변을 단순한 스택 형태로 정리하는 기본 아코디언입니다.',
+          description: '문서, FAQ, 안내 문구를 가볍게 쌓아두고 필요할 때 펼쳐보는 기본형입니다.',
           title: '클래식 아코디언',
         },
       },
     },
     'Power Apps|Animation Components': {
-      description: '대시보드형 인터페이스에 어울리는 진행 상태와 피드백 애니메이션 패턴입니다.',
+      description: '숫자와 상태 변화가 갑자기 튀지 않도록 화면에 부드러운 흐름을 더합니다.',
       eyebrow: '모션 라이브러리',
       title: 'Power Apps',
-      titleHighlight: '애니메이션 컴포넌트',
+      titleHighlight: '애니메이션',
       sections: {
         'Animated Line Chart': {
-          description: 'KPI 또는 추세 위젯에 활용하기 좋은 그라디언트 차트 미리보기입니다.',
+          description: '지표가 바뀌는 느낌을 자연스럽게 보여주는 간단한 차트 모션입니다.',
           title: '애니메이션 라인 차트',
         },
         'Animated Toggle': {
-          description: '필터와 모드 전환에 쓰기 좋은 상태 전환 애니메이션 세그먼트 컨트롤입니다.',
+          description: '필터나 보기 모드를 바꿀 때 선택 상태가 부드럽게 이동합니다.',
           title: '애니메이션 토글',
         },
       },
     },
     'App Shells|Component': {
-      description: '내비게이션, 유틸리티 패널, 콘텐츠 영역을 갖춘 애플리케이션 셸 패턴입니다.',
+      description: '업무 화면의 기본 골격을 빠르게 잡을 수 있는 앱 레이아웃입니다.',
       eyebrow: '레이아웃 시스템',
       title: '앱 셸',
       titleHighlight: '컴포넌트',
       sections: {
         'Dashboard Shell': {
-          description: '관리 도구와 내부 대시보드에 사용할 수 있는 기본 레이아웃입니다.',
+          description: '사이드 메뉴와 본문 영역이 필요한 관리자 화면에 바로 맞는 구조입니다.',
           title: '대시보드 셸',
         },
       },
     },
     'Badge|Component': {
-      description: '우선순위, 시스템 상태, 릴리스 마커를 표현하는 작은 상태 라벨입니다.',
+      description: '상태와 우선순위를 짧은 라벨로 보여줘 화면을 빠르게 읽게 합니다.',
       eyebrow: '상태 표시',
       title: '배지',
       titleHighlight: '컴포넌트',
       sections: {
         'Status Badges': {
-          description: '성공, 경고, 초안, 검토 완료 상태를 표현하는 재사용 배지입니다.',
+          description: '성공, 대기, 차단, 검토 완료처럼 자주 쓰는 상태를 한눈에 구분합니다.',
           title: '상태 배지',
         },
       },
     },
     'Power Apps|Button Components': {
-      description: '주요 액션, 보조 액션, 아이콘 액션에 맞춘 버튼 패턴입니다.',
+      description: '사용자가 다음에 무엇을 누르면 되는지 명확하게 안내하는 버튼 모음입니다.',
       eyebrow: '액션 라이브러리',
       title: 'Power Apps',
-      titleHighlight: '버튼 컴포넌트',
+      titleHighlight: '버튼',
       sections: {
         'Primary Button': {
-          description: '우선순위가 높은 주요 액션을 명확하게 보여주는 버튼입니다.',
+          description: '저장, 확인, 시작처럼 가장 중요한 행동을 또렷하게 보여줍니다.',
           title: '주요 버튼',
         },
         'Outline Buttons': {
-          description: '보조 흐름에 어울리는 가벼운 강조 버튼입니다.',
+          description: '취소, 보조 선택, 덜 중요한 행동을 부담 없이 배치할 때 좋습니다.',
           title: '아웃라인 버튼',
         },
         'Icon Buttons': {
-          description: '아이콘 힌트와 액션 라벨을 함께 보여주는 버튼입니다.',
+          description: '아이콘과 라벨을 함께 써서 작은 공간에서도 의미를 놓치지 않게 합니다.',
           title: '아이콘 버튼',
         },
       },
     },
     'Button Group|Component': {
-      description: '모드 전환, 세그먼트 필터, 압축 액션을 위한 묶음 컨트롤입니다.',
+      description: '서로 관련된 선택지를 가까이 묶어 빠르게 전환할 수 있게 합니다.',
       eyebrow: '액션 클러스터',
       title: '버튼 그룹',
       titleHighlight: '컴포넌트',
       sections: {
         'Segmented Controls': {
-          description: '서로 가까운 옵션 사이를 전환하는 연결형 버튼 그룹입니다.',
+          description: '개요, 활동, 파일처럼 같은 레벨의 보기 옵션을 한 줄에서 전환합니다.',
           title: '세그먼트 컨트롤',
         },
       },
     },
     'Calendars|Component': {
-      description: '예약, 일정, 팀 계획 화면에 사용할 수 있는 인터랙티브 캘린더 레이아웃입니다.',
+      description: '예약, 일정, 팀 계획을 날짜 중심으로 편하게 살펴보는 화면입니다.',
       eyebrow: '날짜 선택',
       title: '캘린더',
       titleHighlight: '컴포넌트',
       sections: {
         'Date Picker': {
-          description: '폼 안에서 날짜를 선택하기 좋은 가벼운 월간 보기입니다.',
+          description: '폼 안에서 날짜 하나를 빠르게 고를 수 있는 가벼운 월간 보기입니다.',
           title: '날짜 선택기',
         },
         'Date Picker Plus': {
-          description: '월 이동, 날짜 선택, 연결된 상세 패널을 갖춘 월간 날짜 선택기입니다.',
+          description: '월 이동과 날짜 상세를 함께 보여줘 예약 흐름에 바로 붙이기 좋습니다.',
           title: '날짜 선택기 플러스',
         },
         'Schedule Board': {
-          description: '빠른 날짜 선택과 간단한 일정 목록을 함께 제공하는 주간 캘린더입니다.',
+          description: '요일별 일정을 고르고 바로 아래에서 할 일을 확인하는 주간 보드입니다.',
           title: '스케줄 보드',
+        },
+      },
+    },
+    'Cards|Component': {
+      description: '서로 다른 정보를 한 덩어리로 묶어 보기 좋게 정리합니다.',
+      eyebrow: '콘텐츠 표면',
+      title: '카드',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Product Card': {
+          description: '제품 설명, 가격, 상세 액션을 한 카드 안에서 자연스럽게 보여줍니다.',
+          title: '제품 카드',
+        },
+      },
+    },
+    'Drawer|Component': {
+      description: '화면을 떠나지 않고 설정이나 상세 내용을 옆에서 확인하게 합니다.',
+      eyebrow: '패널과 오버레이',
+      title: '드로어',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Side Drawer': {
+          description: '본문은 그대로 두고, 필요한 설정만 옆 패널에서 빠르게 다룹니다.',
+          title: '사이드 드로어',
+        },
+      },
+    },
+    'Dropdowns|Component': {
+      description: '자주 쓰는 작업을 접어두었다가 필요한 순간에 꺼내 씁니다.',
+      eyebrow: '선택 메뉴',
+      title: '드롭다운',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Menu Dropdown': {
+          description: '이름 변경, 복제, 공유처럼 항목별 작업을 깔끔하게 묶어둡니다.',
+          title: '메뉴 드롭다운',
+        },
+      },
+    },
+    'Gallery|Component': {
+      description: '이미지나 시각 자료를 고르고 비교하기 좋은 갤러리 레이아웃입니다.',
+      eyebrow: '미디어 레이아웃',
+      title: '갤러리',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Photo Grid': {
+          description: '큰 미리보기와 작은 썸네일을 함께 두어 선택 흐름을 분명하게 만듭니다.',
+          title: '사진 그리드',
+        },
+      },
+    },
+    'Input Fields|Component': {
+      description: '입력값을 받고 바로 검증 상태를 알려주는 기본 폼 요소입니다.',
+      eyebrow: '폼 컨트롤',
+      title: '입력 필드',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Text Input': {
+          description: '사용자가 입력하는 동안 바로 사용할 수 있는 값인지 안내합니다.',
+          title: '텍스트 입력',
+        },
+      },
+    },
+    'Modals|Component': {
+      description: '중요한 선택을 잠깐 멈춰 확인하게 만드는 집중형 창입니다.',
+      eyebrow: '포커스 상태',
+      title: '모달',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Confirmation Modal': {
+          description: '삭제처럼 되돌리기 어려운 행동을 실행하기 전에 한 번 더 확인합니다.',
+          title: '확인 모달',
+        },
+      },
+    },
+    'Navigation Bars|Component': {
+      description: '화면 상단에서 주요 이동 경로와 시작 액션을 함께 보여줍니다.',
+      eyebrow: '전역 내비게이션',
+      title: '내비게이션 바',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Top Navigation': {
+          description: '로고, 주요 링크, 시작 버튼을 한 줄에 배치해 첫 탐색을 쉽게 만듭니다.',
+          title: '상단 내비게이션',
+        },
+      },
+    },
+    'Sidebar|Component': {
+      description: '메뉴가 많은 업무 화면에서도 현재 위치를 잃지 않게 도와줍니다.',
+      eyebrow: '내비게이션 패턴',
+      title: '사이드바',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Collapsible Sidebar': {
+          description: '넓을 때는 펼쳐 쓰고, 공간이 부족할 때는 접어서 본문을 확보합니다.',
+          title: '접이식 사이드바',
+        },
+      },
+    },
+    'Steppers|Component': {
+      description: '여러 단계로 나뉜 작업에서 지금 어디까지 왔는지 알려줍니다.',
+      eyebrow: '워크플로 진행',
+      title: '스테퍼',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Progress Stepper': {
+          description: '입력, 설정, 검토, 출시처럼 순서가 있는 흐름에 잘 맞습니다.',
+          title: '진행 스테퍼',
+        },
+      },
+    },
+    'Tabs|Component': {
+      description: '같은 공간에서 관련 정보를 나눠 보여주고 빠르게 전환합니다.',
+      eyebrow: '콘텐츠 전환',
+      title: '탭',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Horizontal Tabs': {
+          description: '개요, 상세, 기록처럼 가까운 정보를 한 영역 안에서 오갈 수 있습니다.',
+          title: '가로 탭',
+        },
+      },
+    },
+    'Toggles|Component': {
+      description: '켜고 끄는 설정을 짧고 분명하게 바꿀 수 있게 합니다.',
+      eyebrow: '이진 컨트롤',
+      title: '토글',
+      titleHighlight: '컴포넌트',
+      sections: {
+        'Switch Toggle': {
+          description: '알림이나 기능 옵션처럼 즉시 바뀌는 설정에 잘 어울립니다.',
+          title: '스위치 토글',
         },
       },
     },
@@ -378,20 +512,20 @@ export const yamlLibraryText = {
     converterDescription: 'Convert common YAML maps and arrays into JSON, or format JSON back into YAML.',
     converterModeLabel: 'Converter mode',
     converterTitle: 'YAML / JSON Converter',
-    convertedOutputQueued: (extension: string) => `Converted ${extension.toUpperCase()} output queued for download.`,
+    convertedOutputQueued: (extension: string) => `${extension.toUpperCase()} output is ready to download.`,
     convertedPlaceholder: 'Converted output will appear here.',
     convert: 'Convert',
     convertBeforeDownload: 'Convert content before downloading output.',
     copy: (name: string) => `Copy ${name}`,
     copyOutput: 'Copy output',
-    description: 'Upload, preview, and reuse configuration snippets in a React-friendly asset library.',
+    description: 'Upload, preview, convert, and reuse configuration snippets in one place.',
     download: 'Download',
     downloadAll: 'Download all',
     downloadFile: (name: string) => `Download ${name}`,
-    featureCards: ['Typed upload state', 'Reusable template cards', 'Clipboard feedback'],
+    featureCards: ['Safe upload history', 'Ready-made templates', 'Copy feedback'],
     fileImported: (name: string, lines: number) => `${name} imported with ${lines} lines.`,
-    fileQueued: (name: string) => `${name} queued for download.`,
-    filesQueued: (count: number) => `${count} uploaded YAML file${count === 1 ? '' : 's'} queued for download.`,
+    fileQueued: (name: string) => `${name} is ready to download.`,
+    filesQueued: (count: number) => `${count} uploaded YAML file${count === 1 ? '' : 's'} ready to download.`,
     highlight: 'YAML',
     importedLines: (lines: number) => `${lines} lines imported`,
     jsonConverted: 'JSON converted to YAML.',
@@ -430,11 +564,11 @@ export const yamlLibraryText = {
     convertBeforeDownload: '출력을 다운로드하기 전에 내용을 변환하세요.',
     copy: (name: string) => `${name} 복사`,
     copyOutput: '출력 복사',
-    description: '설정 스니펫을 업로드하고 미리 본 뒤 React 작업에 맞게 재사용하세요.',
+    description: '자주 쓰는 YAML 설정을 업로드하고, 변환하고, 다시 꺼내 쓰세요.',
     download: '다운로드',
     downloadAll: '전체 다운로드',
     downloadFile: (name: string) => `${name} 다운로드`,
-    featureCards: ['타입 기반 업로드 상태', '재사용 템플릿 카드', '클립보드 피드백'],
+    featureCards: ['안전한 업로드 기록', '바로 쓰는 템플릿', '복사 상태 안내'],
     fileImported: (name: string, lines: number) => `${name} 파일을 ${lines}줄로 가져왔습니다.`,
     fileQueued: (name: string) => `${name} 다운로드를 준비했습니다.`,
     filesQueued: (count: number) => `업로드된 YAML 파일 ${count}개 다운로드를 준비했습니다.`,
@@ -468,15 +602,15 @@ const yamlTemplateCopy: Record<AppLanguage, Record<string, { description: string
   en: {},
   ko: {
     'app-config': {
-      description: '환경, 기능 플래그, API 엔드포인트 예시입니다.',
+      description: '환경값, 기능 플래그, API 주소를 한 번에 정리한 예시입니다.',
       title: '애플리케이션 설정',
     },
     'docker-compose': {
-      description: '로컬 개발을 위한 작은 웹/데이터베이스 스택입니다.',
+      description: '로컬에서 웹과 데이터베이스를 함께 띄우는 기본 구성입니다.',
       title: 'Docker Compose 서비스',
     },
     'github-action': {
-      description: '푸시 시 의존성 설치, 타입체크, 빌드를 실행합니다.',
+      description: '푸시 후 설치, 타입체크, 빌드를 자동으로 확인하는 흐름입니다.',
       title: 'GitHub Actions 워크플로',
     },
   },
@@ -489,44 +623,44 @@ const fullAppHighlightCopy: Record<AppLanguage, Record<string, string[]>> = {
     'Feedback App': ['평점 대시보드', '리뷰 워크플로', '응답 추적'],
     'Project Management App': ['작업 보드', '타임라인 지표', '팀 현황'],
     'Cleaning Confirmation': ['예약 상세', '서비스 상태', '고객 확인'],
-    default: ['재사용 섹션', '타입 데이터', '반응형 레이아웃'],
+    default: ['다시 쓰는 섹션', '정리된 데이터', '반응형 화면'],
   },
 };
 
 export const homeText = {
   en: {
-    childrenCount: (count: number) => `${count} child pages`,
+    childrenCount: (count: number) => `${count} pages inside`,
     clearSearch: 'Clear search',
     connectedGroups: 'Connected groups',
     currentStructure: 'Current structure',
     description: [
-      'Components, full apps, libraries, tools, and MCP resources are organized into one workspace.',
-      'Find implemented screens quickly and jump directly into the next area of work.',
+      'Components, apps, libraries, tools, and MCP resources live in one practical workspace.',
+      'Search what is already built, open it quickly, and keep the next improvement moving.',
     ],
     eyebrow: 'React + TypeScript work hub',
     featureCards: [
       {
-        description: 'Components, apps, libraries, tools, and MCP screens are searchable from one flow.',
-        title: 'Visible structure for work',
+        description: 'Every section can be searched from one place, so you can move without hunting through menus.',
+        title: 'Find the right screen fast',
       },
       {
-        description: 'The pages are real interfaces with search, saved state, uploads, exports, and interaction flows.',
-        title: 'Demo surfaces with real behavior',
+        description: 'The demos keep state, accept input, export files, and respond like working product screens.',
+        title: 'More than static mockups',
       },
       {
-        description: 'Shared cards, buttons, sections, search, and navigation patterns keep the next page fast to build.',
-        title: 'Easy foundation to extend',
+        description: 'Shared cards, buttons, search, and navigation patterns make each next page easier to finish.',
+        title: 'Built to keep growing',
       },
     ],
     majorSections: 'Major sections',
     note: [
-      'Routing, catalog data, search, dark mode, and sidebar navigation are connected.',
-      'The next step is to keep filling each demo with production-like behavior and QA coverage.',
+      'Routing, catalog data, search, dark mode, and sidebar navigation are already connected.',
+      'The next pass can focus on richer interactions, cleaner copy, and visual QA by page.',
     ],
     open: 'Open',
     projectMap: 'Project map',
     quickActions: 'Quick actions',
-    quickActionsDescription: 'Jump into a major section and scan the current structure.',
+    quickActionsDescription: 'Open a major section and see what is ready to improve next.',
     searchButton: 'Go now',
     searchNoResults: 'No search results.',
     searchPlaceholder: 'Search components, pages, or tools...',
@@ -539,10 +673,10 @@ export const homeText = {
       { label: 'SVG Editor', query: 'SVG Editor' },
       { label: 'Form Builder', query: 'Form Builder' },
     ],
-    title: 'Check the Solucioneomos build progress at a glance',
+    title: 'See the Solucioneomos workspace in one clear view',
     viewComponents: 'Start with components',
     workPrinciples: 'Work principles',
-    workPrinciplesDescription: 'The structure favors pages that are easy to find, extend, and verify while sharing the same common components and layout data.',
+    workPrinciplesDescription: 'The workspace is shaped around screens that are easy to find, extend, and verify while sharing the same layout and catalog data.',
   },
   ko: {
     childrenCount: (count: number) => `${count}개의 하위 페이지`,
@@ -550,33 +684,33 @@ export const homeText = {
     connectedGroups: '연결된 그룹',
     currentStructure: '현재 구성',
     description: [
-      '컴포넌트, 전체 앱, 라이브러리, 도구, MCP 자료를 하나의 작업 공간으로 정리했습니다.',
-      '구현된 화면을 빠르게 찾고 다음 작업 지점으로 바로 이동할 수 있습니다.',
+      '컴포넌트, 앱, 라이브러리, 도구, MCP 자료를 한곳에서 볼 수 있게 정리했습니다.',
+      '이미 만들어진 화면을 빠르게 찾고, 다음에 손볼 곳으로 바로 이동할 수 있습니다.',
     ],
     eyebrow: 'React + TypeScript 작업 허브',
     featureCards: [
       {
-        description: '컴포넌트, 앱, 라이브러리, 도구, MCP 화면을 하나의 흐름에서 검색하고 이동할 수 있습니다.',
-        title: '구조가 보이는 작업 허브',
+        description: '메뉴를 뒤지지 않아도 한 번의 검색으로 필요한 화면까지 바로 이동합니다.',
+        title: '필요한 화면을 빠르게 찾기',
       },
       {
-        description: '검색, 저장 상태, 업로드, 내보내기, 상태 변경까지 확인할 수 있는 실제 화면을 목표로 합니다.',
-        title: '실제 동작 중심 데모',
+        description: '저장 상태, 입력, 업로드, 내보내기까지 실제 화면처럼 만져볼 수 있습니다.',
+        title: '정적인 목업을 넘어서기',
       },
       {
-        description: '공용 카드, 버튼, 섹션, 검색, 내비게이션 패턴을 재사용해 다음 화면 제작 속도를 높입니다.',
-        title: '확장하기 쉬운 기반',
+        description: '공용 카드, 버튼, 검색, 내비게이션을 함께 써서 다음 화면을 더 빨리 완성합니다.',
+        title: '계속 키우기 쉬운 구조',
       },
     ],
     majorSections: '주요 섹션',
     note: [
       '라우팅, 카탈로그 데이터, 검색, 다크 모드, 사이드바 이동 흐름이 연결되어 있습니다.',
-      '다음 단계는 각 데모에 실제 기능과 브라우저 QA 범위를 계속 채워 넣는 작업입니다.',
+      '다음 단계에서는 페이지별 상호작용, 문구, 반응형 QA를 더 촘촘히 다듬으면 됩니다.',
     ],
     open: '열기',
     projectMap: '프로젝트 맵',
     quickActions: '빠른 이동',
-    quickActionsDescription: '주요 섹션으로 바로 이동해 전체 구조를 둘러보세요.',
+    quickActionsDescription: '주요 섹션을 열어 지금 어디까지 준비됐는지 확인하세요.',
     searchButton: '바로 이동',
     searchNoResults: '검색 결과가 없습니다.',
     searchPlaceholder: '컴포넌트, 페이지, 도구를 검색해보세요...',
@@ -589,75 +723,75 @@ export const homeText = {
       { label: 'SVG 에디터', query: 'svg 에디터' },
       { label: '폼 빌더', query: '폼 빌더' },
     ],
-    title: '솔루시오모스 제작 현황을 한눈에 확인하세요',
+    title: '솔루시오모스 작업 공간을 한눈에 확인하세요',
     viewComponents: '컴포넌트부터 보기',
     workPrinciples: '작업 기준',
-    workPrinciplesDescription: '화면을 찾기 쉽고 확장하기 쉬운 구조로 유지하면서, 각 섹션이 같은 공용 컴포넌트와 라우트 데이터를 공유하도록 정리했습니다.',
+    workPrinciplesDescription: '화면을 찾기 쉽고 확장하기 쉬운 구조로 유지하면서, 같은 레이아웃과 카탈로그 데이터를 함께 쓰도록 정리했습니다.',
   },
 } as const;
 
 export const asideItems = {
   en: [
-    { title: 'Build note', description: 'Home, routing, search, and dark mode are connected.' },
-    { title: 'Suggested path', description: 'Start with Components or Tools to inspect reusable patterns.' },
-    { title: 'Next work', description: 'Keep improving copy, interactions, and responsive QA by page.' },
-    { title: 'Verification', description: 'Typecheck and production build should stay green after each batch.' },
-    { title: 'Content rule', description: 'Replace placeholder copy with sentences that reveal purpose and flow.' },
-    { title: 'Resources', description: 'Shared components and catalog data make it easier to expand pages.' },
+    { title: 'Where things stand', description: 'Home, routing, search, and dark mode are already wired together.' },
+    { title: 'Good place to start', description: 'Open Components or Tools to review the reusable patterns first.' },
+    { title: 'Next polish pass', description: 'Keep tightening copy, interactions, and responsive behavior page by page.' },
+    { title: 'Health check', description: 'Typecheck and production build should stay green after each batch.' },
+    { title: 'Copy rule', description: 'Every empty state should explain what the user can actually do.' },
+    { title: 'Shared base', description: 'Common components and catalog data make each new page faster to finish.' },
   ],
   ko: [
-    { title: '시작 메모', description: '홈, 라우팅, 검색, 다크 모드 구조가 연결된 상태입니다.' },
-    { title: '추천 탐색', description: 'Components 또는 Tools 섹션에서 재사용 패턴을 먼저 확인하세요.' },
-    { title: '다음 작업', description: '페이지별 문구, 인터랙션, 반응형 상태를 순서대로 다듬으면 좋습니다.' },
-    { title: '검증 상태', description: '작업 단위마다 타입체크와 프로덕션 빌드가 통과하도록 유지합니다.' },
-    { title: '콘텐츠 기준', description: '임시 문구는 목적과 사용 흐름이 드러나는 문장으로 정리합니다.' },
-    { title: '리소스', description: '공용 컴포넌트와 카탈로그 데이터를 기반으로 페이지를 확장합니다.' },
+    { title: '현재 상태', description: '홈, 라우팅, 검색, 다크 모드는 이미 연결되어 있습니다.' },
+    { title: '먼저 볼 곳', description: '컴포넌트나 도구 섹션에서 재사용 패턴을 먼저 확인해보세요.' },
+    { title: '다음 다듬기', description: '페이지별 문구, 상호작용, 반응형 상태를 차례로 더 매끄럽게 만듭니다.' },
+    { title: '상태 확인', description: '작업 단위마다 타입체크와 프로덕션 빌드가 통과하도록 유지합니다.' },
+    { title: '문구 기준', description: '임시 문구는 사용자가 무엇을 할 수 있는지 알려주는 문장으로 바꿉니다.' },
+    { title: '공용 기반', description: '공용 컴포넌트와 카탈로그 데이터 덕분에 다음 페이지를 더 빨리 확장할 수 있습니다.' },
   ],
 } as const;
 
 const routeCopy: Record<AppLanguage, Record<string, LocalizedRouteCopy>> = {
   en: {},
   ko: {
-    home: { label: '홈', description: '전체 쇼케이스와 검색 경험을 위한 통합 시작 화면입니다.', keywords: ['시작', '메인'] },
-    components: { label: '컴포넌트', description: '재사용 가능한 인터페이스 빌딩 블록과 인터랙션 패턴입니다.', keywords: ['구성 요소', 'ui'] },
-    'full-apps': { label: '전체 앱', description: '여러 UI 블록을 조합한 완성형 워크플로 데모입니다.', keywords: ['데모', '업무 앱'] },
-    libraries: { label: '라이브러리', description: '재사용 가능한 에셋 모음과 큐레이션 리소스입니다.', keywords: ['자료', '에셋'] },
-    tools: { label: '도구', description: '프로토타입, 변환, 에셋 편집을 위한 집중형 유틸리티입니다.', keywords: ['툴', '유틸리티'] },
-    mcp: { label: 'MCP', description: 'Model Context Protocol 개요와 쇼케이스 진입점입니다.', keywords: ['모델 컨텍스트'] },
-    '/': { label: '홈', description: '전체 쇼케이스와 검색 경험을 위한 통합 시작 화면입니다.', keywords: ['시작', '메인'] },
-    '/components': { label: '컴포넌트', description: '재사용 가능한 인터페이스 빌딩 블록과 인터랙션 패턴입니다.', keywords: ['구성 요소', 'ui'] },
-    '/components/accordions': { label: '아코디언', description: '펼치고 접는 인터랙티브 아코디언 컴포넌트입니다.', keywords: ['접기', '펼치기'] },
-    '/components/animations': { label: '애니메이션', description: '전환 효과와 모션 패턴입니다.', keywords: ['모션', '전환'] },
-    '/components/app-shells': { label: '앱 셸', description: '애플리케이션 기본 레이아웃 템플릿입니다.', keywords: ['레이아웃', '셸'] },
-    '/components/badge': { label: '배지', description: '상태와 태그를 표현하는 컴포넌트입니다.', keywords: ['태그', '상태'] },
-    '/components/buttons': { label: '버튼', description: '버튼 스타일과 변형 패턴입니다.', keywords: ['액션', 'cta'] },
-    '/components/button-group': { label: '버튼 그룹', description: '묶음 버튼과 세그먼트 컨트롤 컴포넌트입니다.', keywords: ['세그먼트', '컨트롤'] },
-    '/components/calendars': { label: '캘린더', description: '캘린더와 날짜 선택 컴포넌트입니다.', keywords: ['날짜', '일정'] },
-    '/components/cards': { label: '카드', description: '카드형 레이아웃 컴포넌트입니다.', keywords: ['패널', '표면'] },
-    '/components/drawer': { label: '드로어', description: '드로어와 사이드 패널 컴포넌트입니다.', keywords: ['패널', '시트'] },
-    '/components/dropdowns': { label: '드롭다운', description: '드롭다운 메뉴 컴포넌트입니다.', keywords: ['메뉴', '선택'] },
-    '/components/gallery': { label: '갤러리', description: '이미지 갤러리 컴포넌트입니다.', keywords: ['이미지', '미디어'] },
-    '/components/input-fields': { label: '입력 필드', description: '폼 입력 필드 컴포넌트입니다.', keywords: ['폼', '입력'] },
-    '/components/modals': { label: '모달', description: '모달과 다이얼로그 컴포넌트입니다.', keywords: ['대화상자', '오버레이'] },
-    '/components/navigation-bars': { label: '내비게이션 바', description: '상단 내비게이션 컴포넌트입니다.', keywords: ['헤더', '메뉴'] },
-    '/components/sidebar': { label: '사이드바', description: '사이드바 레이아웃 컴포넌트입니다.', keywords: ['사이드 내비', '탐색'] },
-    '/components/steppers': { label: '스테퍼', description: '단계 진행과 프로그레스 컴포넌트입니다.', keywords: ['단계', '진행'] },
-    '/components/tabs': { label: '탭', description: '탭 전환 컴포넌트입니다.', keywords: ['탭', '전환'] },
-    '/components/toggles': { label: '토글', description: '토글과 스위치 컴포넌트입니다.', keywords: ['스위치', '설정'] },
-    '/full-apps': { label: '전체 앱', description: '여러 UI 블록을 조합한 완성형 워크플로 데모입니다.', keywords: ['데모', '업무 앱'] },
-    '/full-apps/chrome-extensions': { label: '크롬 확장', description: '크롬 확장 템플릿과 Power Apps 설치 워크플로입니다.', keywords: ['확장', '크롬'] },
-    '/full-apps/cleaning-confirmation': { label: '청소 확인', description: '서비스 확인과 일정 관리 애플리케이션입니다.', keywords: ['청소', '방문', '서비스'] },
-    '/full-apps/feedback-app': { label: '피드백 앱', description: '고객 피드백과 평점을 관리하는 완성형 앱입니다.', keywords: ['후기', '리뷰', '고객 의견'] },
-    '/full-apps/project-management': { label: '프로젝트 관리', description: '분석과 작업 관리를 포함한 프로젝트 추적 앱입니다.', keywords: ['프로젝트', '작업', '칸반'] },
-    '/libraries': { label: '라이브러리', description: '재사용 가능한 에셋 모음과 큐레이션 리소스입니다.', keywords: ['자료', '에셋'] },
-    '/libraries/custom-svg-library': { label: '커스텀 SVG 라이브러리', description: '커스텀 SVG 아이콘을 가져오고 정리하는 도구입니다.', keywords: ['아이콘', '벡터'] },
-    '/libraries/yaml-library': { label: 'YAML 라이브러리', description: '재사용 가능한 YAML 자산을 저장하고 관리합니다.', keywords: ['설정', '스키마'] },
-    '/mcp': { label: 'MCP', description: 'Model Context Protocol 개요와 쇼케이스 진입점입니다.', keywords: ['모델 컨텍스트'] },
-    '/tools': { label: '도구', description: '프로토타입, 변환, 에셋 편집을 위한 집중형 유틸리티입니다.', keywords: ['툴', '유틸리티'] },
-    '/tools/form-builder': { label: '폼 빌더', description: '시각적 워크플로로 폼을 만드는 도구입니다.', keywords: ['폼', '양식'] },
-    '/tools/logo-generator': { label: '로고 생성기', description: '빠른 브랜드 콘셉트를 위한 로고 제작 워크플로입니다.', keywords: ['로고', '브랜드'] },
-    '/tools/powerts-toolkit': { label: 'PowerT 툴킷', description: 'PowerT 코드를 React 또는 JavaScript 구현으로 변환합니다.', keywords: ['변환', '타입스크립트'] },
-    '/tools/svg-editor': { label: 'SVG 에디터', description: 'SVG 에셋을 편집하고 미리보기, 내보내기까지 처리합니다.', keywords: ['svg', '벡터', '편집'] },
+    home: { label: '홈', description: '전체 구조와 검색 흐름을 한눈에 보는 시작 화면입니다.', keywords: ['시작', '메인'] },
+    components: { label: '컴포넌트', description: '바로 가져다 쓸 수 있는 UI 패턴을 모아둔 공간입니다.', keywords: ['구성 요소', 'ui'] },
+    'full-apps': { label: '전체 앱', description: '여러 UI 조각을 엮어 만든 실제 업무 화면 예시입니다.', keywords: ['데모', '업무 앱'] },
+    libraries: { label: '라이브러리', description: '아이콘, 설정, 공용 에셋을 다시 쓰기 쉽게 모아둔 곳입니다.', keywords: ['자료', '에셋'] },
+    tools: { label: '도구', description: '제작, 변환, 편집 작업을 빠르게 처리하는 작은 도구 모음입니다.', keywords: ['툴', '유틸리티'] },
+    mcp: { label: 'MCP', description: '공용 컴포넌트 지식을 관리하고 배포하는 흐름을 살펴봅니다.', keywords: ['모델 컨텍스트'] },
+    '/': { label: '홈', description: '전체 구조와 검색 흐름을 한눈에 보는 시작 화면입니다.', keywords: ['시작', '메인'] },
+    '/components': { label: '컴포넌트', description: '바로 가져다 쓸 수 있는 UI 패턴을 모아둔 공간입니다.', keywords: ['구성 요소', 'ui'] },
+    '/components/accordions': { label: '아코디언', description: '긴 내용을 접고 펼치며 깔끔하게 정리합니다.', keywords: ['접기', '펼치기'] },
+    '/components/animations': { label: '애니메이션', description: '상태 변화와 전환을 부드럽게 보여줍니다.', keywords: ['모션', '전환'] },
+    '/components/app-shells': { label: '앱 셸', description: '업무 화면의 기본 레이아웃을 빠르게 잡습니다.', keywords: ['레이아웃', '셸'] },
+    '/components/badge': { label: '배지', description: '상태와 우선순위를 짧은 라벨로 보여줍니다.', keywords: ['태그', '상태'] },
+    '/components/buttons': { label: '버튼', description: '주요 행동과 보조 행동을 분명하게 나눕니다.', keywords: ['액션', 'cta'] },
+    '/components/button-group': { label: '버튼 그룹', description: '비슷한 선택지를 한곳에 묶어 빠르게 전환합니다.', keywords: ['세그먼트', '컨트롤'] },
+    '/components/calendars': { label: '캘린더', description: '날짜 선택과 일정 확인을 한 흐름으로 다룹니다.', keywords: ['날짜', '일정'] },
+    '/components/cards': { label: '카드', description: '정보를 작고 읽기 쉬운 단위로 묶습니다.', keywords: ['패널', '표면'] },
+    '/components/drawer': { label: '드로어', description: '현재 화면을 유지한 채 옆에서 상세 내용을 엽니다.', keywords: ['패널', '시트'] },
+    '/components/dropdowns': { label: '드롭다운', description: '추가 작업과 선택지를 필요할 때만 보여줍니다.', keywords: ['메뉴', '선택'] },
+    '/components/gallery': { label: '갤러리', description: '이미지와 시각 자료를 고르고 비교하기 쉽게 보여줍니다.', keywords: ['이미지', '미디어'] },
+    '/components/input-fields': { label: '입력 필드', description: '입력값을 받고 바로 상태를 안내합니다.', keywords: ['폼', '입력'] },
+    '/components/modals': { label: '모달', description: '중요한 선택을 실행하기 전에 사용자의 주의를 모읍니다.', keywords: ['대화상자', '오버레이'] },
+    '/components/navigation-bars': { label: '내비게이션 바', description: '상단에서 주요 이동 경로와 시작 액션을 보여줍니다.', keywords: ['헤더', '메뉴'] },
+    '/components/sidebar': { label: '사이드바', description: '메뉴가 많은 화면에서도 현재 위치를 놓치지 않게 합니다.', keywords: ['사이드 내비', '탐색'] },
+    '/components/steppers': { label: '스테퍼', description: '여러 단계의 진행 상황을 차분하게 안내합니다.', keywords: ['단계', '진행'] },
+    '/components/tabs': { label: '탭', description: '관련 정보를 한 공간에서 빠르게 오가게 합니다.', keywords: ['탭', '전환'] },
+    '/components/toggles': { label: '토글', description: '켜짐과 꺼짐 상태를 짧고 분명하게 바꿉니다.', keywords: ['스위치', '설정'] },
+    '/full-apps': { label: '전체 앱', description: '여러 UI 조각을 엮어 만든 실제 업무 화면 예시입니다.', keywords: ['데모', '업무 앱'] },
+    '/full-apps/chrome-extensions': { label: '크롬 확장', description: '확장 프로그램 구성과 설치 흐름을 한 화면에서 점검합니다.', keywords: ['확장', '크롬'] },
+    '/full-apps/cleaning-confirmation': { label: '청소 확인', description: '방문 일정, 청소 상태, 고객 확인을 함께 관리합니다.', keywords: ['청소', '방문', '서비스'] },
+    '/full-apps/feedback-app': { label: '피드백 앱', description: '고객 의견을 모으고 답변 흐름까지 이어갑니다.', keywords: ['후기', '리뷰', '고객 의견'] },
+    '/full-apps/project-management': { label: '프로젝트 관리', description: '작업, 일정, 팀 현황을 한 화면에서 추적합니다.', keywords: ['프로젝트', '작업', '칸반'] },
+    '/libraries': { label: '라이브러리', description: '아이콘, 설정, 공용 에셋을 다시 쓰기 쉽게 모아둔 곳입니다.', keywords: ['자료', '에셋'] },
+    '/libraries/custom-svg-library': { label: '커스텀 SVG 라이브러리', description: 'SVG 아이콘을 가져오고 정리해 바로 재사용합니다.', keywords: ['아이콘', '벡터'] },
+    '/libraries/yaml-library': { label: 'YAML 라이브러리', description: '자주 쓰는 YAML 설정을 저장하고 변환합니다.', keywords: ['설정', '스키마'] },
+    '/mcp': { label: 'MCP', description: '공용 컴포넌트 지식을 관리하고 배포하는 흐름을 살펴봅니다.', keywords: ['모델 컨텍스트'] },
+    '/tools': { label: '도구', description: '제작, 변환, 편집 작업을 빠르게 처리하는 작은 도구 모음입니다.', keywords: ['툴', '유틸리티'] },
+    '/tools/form-builder': { label: '폼 빌더', description: '필드를 조합해 폼을 만들고 바로 미리 봅니다.', keywords: ['폼', '양식'] },
+    '/tools/logo-generator': { label: '로고 생성기', description: '간단한 브랜드 시안을 빠르게 만들고 내보냅니다.', keywords: ['로고', '브랜드'] },
+    '/tools/powerts-toolkit': { label: 'PowerT 툴킷', description: 'PowerT 코드를 다듬고 변환하는 작업 도구입니다.', keywords: ['변환', '타입스크립트'] },
+    '/tools/svg-editor': { label: 'SVG 에디터', description: 'SVG 도형을 그리고 조정한 뒤 바로 내보냅니다.', keywords: ['svg', '벡터', '편집'] },
   },
 };
 
@@ -725,37 +859,37 @@ export function localizeRouteDescription(language: AppLanguage, keyOrPath: strin
 }
 
 export function localizeSearchItem(language: AppLanguage, item: SearchItem): SearchItem {
-  const copy = routeCopy[language][item.path] ?? {};
+  const routeCopyEntry = routeCopy[language][item.path] ?? {};
 
   return {
     ...item,
     category: localizeCategory(language, item.category) ?? item.category,
-    description: copy.description ?? item.description,
-    keywords: [...item.keywords, ...(copy.keywords ?? [])],
-    name: copy.label ?? item.name,
+    description: routeCopyEntry.description ?? item.description,
+    keywords: [...item.keywords, ...(routeCopyEntry.keywords ?? [])],
+    name: routeCopyEntry.label ?? item.name,
   };
 }
 
 export function getCatalogItemCopy(language: AppLanguage, item: CatalogItem) {
-  const copy = routeCopy[language][item.path] ?? {};
+  const routeCopyEntry = routeCopy[language][item.path] ?? {};
 
   return {
     category: localizeCategory(language, item.category),
-    description: copy.description ?? item.description,
-    name: copy.label ?? item.name,
+    description: routeCopyEntry.description ?? item.description,
+    name: routeCopyEntry.label ?? item.name,
   };
 }
 
 export function getCatalogSearchText(language: AppLanguage, item: CatalogItem) {
-  const copy = routeCopy[language][item.path] ?? {};
+  const routeCopyEntry = routeCopy[language][item.path] ?? {};
 
   return [
     item.name,
     item.description,
     item.category ?? '',
-    copy.label ?? '',
-    copy.description ?? '',
-    ...(copy.keywords ?? []),
+    routeCopyEntry.label ?? '',
+    routeCopyEntry.description ?? '',
+    ...(routeCopyEntry.keywords ?? []),
     localizeCategory(language, item.category) ?? '',
   ];
 }
@@ -765,40 +899,40 @@ export function getFullAppHighlights(language: AppLanguage, appName: string, fal
 }
 
 export function getYamlTemplateCopy<TTemplate extends YamlTemplateLike>(language: AppLanguage, template: TTemplate) {
-  const copy = yamlTemplateCopy[language][template.id];
+  const templateCopy = yamlTemplateCopy[language][template.id];
 
   return {
     ...template,
-    description: copy?.description ?? template.description,
-    title: copy?.title ?? template.title,
+    description: templateCopy?.description ?? template.description,
+    title: templateCopy?.title ?? template.title,
   };
 }
 
 export function getYamlTemplateSearchText(language: AppLanguage, template: YamlTemplateLike) {
-  const copy = yamlTemplateCopy[language][template.id];
+  const templateCopy = yamlTemplateCopy[language][template.id];
 
   return [
     template.title,
     template.description,
     template.code,
-    copy?.title ?? '',
-    copy?.description ?? '',
+    templateCopy?.title ?? '',
+    templateCopy?.description ?? '',
   ];
 }
 
 export function getComponentShowcaseConfigCopy(language: AppLanguage, config: ComponentShowcaseConfig): ComponentShowcaseConfig {
-  const copy = componentShowcaseCopy[language][`${config.title}|${config.titleHighlight}`];
+  const showcaseCopy = componentShowcaseCopy[language][`${config.title}|${config.titleHighlight}`];
 
-  if (!copy) {
+  if (!showcaseCopy) {
     return config;
   }
 
   return {
     ...config,
-    description: copy.description,
-    eyebrow: copy.eyebrow ?? config.eyebrow,
+    description: showcaseCopy.description,
+    eyebrow: showcaseCopy.eyebrow ?? config.eyebrow,
     sections: config.sections.map((section) => {
-      const sectionCopy = copy.sections[section.title];
+      const sectionCopy = showcaseCopy.sections[section.title];
 
       return {
         ...section,
@@ -807,7 +941,7 @@ export function getComponentShowcaseConfigCopy(language: AppLanguage, config: Co
         title: sectionCopy?.title ?? section.title,
       };
     }),
-    title: copy.title,
-    titleHighlight: copy.titleHighlight,
+    title: showcaseCopy.title,
+    titleHighlight: showcaseCopy.titleHighlight,
   };
 }

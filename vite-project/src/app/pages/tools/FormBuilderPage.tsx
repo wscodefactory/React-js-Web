@@ -1,5 +1,6 @@
 import { MetricGrid } from '@/app/components/showcase/MetricGrid';
 import { PageIntro } from '@/app/components/showcase/PageIntro';
+import { useLanguage } from '@/app/context/LanguageContext';
 import {
   BuilderActions,
   ExportCodePanel,
@@ -8,16 +9,19 @@ import {
   FormSettingsPanel,
   useFormBuilderController,
 } from '@/app/features/form-builder';
+import { formBuilderCopy } from '@/app/features/form-builder/copy';
 
 export function FormBuilderPage() {
+  const { language } = useLanguage();
+  const text = formBuilderCopy[language].page;
   const formBuilder = useFormBuilderController();
 
   return (
     <div className="space-y-6 p-4 md:p-8">
       <PageIntro
-        highlight="Form"
-        title="Builder"
-        description="Create custom forms with drag-and-drop simplicity"
+        highlight={text.highlight}
+        title={text.title}
+        description={text.description}
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

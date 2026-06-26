@@ -1,5 +1,6 @@
 import type { Ref } from 'react';
 import { SectionHeader } from '@/app/components/common';
+import { useLanguage } from '@/app/context/LanguageContext';
 import {
   ActionsPanel,
   CanvasPreview,
@@ -10,16 +11,19 @@ import {
   SvgToolPalette,
   useSvgEditorController,
 } from '@/app/features/svg-editor';
+import { svgEditorCopy } from '@/app/features/svg-editor/copy';
 
 export function SvgEditorPage() {
+  const { language } = useLanguage();
+  const text = svgEditorCopy[language];
   const svgEditor = useSvgEditorController();
 
   return (
     <div className="container-page">
       <SectionHeader
-        titleHighlight="SVG"
-        title="Editor"
-        description="Create and edit scalable vector graphics with professional tools"
+        titleHighlight={text.page.titleHighlight}
+        title={text.page.title}
+        description={text.page.description}
       />
 
       <input
@@ -32,7 +36,7 @@ export function SvgEditorPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="space-y-section">
-          <SvgToolPalette activeTool={svgEditor.activeTool} onSelectTool={svgEditor.addShape} />
+          <SvgToolPalette activeTool={svgEditor.activeTool} onSelectTool={svgEditor.selectToolOrAddShape} />
           <PropertiesPanel selectedShape={svgEditor.selectedShape} onUpdateSelected={svgEditor.updateSelectedShape} />
           <LayersPanel
             shapes={svgEditor.shapes}
@@ -77,12 +81,12 @@ export function SvgEditorPage() {
             onSelectShape={svgEditor.setSelectedShapeId}
           />
           <ExportSettings
-            format={svgEditor.format}
-            quality={svgEditor.quality}
-            scale={svgEditor.scale}
-            onFormatChange={svgEditor.setFormat}
-            onQualityChange={svgEditor.setQuality}
-            onScaleChange={svgEditor.setScale}
+            format={svgEditor.exportFormat}
+            quality={svgEditor.exportQuality}
+            scale={svgEditor.exportScale}
+            onFormatChange={svgEditor.setExportFormat}
+            onQualityChange={svgEditor.setExportQuality}
+            onScaleChange={svgEditor.setExportScale}
           />
           <SvgStatusCard status={svgEditor.status} />
         </section>

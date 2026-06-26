@@ -1,3 +1,5 @@
+import type { AppLanguage } from '../../context/LanguageContext';
+import { powerToolkitCopy } from './copy';
 import type { ConversionTarget, ToolProcessResult } from './types';
 
 function splitTopLevelArgs(value: string) {
@@ -103,14 +105,15 @@ function convertPowerFxStatement(statement: string, target: ConversionTarget) {
   return `// Unsupported Power Fx function "${call.name}": ${statement}`;
 }
 
-export function convertPowerFx(input: string, target: ConversionTarget): ToolProcessResult {
+export function convertPowerFx(input: string, target: ConversionTarget, language: AppLanguage = 'en'): ToolProcessResult {
+  const text = powerToolkitCopy[language].processor;
   const statements = input
     .split(/;|\n/)
     .map((line) => line.trim())
     .filter(Boolean);
 
   if (statements.length === 0) {
-    return { status: 'No Power Fx statements found.', output: 'Try Set(varName, true); Notify("Saved", NotificationType.Success)' };
+    return { status: text.powerFxMissing, output: text.powerFxMissingOutput };
   }
 
   const converted = statements.map((statement) => convertPowerFxStatement(statement, target));
@@ -125,7 +128,7 @@ export function convertPowerFx(input: string, target: ConversionTarget): ToolPro
     : 'const state = {};\nconst colRequests = [];\n\n';
 
   return {
-    status: `Converted ${statements.length} Power Fx statement${statements.length === 1 ? '' : 's'} to ${target === 'react' ? 'React' : 'JavaScript'}.`,
+    status: text.powerFxReady(statements.length, target),
     output: `${imports}${converted.join('\n')}`,
   };
 }

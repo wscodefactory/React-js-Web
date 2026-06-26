@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle, Code2, Copy, Download } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
 import { copyTextToClipboard } from '../../utils/clipboard';
+import { chromeExtensionText } from './data';
 import type { ExtensionScaffoldFile } from './scaffold';
 import { createZipBlob } from './zipBundle';
 
@@ -36,9 +38,15 @@ function slugify(value: string) {
 }
 
 export function FileList({ bundleName, files }: FileListProps) {
+  const { language } = useLanguage();
+  const text = chromeExtensionText[language].fileList;
   const [selectedPath, setSelectedPath] = useState(files[0]?.path ?? '');
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
-  const [status, setStatus] = useState('Select a generated file to inspect or copy.');
+  const [status, setStatus] = useState<string>(text.selectFile);
+
+  useEffect(() => {
+    setStatus(text.selectFile);
+  }, [text.selectFile]);
 
   const selectedFile = useMemo(() => {
     return files.find((file) => file.path === selectedPath) ?? files[0];
@@ -49,46 +57,48 @@ export function FileList({ bundleName, files }: FileListProps) {
 
     if (!copied) {
       setCopiedPath(null);
-      setStatus('Clipboard copy failed. Use download instead.');
+      setStatus(text.copyBlocked);
       return;
     }
 
     setCopiedPath(file.path);
-    setStatus(`${file.path} copied to clipboard.`);
+    setStatus(text.copied(file.path));
     window.setTimeout(() => setCopiedPath(null), 1200);
   };
 
   const downloadFile = (file: ExtensionScaffoldFile) => {
     downloadTextFile(file);
-    setStatus(`${file.path} queued for download.`);
+    setStatus(text.fileReady(file.path));
   };
 
   const downloadAllFiles = () => {
     if (files.length === 0) {
-      setStatus('No scaffold files are available to bundle.');
+      setStatus(text.noFiles);
       return;
     }
 
-    downloadBlob(createZipBlob(files), `${slugify(bundleName)}.zip`);
-    setStatus(`${files.length} scaffold files bundled into ${slugify(bundleName)}.zip.`);
+    const fileName = `${slugify(bundleName)}.zip`;
+
+    downloadBlob(createZipBlob(files), fileName);
+    setStatus(text.bundleReady(files.length, fileName));
   };
 
   return (
-    <Card>
-      <CardContent className="space-y-4">
+    <Card className="min-w-0 max-w-[calc(100vw_-_2rem)] overflow-hidden md:max-w-full">
+      <CardContent className="min-w-0 space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Generated scaffold</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Copy a single file or download the extension scaffold as a ZIP bundle.</p>
+          <div className="min-w-0">
+            <h2 className="break-words text-xl font-semibold text-gray-900 dark:text-white">{text.title}</h2>
+            <p className="break-words text-sm text-gray-500 [overflow-wrap:anywhere] dark:text-gray-400">{text.description}</p>
           </div>
           <Button variant="secondary" onClick={downloadAllFiles} className="w-fit gap-2">
             <Download className="h-4 w-4" />
-            Download all
+            {text.downloadAll}
           </Button>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <div className="space-y-2">
+        <div className="grid min-w-0 gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <div className="min-w-0 space-y-2">
             {files.map((file) => {
               const selected = selectedFile?.path === file.path;
 
@@ -111,31 +121,31 @@ export function FileList({ bundleName, files }: FileListProps) {
           </div>
 
           {selectedFile ? (
-            <div className="min-w-0 space-y-3">
+            <div className="min-w-0 max-w-full space-y-3">
               <div className="flex flex-col gap-3 rounded-xl border border-gray-200 p-3 dark:border-gray-700 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">{selectedFile.path}</p>
+                <div className="min-w-0">
+                  <p className="break-words font-medium text-gray-900 [overflow-wrap:anywhere] dark:text-white">{selectedFile.path}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{selectedFile.language}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex shrink-0 flex-wrap gap-2">
                   <Button variant="secondary" onClick={() => copyFile(selectedFile)} className="gap-2">
                     {copiedPath === selectedFile.path ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    {copiedPath === selectedFile.path ? 'Copied' : 'Copy'}
+                    {copiedPath === selectedFile.path ? text.copiedButton : text.copy}
                   </Button>
                   <Button variant="secondary" onClick={() => downloadFile(selectedFile)} className="gap-2">
                     <Download className="h-4 w-4" />
-                    File
+                    {text.file}
                   </Button>
                 </div>
               </div>
-              <pre className="max-h-80 overflow-auto rounded-xl bg-gray-950 p-4 text-sm text-gray-100">
+              <pre className="max-h-80 max-w-full overflow-auto rounded-xl bg-gray-950 p-4 text-sm text-gray-100">
                 <code>{selectedFile.content}</code>
               </pre>
             </div>
           ) : null}
         </div>
 
-        <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-gray-900 dark:text-gray-400">{status}</p>
+        <p className="break-words rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 [overflow-wrap:anywhere] dark:bg-gray-900 dark:text-gray-400">{status}</p>
       </CardContent>
     </Card>
   );

@@ -1,6 +1,8 @@
 import { Card, CardContent } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
 import { svgEditorTools } from '../../data/showcase';
 import type { SvgToolItem } from '../../types/showcase';
+import { svgEditorCopy } from './copy';
 
 type SvgToolPaletteProps = {
   activeTool: string;
@@ -11,10 +13,13 @@ export function SvgToolPalette({
   activeTool,
   onSelectTool,
 }: SvgToolPaletteProps) {
+  const { language } = useLanguage();
+  const text = svgEditorCopy[language].tools;
+
   return (
     <Card>
       <CardContent>
-        <h2 className="card-title">Tools</h2>
+        <h2 className="card-title">{text.title}</h2>
         <div className="mt-4 grid grid-cols-2 gap-2">
           {svgEditorTools.map((tool: SvgToolItem) => {
             const Icon = tool.icon;
@@ -32,7 +37,7 @@ export function SvgToolPalette({
                 }`}
               >
                 <Icon className="icon" />
-                <span className="text-xs">{tool.label}</span>
+                <span className="text-xs">{text[tool.id as keyof Omit<typeof text, 'title'>] ?? tool.label}</span>
               </button>
             );
           })}

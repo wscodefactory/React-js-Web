@@ -1,7 +1,13 @@
 import type { supportedPlatforms } from './data';
 
 export type PlatformId = (typeof supportedPlatforms)[number]['id'];
-export type SupportedPlatform = (typeof supportedPlatforms)[number];
+export type SupportedPlatform = {
+  assets: readonly string[];
+  description: string;
+  id: PlatformId;
+  label: string;
+  status: string;
+};
 
 export type ImportedSource = {
   id: string;

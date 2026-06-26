@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { powerToolkitResources } from '../../data/showcase';
-import { quickToolHelp, resourceToolMap, toolSamples } from './data';
+import { useLanguage } from '../../context/LanguageContext';
+import { loadStoredList, saveStoredList } from '../../utils/storage';
+import { resourceToolMap, toolSamples } from './data';
 import { processInput } from './processors';
+import { powerToolkitCopy } from './copy';
 import type { ConversionTarget, QuickToolValue, ToolHistoryItem, ToolProcessResult } from './types';
 
 const historyStorageKey = 'web5:powerts-toolkit-history:v1';
@@ -37,34 +40,26 @@ function readStoredHistory(): ToolHistoryItem[] {
     return [];
   }
 
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(historyStorageKey) ?? '[]') as unknown;
-
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.filter(isToolHistoryItem).slice(0, historyLimit);
-  } catch {
-    return [];
-  }
+  return loadStoredList(historyStorageKey, isToolHistoryItem).slice(0, historyLimit);
 }
 
 export function usePowerTsToolkitController() {
+  const { language } = useLanguage();
+  const text = powerToolkitCopy[language];
   const [selectedTool, setSelectedTool] = useState<QuickToolValue>('formatter');
   const [conversionTarget, setConversionTarget] = useState<ConversionTarget>('react');
   const [input, setInput] = useState(toolSamples.formatter);
-  const [result, setResult] = useState(() => processInput('formatter', toolSamples.formatter, 'react'));
+  const [result, setResult] = useState(() => processInput('formatter', toolSamples.formatter, 'react', language));
   const [history, setHistory] = useState<ToolHistoryItem[]>(() => readStoredHistory());
 
-  const selectedHelp = useMemo(() => quickToolHelp[selectedTool], [selectedTool]);
+  const selectedHelp = useMemo(() => text.quick.help[selectedTool], [selectedTool, text.quick.help]);
   const selectedResourceId = useMemo(
     () => powerToolkitResources.find((item) => resourceToolMap[item.title] === selectedTool)?.id,
     [selectedTool],
   );
 
   useEffect(() => {
-    window.localStorage.setItem(historyStorageKey, JSON.stringify(history));
+    saveStoredList(historyStorageKey, history);
   }, [history]);
 
   const addHistoryItem = (nextResult: ToolProcessResult) => {
@@ -88,20 +83,20 @@ export function usePowerTsToolkitController() {
   };
 
   const handleProcess = () => {
-    const nextResult = processInput(selectedTool, input, conversionTarget);
+    const nextResult = processInput(selectedTool, input, conversionTarget, language);
     setResult(nextResult);
     addHistoryItem(nextResult);
   };
 
   const handleClear = () => {
     setInput('');
-    setResult({ status: 'Input cleared.', output: '' });
+    setResult({ status: language === 'ko' ? '입력을 지웠습니다.' : 'Input cleared.', output: '' });
   };
 
   const handleToolChange = (value: QuickToolValue) => {
     setSelectedTool(value);
     setInput(toolSamples[value]);
-    setResult(processInput(value, toolSamples[value], conversionTarget));
+    setResult(processInput(value, toolSamples[value], conversionTarget, language));
   };
 
   const handleResourceSelect = (title: string) => {
@@ -116,13 +111,13 @@ export function usePowerTsToolkitController() {
     setConversionTarget(value);
 
     if (selectedTool === 'powerfx') {
-      setResult(processInput(selectedTool, input, value));
+      setResult(processInput(selectedTool, input, value, language));
     }
   };
 
   const loadSample = () => {
     setInput(toolSamples[selectedTool]);
-    setResult(processInput(selectedTool, toolSamples[selectedTool], conversionTarget));
+    setResult(processInput(selectedTool, toolSamples[selectedTool], conversionTarget, language));
   };
 
   const loadHistoryItem = (item: ToolHistoryItem) => {

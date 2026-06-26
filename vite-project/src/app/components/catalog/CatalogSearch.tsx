@@ -48,7 +48,7 @@ export function CatalogSearch({
           value={searchQuery}
           onChange={(event) => onSearchQueryChange(event.target.value)}
           onFocus={onInputFocus}
-          className="form-input w-full pl-12 pr-12"
+          className="form-input w-full !pl-12 !pr-12"
         />
         {searchQuery.trim() ? (
           <button

@@ -1,5 +1,7 @@
 import { CheckCircle2, Copy, Download, PackageCheck } from 'lucide-react';
 import { Button, Card, CardContent } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
+import { mcpCopy } from './copy';
 import type { SupportedPlatform } from './types';
 
 type ManifestPreviewPanelProps = {
@@ -21,6 +23,9 @@ export function ManifestPreviewPanel({
   onDownloadPackage,
   platform,
 }: ManifestPreviewPanelProps) {
+  const { language } = useLanguage();
+  const text = mcpCopy[language].manifest;
+
   const downloadManifest = () => {
     const blob = new Blob([manifestPreview], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -37,19 +42,19 @@ export function ManifestPreviewPanel({
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="card-title">Manifest Preview</h2>
-            <p className="card-description">{platform.label} package metadata</p>
+            <h2 className="card-title">{text.title}</h2>
+            <p className="card-description">{text.subtitle(platform.label)}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={onCopyManifest} className="shrink-0 whitespace-nowrap">
               <span className="inline-flex items-center gap-2 whitespace-nowrap">
                 {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? 'Copied' : 'Copy'}
+                {copied ? text.copied : text.copy}
               </span>
             </Button>
             <Button variant="secondary" onClick={downloadManifest} className="shrink-0 gap-2 whitespace-nowrap">
               <Download className="h-4 w-4" />
-              JSON
+              {text.json}
             </Button>
             <Button
               variant="secondary"
@@ -58,7 +63,7 @@ export function ManifestPreviewPanel({
               className="shrink-0 gap-2 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download className="h-4 w-4" />
-              Package
+              {text.package}
             </Button>
           </div>
         </div>

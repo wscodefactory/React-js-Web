@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, FormField } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
 import { SVG_CANVAS_HEIGHT, SVG_CANVAS_WIDTH, SVG_MIN_SHAPE_SIZE } from './constants';
+import { svgEditorCopy } from './copy';
 import type { SvgShape } from './types';
 
 type PropertiesPanelProps = {
@@ -12,6 +14,8 @@ export function PropertiesPanel({
   onUpdateSelected,
   selectedShape,
 }: PropertiesPanelProps) {
+  const { language } = useLanguage();
+  const text = svgEditorCopy[language].properties;
   const [widthDraft, setWidthDraft] = useState('');
   const [heightDraft, setHeightDraft] = useState('');
 
@@ -59,11 +63,11 @@ export function PropertiesPanel({
   return (
     <Card>
       <CardContent>
-        <h2 className="card-title">Properties</h2>
+        <h2 className="card-title">{text.title}</h2>
         {selectedShape ? (
           <div className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <FormField label="Width">
+              <FormField label={text.width}>
                 <input
                   type="number"
                   min={SVG_MIN_SHAPE_SIZE}
@@ -75,7 +79,7 @@ export function PropertiesPanel({
                   className="form-input"
                 />
               </FormField>
-              <FormField label="Height">
+              <FormField label={text.height}>
                 <input
                   type="number"
                   min={SVG_MIN_SHAPE_SIZE}
@@ -90,21 +94,21 @@ export function PropertiesPanel({
             </div>
 
             {selectedShape.type !== 'path' ? (
-              <FormField label="Fill Color">
+              <FormField label={text.fill}>
                 <div className="form-color-group">
                   <input type="color" value={selectedShape.fill} onChange={(event) => onUpdateSelected({ fill: event.target.value })} className="form-color-picker" />
                   <input value={selectedShape.fill} onChange={(event) => onUpdateSelected({ fill: event.target.value })} className="form-input" />
                 </div>
               </FormField>
             ) : null}
-            <FormField label="Stroke Color">
+            <FormField label={text.stroke}>
               <div className="form-color-group">
                 <input type="color" value={selectedShape.stroke} onChange={(event) => onUpdateSelected({ stroke: event.target.value })} className="form-color-picker" />
                 <input value={selectedShape.stroke} onChange={(event) => onUpdateSelected({ stroke: event.target.value })} className="form-input" />
               </div>
             </FormField>
 
-            <FormField label="Stroke Width">
+            <FormField label={text.strokeWidth}>
               <div className="flex items-center gap-3">
                 <input
                   type="range"
@@ -118,7 +122,7 @@ export function PropertiesPanel({
               </div>
             </FormField>
 
-            <FormField label="Opacity">
+            <FormField label={text.opacity}>
               <div className="flex items-center gap-3">
                 <input
                   type="range"
@@ -133,7 +137,7 @@ export function PropertiesPanel({
             </FormField>
           </div>
         ) : (
-          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">Select a shape to edit its properties.</p>
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">{text.empty}</p>
         )}
       </CardContent>
     </Card>

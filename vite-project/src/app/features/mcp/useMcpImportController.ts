@@ -1,71 +1,42 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { copyTextToClipboard } from '../../utils/clipboard';
 import { supportedPlatforms } from './data';
 import { parseImportUrl } from './importUrl';
+import { getLocalizedPlatform, mcpCopy } from './copy';
+import { readStoredImportHistory, saveStoredImportHistory } from './importHistoryStorage';
+import { downloadJsonFile, slugifyPackageName } from './packageExport';
 import type { ImportedSource, McpManifest, McpPackage, PlatformId } from './types';
 
-const importHistoryStorageKey = 'web5:mcp-import-history:v1';
-
-function readStoredImportHistory() {
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(importHistoryStorageKey) ?? '[]');
-    return Array.isArray(parsed) ? parsed.filter((item): item is ImportedSource => (
-      item &&
-      typeof item.id === 'string' &&
-      typeof item.name === 'string' &&
-      typeof item.host === 'string' &&
-      typeof item.protocol === 'string' &&
-      typeof item.url === 'string' &&
-      typeof item.importedAt === 'string' &&
-      supportedPlatforms.some((platform) => platform.id === item.platform)
-    )) : [];
-  } catch {
-    return [];
-  }
-}
-
-function downloadText(content: string, fileName: string) {
-  const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-function slugify(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'mcp-package';
-}
-
 export function useMcpImportController() {
+  const { language } = useLanguage();
+  const text = mcpCopy[language];
   const [importUrl, setImportUrl] = useState('https://github.com/wscodefactory/React-js-Web');
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId>('canvas');
   const [importedSource, setImportedSource] = useState<ImportedSource | null>(null);
   const [importHistory, setImportHistory] = useState<ImportedSource[]>(() => readStoredImportHistory());
   const [copied, setCopied] = useState(false);
-  const [copyStatus, setCopyStatus] = useState('Manifest metadata is ready to copy.');
+  const [copyStatus, setCopyStatus] = useState(text.status.manifestReady);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    window.localStorage.setItem(importHistoryStorageKey, JSON.stringify(importHistory));
+    saveStoredImportHistory(importHistory);
   }, [importHistory]);
 
   const parsedUrl = useMemo(() => parseImportUrl(importUrl), [importUrl]);
   const selectedPlatformInfo = useMemo(
-    () => supportedPlatforms.find((platform) => platform.id === selectedPlatform) ?? supportedPlatforms[0],
-    [selectedPlatform],
+    () => getLocalizedPlatform(language, supportedPlatforms.find((platform) => platform.id === selectedPlatform) ?? supportedPlatforms[0]),
+    [language, selectedPlatform],
   );
 
   const manifest = useMemo<McpManifest>(() => {
     const source = importedSource ?? {
-      name: parsedUrl.name || 'pending-source',
-      host: parsedUrl.host || 'pending-host',
+      name: parsedUrl.name || text.status.pendingSource,
+      host: parsedUrl.host || text.status.pendingHost,
       protocol: parsedUrl.protocol || 'https',
       url: parsedUrl.href || importUrl,
       platform: selectedPlatform,
-      importedAt: 'Not imported',
+      importedAt: text.status.notImported,
     };
 
     return {
@@ -76,7 +47,7 @@ export function useMcpImportController() {
       source: source.url,
       status: selectedPlatformInfo.status,
     };
-  }, [importUrl, importedSource, parsedUrl.href, parsedUrl.host, parsedUrl.name, parsedUrl.protocol, selectedPlatform, selectedPlatformInfo]);
+  }, [importUrl, importedSource, parsedUrl.href, parsedUrl.host, parsedUrl.name, parsedUrl.protocol, selectedPlatform, selectedPlatformInfo, text.status.notImported, text.status.pendingHost, text.status.pendingSource]);
   const manifestPreview = useMemo(() => JSON.stringify(manifest, null, 2), [manifest]);
 
   const buildPackage = (): McpPackage | null => {
@@ -89,10 +60,10 @@ export function useMcpImportController() {
       install: {
         assets: selectedPlatformInfo.assets,
         checklist: [
-          `Review ${importedSource.name} source before publishing.`,
-          `Map imported assets to ${selectedPlatformInfo.label}.`,
-          'Verify usage notes, permissions, and preview metadata.',
-          'Publish the package manifest after review.',
+          text.checklist.review(importedSource.name),
+          text.checklist.mapAssets(selectedPlatformInfo.label),
+          text.checklist.verify,
+          text.checklist.publish,
         ],
         target: selectedPlatformInfo.label,
       },
@@ -105,18 +76,18 @@ export function useMcpImportController() {
   const changeImportUrl = (value: string) => {
     setImportUrl(value);
     setCopied(false);
-    setCopyStatus('Manifest metadata updated.');
+    setCopyStatus(text.status.metadataUpdated);
   };
 
   const selectPlatform = (platform: PlatformId) => {
     setSelectedPlatform(platform);
     setCopied(false);
-    setCopyStatus('Manifest metadata updated.');
+    setCopyStatus(text.status.metadataUpdated);
   };
 
   const handleImport = () => {
     if (!parsedUrl.valid) {
-      setError('Enter a valid https:// or file URL before importing.');
+      setError(text.status.invalidUrl);
       setImportedSource(null);
       return;
     }
@@ -128,12 +99,12 @@ export function useMcpImportController() {
       protocol: parsedUrl.protocol,
       url: parsedUrl.href,
       platform: selectedPlatform,
-      importedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      importedAt: new Date().toLocaleTimeString(language === 'ko' ? 'ko-KR' : 'en-US', { hour: '2-digit', minute: '2-digit' }),
     };
 
     setError('');
     setCopied(false);
-    setCopyStatus('Manifest metadata updated.');
+    setCopyStatus(text.status.metadataUpdated);
     setImportedSource(nextSource);
     setImportHistory((current) => [
       nextSource,
@@ -144,19 +115,19 @@ export function useMcpImportController() {
   const copyManifest = async () => {
     const wasCopied = await copyTextToClipboard(manifestPreview);
     setCopied(wasCopied);
-    setCopyStatus(wasCopied ? 'Manifest copied to clipboard.' : 'Clipboard copy failed. Use JSON download instead.');
+    setCopyStatus(wasCopied ? text.status.copied : text.status.copyFailed);
   };
 
   const downloadPackage = () => {
     const packagePayload = buildPackage();
 
     if (!packagePayload) {
-      setCopyStatus('Import a source before downloading an MCP package.');
+      setCopyStatus(text.status.importFirst);
       return;
     }
 
-    downloadText(JSON.stringify(packagePayload, null, 2), `${slugify(`${packagePayload.source.name}-${selectedPlatformInfo.id}`)}.mcp-package.json`);
-    setCopyStatus('MCP package queued for download.');
+    downloadJsonFile(JSON.stringify(packagePayload, null, 2), `${slugifyPackageName(`${packagePayload.source.name}-${selectedPlatformInfo.id}`)}.mcp-package.json`);
+    setCopyStatus(text.status.packageReady);
   };
 
   const restoreImport = (source: ImportedSource) => {
@@ -164,7 +135,7 @@ export function useMcpImportController() {
     setImportUrl(source.url);
     setSelectedPlatform(source.platform);
     setCopied(false);
-    setCopyStatus('Manifest metadata restored.');
+    setCopyStatus(text.status.metadataRestored);
     setError('');
   };
 
@@ -180,7 +151,7 @@ export function useMcpImportController() {
     setImportHistory([]);
     setImportedSource(null);
     setCopied(false);
-    setCopyStatus('Import history cleared.');
+    setCopyStatus(text.status.historyCleared);
   };
 
   return {

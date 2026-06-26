@@ -1,4 +1,6 @@
 import { Card, CardContent } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
+import { chromeExtensionText } from './data';
 import type { ExtensionTemplate } from './types';
 
 type ImplementationNotesProps = {
@@ -6,26 +8,24 @@ type ImplementationNotesProps = {
 };
 
 export function ImplementationNotes({ template }: ImplementationNotesProps) {
+  const { language } = useLanguage();
+  const text = chromeExtensionText[language].implementation;
+  const hasStoragePermission = template.permissions.includes('storage');
+
   return (
-    <Card>
-      <CardContent className="grid gap-4 md:grid-cols-3">
-        <div>
-          <h3 className="font-semibold text-gray-900 dark:text-white">Storage</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Persist template data with the {template.permissions.includes('storage') ? 'declared storage permission' : 'selected permissions'}.
-          </p>
+    <Card className="min-w-0 max-w-[calc(100vw_-_2rem)] overflow-hidden md:max-w-full">
+      <CardContent className="grid min-w-0 gap-4 md:grid-cols-3">
+        <div className="min-w-0">
+          <h3 className="break-words font-semibold text-gray-900 dark:text-white">{text.storageTitle}</h3>
+          <p className="mt-1 break-words text-sm text-gray-500 [overflow-wrap:anywhere] dark:text-gray-400">{text.storageBody(hasStoragePermission)}</p>
         </div>
-        <div>
-          <h3 className="font-semibold text-gray-900 dark:text-white">Popup</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Use the preview shell as the first popup route and connect list actions next.
-          </p>
+        <div className="min-w-0">
+          <h3 className="break-words font-semibold text-gray-900 dark:text-white">{text.popupTitle}</h3>
+          <p className="mt-1 break-words text-sm text-gray-500 [overflow-wrap:anywhere] dark:text-gray-400">{text.popupBody}</p>
         </div>
-        <div>
-          <h3 className="font-semibold text-gray-900 dark:text-white">Testing</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Load the unpacked folder, verify permissions, then run a popup interaction pass.
-          </p>
+        <div className="min-w-0">
+          <h3 className="break-words font-semibold text-gray-900 dark:text-white">{text.testingTitle}</h3>
+          <p className="mt-1 break-words text-sm text-gray-500 [overflow-wrap:anywhere] dark:text-gray-400">{text.testingBody}</p>
         </div>
       </CardContent>
     </Card>

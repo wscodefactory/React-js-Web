@@ -76,11 +76,11 @@ export function Layout() {
       <Header />
       <div className="layout-content">
         {isHomePage ? (
-          <main className="min-h-screen">
+          <main className="min-h-screen w-full max-w-full overflow-x-hidden">
             <Outlet />
           </main>
         ) : (
-          <div className="min-h-screen">
+          <div className="min-h-screen w-full max-w-full overflow-x-hidden">
             <div className="layout-grid">
               <div className="layout-spacer" />
 

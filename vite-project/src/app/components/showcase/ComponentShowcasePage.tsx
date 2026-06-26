@@ -4,18 +4,11 @@ import type { ComponentShowcaseConfig } from "@/app/types/component-showcase";
 import { Button, Card, CardContent } from "@/app/components/common";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { componentShowcaseText, getComponentShowcaseConfigCopy } from "@/app/i18n";
-import { ComponentPreviewCard, getPreviewSectionId, savedPreviewStorageKey } from "./ComponentPreviewCard";
+import { ComponentPreviewCard, getPreviewSectionId } from "./ComponentPreviewCard";
+import { readSavedPreviewIds, savedPreviewChangeEvent } from "./savedPreviews";
 
 export interface ComponentShowcasePageProps {
   config: ComponentShowcaseConfig;
-}
-
-function readSavedPreviewIds() {
-  try {
-    return JSON.parse(window.localStorage.getItem(savedPreviewStorageKey) ?? "[]") as string[];
-  } catch {
-    return [];
-  }
 }
 
 /**
@@ -70,19 +63,19 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
       setSavedPreviewIds(readSavedPreviewIds());
     }
 
-    window.addEventListener("web5:saved-preview-change", handleSavedPreviewChange);
+    window.addEventListener(savedPreviewChangeEvent, handleSavedPreviewChange);
     window.addEventListener("storage", handleStorageChange);
 
     return () => {
-      window.removeEventListener("web5:saved-preview-change", handleSavedPreviewChange);
+      window.removeEventListener(savedPreviewChangeEvent, handleSavedPreviewChange);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="w-full min-w-0 max-w-[100vw] overflow-x-hidden p-4 md:p-8">
       <header className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-3xl">
+        <div className="w-full min-w-0 max-w-[calc(100vw-2rem)] md:max-w-3xl">
           {localizedConfig.eyebrow ? (
             <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
               {localizedConfig.eyebrow}
@@ -91,12 +84,12 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
           <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white md:text-4xl">
             {localizedConfig.title} <span className="text-green-600 dark:text-green-400">{localizedConfig.titleHighlight}</span>
           </h1>
-          <p className="mb-2 text-gray-600 dark:text-gray-400">{localizedConfig.description}</p>
+          <p className="mb-2 w-full max-w-[calc(100vw-2rem)] break-words text-gray-600 [overflow-wrap:anywhere] dark:text-gray-400 md:max-w-full">{localizedConfig.description}</p>
           {localizedConfig.updatedAt ? (
             <p className="text-sm text-gray-500 dark:text-gray-500">{text.lastUpdated(localizedConfig.updatedAt)}</p>
           ) : null}
         </div>
-        <div className="flex w-full flex-col gap-2 lg:max-w-md">
+        <div className="flex w-full min-w-0 max-w-[calc(100vw-2rem)] flex-col gap-2 md:max-w-full lg:max-w-md">
           <label className="relative block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEven
 import { useLanguage } from '../context/LanguageContext';
 import { getCatalogSearchText } from '../i18n';
 import type { CatalogItem } from '../types/catalog';
-import { loadStoredList, saveStoredList } from '../utils/storage';
+import { loadStoredList, removeStoredValue, saveStoredList } from '../utils/storage';
 
 export interface SearchState {
   searchQuery: string;
@@ -22,7 +22,7 @@ export function useCatalogSearch(items: CatalogItem[], storageKey: string): Sear
   const { language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<CatalogItem[]>([]);
+  const [recentSearches, setRecentSearches] = useState<CatalogItem[]>(() => loadStoredList(storageKey, isCatalogItem));
   const dropdownRef = useRef<HTMLDivElement>(null!);
 
   const filteredItems = useMemo(() => {
@@ -30,12 +30,9 @@ export function useCatalogSearch(items: CatalogItem[], storageKey: string): Sear
       return items;
     }
 
-    const normalizedQuery = searchQuery.toLowerCase();
-    return items.filter((item) => {
-      return getCatalogSearchText(language, item)
-        .filter(Boolean)
-        .some((value) => value!.toLowerCase().includes(normalizedQuery));
-    });
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return items.filter((catalogItem) => getCatalogSearchText(language, catalogItem)
+      .some((searchValue) => Boolean(searchValue) && searchValue.toLowerCase().includes(normalizedQuery)));
   }, [items, language, searchQuery]);
 
   useEffect(() => {
@@ -73,7 +70,7 @@ export function useCatalogSearch(items: CatalogItem[], storageKey: string): Sear
 
   const clearAllRecentSearches = () => {
     setRecentSearches([]);
-    localStorage.removeItem(storageKey);
+    removeStoredValue(storageKey);
   };
 
   return {

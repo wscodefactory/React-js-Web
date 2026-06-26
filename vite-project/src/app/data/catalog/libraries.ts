@@ -2,6 +2,6 @@ import { FileCode, Palette } from 'lucide-react';
 import type { CatalogItem } from '../../types/catalog';
 
 export const libraryCatalog: CatalogItem[] = [
-  { name: 'YAML Library', description: 'Store and manage reusable YAML assets for faster development.', path: '/libraries/yaml-library', icon: FileCode, category: 'assets' },
-  { name: 'Custom SVG Library', description: 'Import, organize, and reuse custom SVG icons.', path: '/libraries/custom-svg-library', icon: Palette, category: 'graphics' },
+  { name: 'YAML Library', description: 'Save, convert, and reuse YAML snippets.', path: '/libraries/yaml-library', icon: FileCode, category: 'assets' },
+  { name: 'Custom SVG Library', description: 'Collect, tune, and export SVG icons.', path: '/libraries/custom-svg-library', icon: Palette, category: 'graphics' },
 ];

@@ -1,4 +1,6 @@
 import { Button, Card, CardContent, FormField, Input, SectionHeader } from '../../components/common';
+import { useLanguage } from '../../context/LanguageContext';
+import { mcpCopy } from './copy';
 import type { ImportedSource } from './types';
 
 type McpImportHeroProps = {
@@ -16,25 +18,28 @@ export function McpImportHero({
   onImport,
   onImportUrlChange,
 }: McpImportHeroProps) {
+  const { language } = useLanguage();
+  const text = mcpCopy[language].hero;
+
   return (
     <section className="mx-auto max-w-3xl space-y-6 text-center">
       <SectionHeader
-        title="MCP"
-        titleHighlight="PowerLibs"
-        description="Build and share a component library platform for Power Apps style workflows, with a community-driven distribution model."
+        title={text.title}
+        titleHighlight={text.titleHighlight}
+        description={text.description}
       />
 
       <div className="flex flex-col items-end justify-center gap-3 sm:flex-row">
-        <FormField label="Import URL" className="w-full text-left sm:flex-1">
+        <FormField label={text.importUrl} className="w-full text-left sm:flex-1">
           <Input
             type="text"
             value={importUrl}
             onChange={(event) => onImportUrlChange(event.target.value)}
-            placeholder="Paste an import URL"
+            placeholder={text.placeholder}
           />
         </FormField>
         <Button className="w-full sm:w-auto" onClick={onImport}>
-          Import
+          {text.importButton}
         </Button>
       </div>
 
@@ -47,13 +52,13 @@ export function McpImportHero({
           <CardContent className="text-left">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="card-title">Imported Source</h2>
+                <h2 className="card-title">{text.sourceTitle}</h2>
                 <p className="card-description">
-                  {importedSource.name} from {importedSource.host}
+                  {text.sourceFrom(importedSource.name, importedSource.host)}
                 </p>
               </div>
               <span className="badge badge-success">
-                {importedSource.protocol.toUpperCase()} at {importedSource.importedAt}
+                {text.importedAt(importedSource.protocol, importedSource.importedAt)}
               </span>
             </div>
           </CardContent>

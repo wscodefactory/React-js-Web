@@ -1,47 +1,40 @@
 import { useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import { copyTextToClipboard } from '../../utils/clipboard';
 import { initialShapes } from './data';
 import { exportAsset } from './exportAsset';
 import { buildSvgMarkup, parseImportedSvg } from './svgMarkup';
-import { SVG_CANVAS_HEIGHT, SVG_CANVAS_WIDTH, SVG_MIN_SHAPE_SIZE } from './constants';
-import { clampCanvasPoint, getPointBounds, getPointDistance, scalePathPoints, translatePathPoints } from './pathGeometry';
-import type { ExportFormat, ExportQuality, ExportScale, SvgPoint, SvgShape, SvgShapeType } from './types';
-
-const HISTORY_LIMIT = 50;
-
-const cloneShapes = (shapeList: SvgShape[]) => shapeList.map((shape) => ({
-  ...shape,
-  points: shape.points?.map((point) => ({ ...point })),
-}));
-
-const areShapeListsEqual = (firstList: SvgShape[], secondList: SvgShape[]) => (
-  JSON.stringify(firstList) === JSON.stringify(secondList)
-);
-
-const getNextSelectedShapeId = (shapeList: SvgShape[], currentId: number | null) => {
-  if (currentId !== null && shapeList.some((shape) => shape.id === currentId)) {
-    return currentId;
-  }
-
-  return shapeList[0]?.id ?? null;
-};
+import { getSvgShapeDisplayName, svgEditorCopy } from './copy';
+import { areShapeListsEqual, cloneShapes, getNextSelectedShapeId, getNextShapeId, SVG_HISTORY_LIMIT } from './shapeListUtils';
+import {
+  applyShapeUpdates,
+  createDuplicateShape,
+  createPathShape,
+  createShapeForTool,
+  getSanitizedFreehandPoints,
+  moveShapeToPosition,
+} from './shapeTransformUtils';
+import type { ExportFormat, ExportQuality, ExportScale, SvgPoint, SvgShape } from './types';
 
 export function useSvgEditorController() {
+  const { language } = useLanguage();
+  const text = svgEditorCopy[language];
+  const displayShapeName = (name: string) => getSvgShapeDisplayName(language, name);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const transformSnapshotRef = useRef<SvgShape[] | null>(null);
   const [shapes, setShapes] = useState<SvgShape[]>(() => cloneShapes(initialShapes));
-  const [history, setHistory] = useState<SvgShape[][]>([]);
-  const [future, setFuture] = useState<SvgShape[][]>([]);
+  const [undoStack, setUndoStack] = useState<SvgShape[][]>([]);
+  const [redoStack, setRedoStack] = useState<SvgShape[][]>([]);
   const [selectedShapeId, setSelectedShapeId] = useState<number | null>(initialShapes[0].id);
   const [activeTool, setActiveTool] = useState('select');
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
   const [showSource, setShowSource] = useState(false);
-  const [format, setFormat] = useState<ExportFormat>('svg');
-  const [quality, setQuality] = useState<ExportQuality>('high');
-  const [scale, setScale] = useState<ExportScale>('1x');
-  const [status, setStatus] = useState('Select a shape or add a new one with the tool palette.');
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('svg');
+  const [exportQuality, setExportQuality] = useState<ExportQuality>('high');
+  const [exportScale, setExportScale] = useState<ExportScale>('1x');
+  const [status, setStatus] = useState(text.status.ready);
 
   const selectedShape = shapes.find((shape) => shape.id === selectedShapeId);
   const svgMarkup = useMemo(() => buildSvgMarkup(shapes), [shapes]);
@@ -49,16 +42,16 @@ export function useSvgEditorController() {
   const pushHistory = (snapshot: SvgShape[]) => {
     const nextSnapshot = cloneShapes(snapshot);
 
-    setHistory((current) => {
+    setUndoStack((current) => {
       const lastSnapshot = current[current.length - 1];
 
       if (lastSnapshot && areShapeListsEqual(lastSnapshot, nextSnapshot)) {
         return current;
       }
 
-      return [...current, nextSnapshot].slice(-HISTORY_LIMIT);
+      return [...current, nextSnapshot].slice(-SVG_HISTORY_LIMIT);
     });
-    setFuture([]);
+    setRedoStack([]);
   };
 
   const applyShapesWithHistory = (nextShapes: SvgShape[]) => {
@@ -71,102 +64,43 @@ export function useSvgEditorController() {
     return true;
   };
 
-  const clampShapeGeometry = (shape: SvgShape, updates: Partial<SvgShape>) => {
-    const next = { ...shape, ...updates };
-    const width = Math.round(Math.min(Math.max(next.width, SVG_MIN_SHAPE_SIZE), SVG_CANVAS_WIDTH));
-    const height = Math.round(Math.min(Math.max(next.height, SVG_MIN_SHAPE_SIZE), SVG_CANVAS_HEIGHT));
-    const x = Math.round(Math.min(Math.max(next.x, 0), Math.max(0, SVG_CANVAS_WIDTH - width)));
-    const y = Math.round(Math.min(Math.max(next.y, 0), Math.max(0, SVG_CANVAS_HEIGHT - height)));
-
-    return { ...next, height, width, x, y };
-  };
-
-  const applyShapeUpdates = (shape: SvgShape, updates: Partial<SvgShape>) => {
-    const nextShape = clampShapeGeometry(shape, updates);
-    const shouldTransformPath = shape.type === 'path'
-      && Boolean(shape.points?.length)
-      && ['height', 'width', 'x', 'y'].some((key) => key in updates);
-
-    if (!shouldTransformPath) {
-      return nextShape;
-    }
-
-    return {
-      ...nextShape,
-      points: scalePathPoints(shape, nextShape),
-    };
-  };
-
-  const getSanitizedFreehandPoints = (points: SvgPoint[]) => (
-    points.map(clampCanvasPoint).filter((point, index, pointList) => (
-      index === 0 || getPointDistance(pointList[index - 1], point) >= 2
-    ))
-  );
-
-  const addShape = (tool: string) => {
+  const selectToolOrAddShape = (tool: string) => {
     setActiveTool(tool);
 
     if (tool === 'select') {
-      setStatus('Select mode enabled. Click a layer or shape to edit it.');
+      setStatus(text.status.selectMode);
       return;
     }
 
     if (tool === 'pen') {
-      setStatus('Pen mode enabled. Drag directly on the canvas to draw a path.');
+      setStatus(text.status.penMode);
       return;
     }
 
     pushHistory(shapes);
-    const nextId = Math.max(0, ...shapes.map((shape) => shape.id)) + 1;
-    const shapeType: SvgShapeType = tool === 'circle' ? 'circle' : 'rect';
-    const nextShape: SvgShape = {
-      id: nextId,
-      name: shapeType === 'circle' ? `Circle ${nextId}` : `Rectangle ${nextId}`,
-      type: shapeType,
-      x: 80 + (nextId * 36) % 360,
-      y: 80 + (nextId * 28) % 240,
-      width: shapeType === 'circle' ? 180 : 240,
-      height: shapeType === 'circle' ? 180 : 160,
-      fill: '#16a34a',
-      stroke: '#000000',
-      strokeWidth: 2,
-      opacity: 100,
-      visible: true,
-      locked: false,
-    };
+    const nextId = getNextShapeId(shapes);
+    const nextShape = createShapeForTool(tool, nextId);
 
     setShapes((current) => [...current, nextShape]);
     setSelectedShapeId(nextId);
-    setStatus(`${nextShape.name} added to canvas.`);
+    setStatus(text.status.duplicated(displayShapeName(nextShape.name)));
   };
 
   const createFreehandPath = (points: SvgPoint[]) => {
     const nextPoints = getSanitizedFreehandPoints(points);
 
     if (nextPoints.length < 2) {
-      setStatus('Drag a longer stroke to create a path.');
+      setStatus(text.status.pathTooShort);
       return;
     }
 
-    const nextId = Math.max(0, ...shapes.map((shape) => shape.id)) + 1;
-    const pathShape: SvgShape = {
-      id: nextId,
-      name: `Path ${nextId}`,
-      type: 'path',
-      ...getPointBounds(nextPoints),
-      fill: 'none',
-      stroke: '#111827',
-      strokeWidth: 3,
-      opacity: 100,
-      points: nextPoints,
-      visible: true,
-      locked: false,
-    };
+    const nextId = getNextShapeId(shapes);
+    const pathShape = createPathShape(nextId, nextPoints);
 
     pushHistory(shapes);
     setShapes((current) => [...current, pathShape]);
     setSelectedShapeId(nextId);
-    setStatus(`${pathShape.name} drawn with ${nextPoints.length} points.`);
+    setStatus(text.status.createdPath(displayShapeName(pathShape.name), nextPoints.length));
   };
 
   const updateSelectedShape = (updates: Partial<SvgShape>) => {
@@ -175,7 +109,7 @@ export function useSvgEditorController() {
     const shape = shapes.find((item) => item.id === selectedShapeId);
 
     if (shape?.locked) {
-      setStatus(`${shape.name} is locked. Unlock it before editing properties.`);
+      setStatus(text.status.lockedProperties(displayShapeName(shape.name)));
       return;
     }
 
@@ -192,14 +126,7 @@ export function useSvgEditorController() {
         return shape;
       }
 
-      const dx = position.x - shape.x;
-      const dy = position.y - shape.y;
-
-      return {
-        ...shape,
-        ...position,
-        points: shape.type === 'path' ? translatePathPoints(shape.points, dx, dy) : shape.points,
-      };
+      return moveShapeToPosition(shape, position);
     }));
   };
 
@@ -232,7 +159,7 @@ export function useSvgEditorController() {
     commitShapeTransform();
 
     if (shape && !shape.locked) {
-      setStatus(`${shape.name} moved to X: ${shape.x}, Y: ${shape.y}.`);
+      setStatus(text.status.moved(displayShapeName(shape.name), shape.x, shape.y));
     }
   };
 
@@ -241,7 +168,7 @@ export function useSvgEditorController() {
     commitShapeTransform();
 
     if (shape && !shape.locked) {
-      setStatus(`${shape.name} resized to W: ${shape.width}, H: ${shape.height}.`);
+      setStatus(text.status.resized(displayShapeName(shape.name), shape.width, shape.height));
     }
   };
 
@@ -249,7 +176,7 @@ export function useSvgEditorController() {
     const shape = shapes.find((item) => item.id === id);
 
     if (shape) {
-      setStatus(`${shape.name} is locked. Unlock it before dragging.`);
+      setStatus(text.status.lockedDrag(displayShapeName(shape.name)));
     }
   };
 
@@ -268,7 +195,7 @@ export function useSvgEditorController() {
       ));
 
       applyShapesWithHistory(nextShapes);
-      setStatus(`${shape.name} ${shape.locked ? 'unlocked' : 'locked'}.`);
+      setStatus(text.status.toggledLock(displayShapeName(shape.name), !shape.locked));
     }
   };
 
@@ -278,27 +205,17 @@ export function useSvgEditorController() {
     if (!shape) return;
 
     if (shape.locked) {
-      setStatus(`${shape.name} is locked. Unlock it before duplicating.`);
+      setStatus(text.status.lockedDuplicate(displayShapeName(shape.name)));
       return;
     }
 
-    const nextId = Math.max(0, ...shapes.map((item) => item.id)) + 1;
-    const nextX = Math.min(shape.x + 24, Math.max(0, SVG_CANVAS_WIDTH - shape.width));
-    const nextY = Math.min(shape.y + 24, Math.max(0, SVG_CANVAS_HEIGHT - shape.height));
-    const duplicate: SvgShape = {
-      ...shape,
-      id: nextId,
-      name: `${shape.name} Copy`,
-      points: shape.type === 'path' ? translatePathPoints(shape.points, nextX - shape.x, nextY - shape.y) : shape.points,
-      x: nextX,
-      y: nextY,
-      locked: false,
-    };
+    const nextId = getNextShapeId(shapes);
+    const duplicate = createDuplicateShape(shape, nextId);
 
     pushHistory(shapes);
     setShapes((current) => [...current, duplicate]);
     setSelectedShapeId(nextId);
-    setStatus(`${duplicate.name} added to layers.`);
+    setStatus(text.status.duplicated(displayShapeName(duplicate.name)));
   };
 
   const deleteShape = (id: number) => {
@@ -307,7 +224,7 @@ export function useSvgEditorController() {
     if (!shape) return;
 
     if (shape.locked) {
-      setStatus(`${shape.name} is locked. Unlock it before deleting.`);
+      setStatus(text.status.lockedDelete(displayShapeName(shape.name)));
       return;
     }
 
@@ -315,15 +232,15 @@ export function useSvgEditorController() {
     pushHistory(shapes);
     setShapes(remainingShapes);
     setSelectedShapeId((current) => (current === id ? remainingShapes[0]?.id ?? null : current));
-    setStatus(`${shape.name} removed from canvas.`);
+    setStatus(text.status.deleted(displayShapeName(shape.name)));
   };
 
   const handleExport = async () => {
     try {
-      await exportAsset(svgMarkup, format, scale, quality);
-      setStatus(`Canvas exported as ${format.toUpperCase()}.`);
+      await exportAsset(svgMarkup, exportFormat, exportScale, exportQuality);
+      setStatus(text.status.exported(exportFormat));
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Export failed.');
+      setStatus(language === 'en' && error instanceof Error ? error.message : text.status.exportFailed);
     }
   };
 
@@ -335,17 +252,17 @@ export function useSvgEditorController() {
     const reader = new FileReader();
 
     reader.onload = () => {
-      const importedShapes = parseImportedSvg(String(reader.result ?? ''), Math.max(0, ...shapes.map((shape) => shape.id)) + 1);
+      const importedShapes = parseImportedSvg(String(reader.result ?? ''), getNextShapeId(shapes));
 
       if (importedShapes.length === 0) {
-        setStatus('Imported SVG, but no supported rect or circle elements were found.');
+        setStatus(text.status.importedEmpty);
         return;
       }
 
       pushHistory(shapes);
       setShapes((current) => [...current, ...importedShapes]);
       setSelectedShapeId(importedShapes[0].id);
-      setStatus(`${importedShapes.length} shapes imported from ${file.name}.`);
+      setStatus(text.status.imported(importedShapes.length, file.name));
     };
 
     reader.readAsText(file, 'UTF-8');
@@ -356,44 +273,44 @@ export function useSvgEditorController() {
     const resetShapes = cloneShapes(initialShapes);
 
     if (!applyShapesWithHistory(resetShapes)) {
-      setStatus('Canvas is already at the starter layout.');
+      setStatus(text.status.alreadyStarter);
       return;
     }
 
     setSelectedShapeId(resetShapes[0]?.id ?? null);
     setActiveTool('select');
-    setStatus('Canvas reset to the starter layout.');
+    setStatus(text.status.canvasReset);
   };
 
   const undo = () => {
-    if (history.length === 0) {
-      setStatus('Nothing to undo.');
+    if (undoStack.length === 0) {
+      setStatus(text.status.nothingUndo);
       return;
     }
 
-    const previousShapes = history[history.length - 1];
-    const nextHistory = history.slice(0, -1);
+    const previousShapes = undoStack[undoStack.length - 1];
+    const nextUndoStack = undoStack.slice(0, -1);
 
-    setHistory(nextHistory);
-    setFuture((current) => [cloneShapes(shapes), ...current].slice(0, HISTORY_LIMIT));
+    setUndoStack(nextUndoStack);
+    setRedoStack((current) => [cloneShapes(shapes), ...current].slice(0, SVG_HISTORY_LIMIT));
     setShapes(cloneShapes(previousShapes));
     setSelectedShapeId((current) => getNextSelectedShapeId(previousShapes, current));
-    setStatus('Undo applied.');
+    setStatus(text.status.undo);
   };
 
   const redo = () => {
-    if (future.length === 0) {
-      setStatus('Nothing to redo.');
+    if (redoStack.length === 0) {
+      setStatus(text.status.nothingRedo);
       return;
     }
 
-    const nextShapes = future[0];
+    const nextShapes = redoStack[0];
 
-    setFuture((current) => current.slice(1));
-    setHistory((current) => [...current, cloneShapes(shapes)].slice(-HISTORY_LIMIT));
+    setRedoStack((current) => current.slice(1));
+    setUndoStack((current) => [...current, cloneShapes(shapes)].slice(-SVG_HISTORY_LIMIT));
     setShapes(cloneShapes(nextShapes));
     setSelectedShapeId((current) => getNextSelectedShapeId(nextShapes, current));
-    setStatus('Redo applied.');
+    setStatus(text.status.redo);
   };
 
   const copySvgMarkup = async () => {
@@ -404,37 +321,37 @@ export function useSvgEditorController() {
         throw new Error('Clipboard copy failed.');
       }
 
-      setStatus('SVG markup copied to clipboard.');
+      setStatus(text.status.copied);
       setShowSource(false);
     } catch (error) {
       setShowSource(true);
-      setStatus(error instanceof Error ? `${error.message} SVG markup is available in the source panel.` : 'SVG markup is available in the source panel.');
+      setStatus(language === 'en' && error instanceof Error ? text.status.copyFallback(error.message) : text.status.copyFallback());
     }
   };
 
   return {
     activeTool,
-    addShape,
     beginShapeTransform,
-    canRedo: future.length > 0,
-    canUndo: history.length > 0,
+    canRedo: redoStack.length > 0,
+    canUndo: undoStack.length > 0,
     copySvgMarkup,
     createFreehandPath,
     deleteShape,
     fileInputRef,
-    format,
     handleExport,
     handleImportFile,
     handleLockedShapeDrag,
-    quality,
     redo,
     resetCanvas,
-    scale,
+    exportFormat,
+    exportQuality,
+    exportScale,
     selectedShape,
     selectedShapeId,
-    setFormat,
-    setQuality,
-    setScale,
+    selectToolOrAddShape,
+    setExportFormat,
+    setExportQuality,
+    setExportScale,
     setSelectedShapeId,
     setShowGrid,
     setShowGuides,
