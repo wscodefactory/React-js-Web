@@ -1,5 +1,5 @@
 import type { AppLanguage } from '@/app/context/LanguageContext';
-import type { ExportFormat, ExportQuality, ExportScale } from './types';
+import type { ExportFormat, ExportQuality, ExportScale, SvgAlignment } from './types';
 
 export type SvgEditorCopy = {
   actions: {
@@ -13,6 +13,8 @@ export type SvgEditorCopy = {
     undo: string;
   };
   canvas: {
+    align: Record<SvgAlignment, string>;
+    alignTitle: string;
     grid: string;
     guides: string;
     resizeHandle: (handle: string) => string;
@@ -70,6 +72,7 @@ export type SvgEditorCopy = {
     rectangle: string;
   };
   status: {
+    aligned: (name: string, alignment: SvgAlignment) => string;
     alreadyStarter: string;
     canvasReset: string;
     copied: string;
@@ -119,6 +122,15 @@ export const svgEditorCopy: Record<AppLanguage, SvgEditorCopy> = {
       undo: 'Undo',
     },
     canvas: {
+      align: {
+        bottom: 'Align bottom',
+        center: 'Align center',
+        left: 'Align left',
+        middle: 'Align middle',
+        right: 'Align right',
+        top: 'Align top',
+      },
+      alignTitle: 'Align selected shape',
       grid: 'Grid',
       guides: 'Guides',
       resizeHandle: (handle) => `Resize ${handle}`,
@@ -189,6 +201,7 @@ export const svgEditorCopy: Record<AppLanguage, SvgEditorCopy> = {
       rectangle: 'Rectangle',
     },
     status: {
+      aligned: (name, alignment) => `${name} ${svgEditorCopy.en.canvas.align[alignment].replace('Align ', 'aligned ')}.`,
       alreadyStarter: 'Canvas is already at the starter layout.',
       canvasReset: 'Canvas reset to the starter layout.',
       copied: 'SVG markup copied to clipboard.',
@@ -236,6 +249,15 @@ export const svgEditorCopy: Record<AppLanguage, SvgEditorCopy> = {
       undo: '실행 취소',
     },
     canvas: {
+      align: {
+        bottom: '아래 정렬',
+        center: '가운데 정렬',
+        left: '왼쪽 정렬',
+        middle: '중앙 정렬',
+        right: '오른쪽 정렬',
+        top: '위 정렬',
+      },
+      alignTitle: '선택한 도형 정렬',
       grid: '그리드',
       guides: '가이드',
       resizeHandle: (handle) => `${handle} 핸들 크기 조정`,
@@ -306,6 +328,7 @@ export const svgEditorCopy: Record<AppLanguage, SvgEditorCopy> = {
       rectangle: '사각형',
     },
     status: {
+      aligned: (name, alignment) => `${name}을 ${svgEditorCopy.ko.canvas.align[alignment]}했습니다.`,
       alreadyStarter: '캔버스가 이미 시작 레이아웃입니다.',
       canvasReset: '캔버스를 시작 레이아웃으로 초기화했습니다.',
       copied: 'SVG 마크업을 클립보드에 복사했습니다.',
@@ -316,7 +339,7 @@ export const svgEditorCopy: Record<AppLanguage, SvgEditorCopy> = {
       exported: (format) => `캔버스를 ${format.toUpperCase()} 형식으로 내보냈습니다.`,
       exportFailed: '내보내기에 실패했습니다.',
       imported: (count, fileName) => `${fileName}에서 도형 ${count}개를 가져왔습니다.`,
-      importedEmpty: 'SVG를 가져왔지만 지원되는 사각형이나 원 요소를 찾지 못했습니다.',
+      importedEmpty: 'SVG를 가져왔지만 지원되는 사각형, 원, 패스를 찾지 못했습니다.',
       lockedDelete: (name) => `${name}은 잠겨 있습니다. 삭제하려면 먼저 잠금을 해제하세요.`,
       lockedDrag: (name) => `${name}은 잠겨 있습니다. 드래그하려면 먼저 잠금을 해제하세요.`,
       lockedDuplicate: (name) => `${name}은 잠겨 있습니다. 복제하려면 먼저 잠금을 해제하세요.`,

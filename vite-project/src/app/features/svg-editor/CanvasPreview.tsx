@@ -9,10 +9,11 @@ import { getSvgShapeDisplayName, svgEditorCopy } from "./copy";
 import { SelectionOverlay } from "./SelectionOverlay";
 import { ShapeElement } from "./ShapeElement";
 import { useCanvasPointerController } from "./useCanvasPointerController";
-import type { SvgPoint, SvgShape } from "./types";
+import type { SvgAlignment, SvgPoint, SvgShape } from "./types";
 
 type CanvasPreviewProps = {
   activeTool: string;
+  onAlignSelected: (alignment: SvgAlignment) => void;
   onBeginShapeTransform: (id: number) => void;
   onCreateFreehandPath: (points: SvgPoint[]) => void;
   onDragLockedShape: (id: number) => void;
@@ -31,6 +32,7 @@ type CanvasPreviewProps = {
 
 export function CanvasPreview({
   activeTool,
+  onAlignSelected,
   onBeginShapeTransform,
   onCreateFreehandPath,
   onDragLockedShape,
@@ -71,6 +73,8 @@ export function CanvasPreview({
   return (
     <Card>
       <CanvasToolbar
+        hasSelection={Boolean(selectedShape)}
+        onAlignSelected={onAlignSelected}
         onToggleGrid={onToggleGrid}
         onToggleGuides={onToggleGuides}
         showGrid={showGrid}

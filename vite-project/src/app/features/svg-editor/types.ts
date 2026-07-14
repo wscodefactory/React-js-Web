@@ -2,6 +2,7 @@ export type SvgShapeType = 'rect' | 'circle' | 'path';
 export type ExportFormat = 'svg' | 'png' | 'jpg' | 'webp';
 export type ExportQuality = 'high' | 'medium' | 'low';
 export type ExportScale = '1x' | '2x' | '3x';
+export type SvgAlignment = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
 
 export type SvgPoint = {
   x: number;

@@ -18,6 +18,7 @@ type FormCanvasPanelProps = {
   onRemoveField: (id: number) => void;
   onSubmit: () => void;
   onToggleRequired: (id: number) => void;
+  onUpdateFieldSettings: (id: number, updates: Partial<Pick<BuilderField, 'helperText' | 'minLength' | 'placeholder'>>) => void;
   onUpdateFieldLabel: (id: number, label: string) => void;
   showLabels: boolean;
   submitStatus: string;
@@ -37,6 +38,7 @@ export function FormCanvasPanel({
   onRemoveField,
   onSubmit,
   onToggleRequired,
+  onUpdateFieldSettings,
   onUpdateFieldLabel,
   showLabels,
   submitStatus,
@@ -78,6 +80,7 @@ export function FormCanvasPanel({
             onMove={onMoveField}
             onRemove={onRemoveField}
             onToggleRequired={onToggleRequired}
+            onUpdateFieldSettings={onUpdateFieldSettings}
             onUpdateLabel={onUpdateFieldLabel}
           />
         ))}

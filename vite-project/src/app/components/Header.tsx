@@ -2,7 +2,8 @@
  * Top navigation bar for the showcase.
  * Handles primary navigation, dark-mode toggle, and the global search modal shortcut.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useLocation } from "react-router";
 import { Menu } from "lucide-react";
 import { useDarkMode } from "../context/DarkModeContext";
@@ -16,11 +17,13 @@ import { HeaderActions } from "./header/HeaderActions";
 import { HeaderMenuDropdown } from "./header/HeaderMenuDropdown";
 import { HeaderNavLink } from "./header/HeaderNavLink";
 import { isPathActive } from "./header/headerUtils";
+import { exportWorkspaceBackup, importWorkspaceBackup } from "../utils/workspaceBackup";
 
 export function Header() {
   const location = useLocation();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const { language, toggleLanguage } = useLanguage();
+  const restoreInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const text = shellText[language];
@@ -45,8 +48,31 @@ export function Header() {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
+  const handleRestoreWorkspace = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const restoredCount = await importWorkspaceBackup(file);
+      window.alert(`Workspace restored (${restoredCount} items). Reopen a tool to load restored drafts.`);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Workspace restore failed.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   return (
     <>
+      <input
+        ref={restoreInputRef}
+        type="file"
+        accept="application/json,.json"
+        onChange={handleRestoreWorkspace}
+        className="hidden"
+      />
+
       <header className="header">
         <div className="header-container">
           <IconButton
@@ -73,6 +99,9 @@ export function Header() {
 
           <HeaderActions
             isDarkMode={isDarkMode}
+            onBackupWorkspace={exportWorkspaceBackup}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            onRestoreWorkspace={() => restoreInputRef.current?.click()}
             onToggleDarkMode={toggleDarkMode}
             onToggleLanguage={toggleLanguage}
             text={text}

@@ -34,8 +34,11 @@ export type FormBuilderCopy = {
   fieldCard: {
     delete: (label: string) => string;
     duplicate: (label: string) => string;
+    helperText: string;
+    minLength: string;
     moveDown: (label: string) => string;
     moveUp: (label: string) => string;
+    placeholder: string;
     toggleRequired: (label: string) => string;
   };
   fieldInput: {
@@ -69,6 +72,7 @@ export type FormBuilderCopy = {
   status: {
     autosaved: string;
     draftSaved: string;
+    minLength: (label: string, minLength: number) => string;
     required: (label: string) => string;
     reset: string;
     schemaReady: string;
@@ -106,18 +110,21 @@ export const formBuilderCopy: Record<AppLanguage, FormBuilderCopy> = {
     code: {
       copied: 'Copied',
       copiedStatus: 'Code copied. You can paste it into your project.',
-      copyBlocked: 'Clipboard copy was blocked. Download the HTML file instead.',
+      copyBlocked: 'Clipboard copy was blocked. Download the file instead.',
       copyCode: 'Copy code',
-      description: 'Copy the current form or download it as an HTML file.',
-      downloadReady: 'The form HTML is ready to download.',
-      initialStatus: 'Your current form code is ready to copy or download.',
+      description: 'Copy the current form HTML or switch to a Zod validation schema.',
+      downloadReady: 'The current export is ready to download.',
+      initialStatus: 'Your current export is ready to copy or download.',
       title: 'Export code',
     },
     fieldCard: {
       delete: (label) => `Delete ${label}`,
       duplicate: (label) => `Duplicate ${label}`,
+      helperText: 'Helper text',
+      minLength: 'Min length',
       moveDown: (label) => `Move ${label} down`,
       moveUp: (label) => `Move ${label} up`,
+      placeholder: 'Placeholder',
       toggleRequired: (label) => `Toggle required for ${label}`,
     },
     fieldInput: {
@@ -160,10 +167,11 @@ export const formBuilderCopy: Record<AppLanguage, FormBuilderCopy> = {
     status: {
       autosaved: 'Draft is autosaved locally.',
       draftSaved: 'Starter form saved as the current draft.',
+      minLength: (label, minLength) => `${label} must be at least ${minLength} characters.`,
       required: (label) => `${label} is required.`,
       reset: 'Builder reset to the starter form.',
       schemaReady: 'Form schema is ready to download.',
-      submitBlocked: (count) => `Complete ${count} required field${count === 1 ? '' : 's'} before submitting.`,
+      submitBlocked: (count) => `Fix ${count} field${count === 1 ? '' : 's'} before submitting.`,
       submitted: (formName, responseCount) => `${formName} submitted with ${responseCount} responses.`,
     },
     starter: {
@@ -198,19 +206,22 @@ export const formBuilderCopy: Record<AppLanguage, FormBuilderCopy> = {
     },
     code: {
       copied: '복사됨',
-      copiedStatus: '코드가 복사되었습니다. 프로젝트에 바로 붙여넣을 수 있습니다.',
-      copyBlocked: '클립보드 복사가 차단되었습니다. HTML 파일을 다운로드하세요.',
+      copiedStatus: '코드를 복사했습니다. 프로젝트에 붙여 넣을 수 있습니다.',
+      copyBlocked: '클립보드 복사가 차단되었습니다. 파일로 다운로드하세요.',
       copyCode: '코드 복사',
-      description: '현재 폼을 복사하거나 HTML 파일로 다운로드하세요.',
-      downloadReady: '폼 HTML을 다운로드할 준비가 되었습니다.',
-      initialStatus: '현재 폼 코드를 복사하거나 다운로드할 준비가 되었습니다.',
+      description: '현재 폼 HTML을 복사하거나 Zod 검증 스키마로 전환하세요.',
+      downloadReady: '현재 내보내기 파일을 다운로드할 수 있습니다.',
+      initialStatus: '현재 내보내기 코드를 복사하거나 다운로드할 수 있습니다.',
       title: '코드 내보내기',
     },
     fieldCard: {
       delete: (label) => `${label} 삭제`,
       duplicate: (label) => `${label} 복제`,
+      helperText: '도움말',
+      minLength: '최소 길이',
       moveDown: (label) => `${label} 아래로 이동`,
       moveUp: (label) => `${label} 위로 이동`,
+      placeholder: '플레이스홀더',
       toggleRequired: (label) => `${label} 필수 여부 전환`,
     },
     fieldInput: {
@@ -239,12 +250,12 @@ export const formBuilderCopy: Record<AppLanguage, FormBuilderCopy> = {
       total: '전체 필드',
     },
     page: {
-      description: '폼을 만들고 경험을 미리 본 뒤 알맞을 때 결과를 내보내세요.',
+      description: '폼을 만들고 경험을 미리 본 뒤 결과를 내보내세요.',
       highlight: '폼',
       title: '빌더',
     },
     settings: {
-      description: '게시 전에 기본 동작을 설정하세요.',
+      description: '게시하기 전 기본 동작을 설정하세요.',
       formName: '폼 이름',
       showLabels: '필드 라벨 표시',
       submitText: '제출 버튼 텍스트',
@@ -253,10 +264,11 @@ export const formBuilderCopy: Record<AppLanguage, FormBuilderCopy> = {
     status: {
       autosaved: '초안이 로컬에 자동 저장됩니다.',
       draftSaved: '시작 폼을 현재 초안으로 저장했습니다.',
+      minLength: (label, minLength) => `${label}은 최소 ${minLength}자 이상이어야 합니다.`,
       required: (label) => `${label}은 필수입니다.`,
       reset: '빌더를 시작 폼으로 초기화했습니다.',
-      schemaReady: '폼 스키마를 다운로드할 준비가 되었습니다.',
-      submitBlocked: (count) => `제출하려면 필수 필드 ${count}개를 완료하세요.`,
+      schemaReady: '폼 스키마를 다운로드할 수 있습니다.',
+      submitBlocked: (count) => `제출하려면 ${count}개 필드를 수정하세요.`,
       submitted: (formName, responseCount) => `${formName}이 응답 ${responseCount}개와 함께 제출되었습니다.`,
     },
     starter: {

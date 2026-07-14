@@ -16,6 +16,7 @@ type CanvasFieldCardProps = {
   onMove: (id: number, direction: MoveDirection) => void;
   onRemove: (id: number) => void;
   onToggleRequired: (id: number) => void;
+  onUpdateFieldSettings: (id: number, updates: Partial<Pick<BuilderField, 'helperText' | 'minLength' | 'placeholder'>>) => void;
   onUpdateLabel: (id: number, label: string) => void;
   showLabel: boolean;
 };
@@ -32,6 +33,7 @@ export function CanvasFieldCard({
   onMove,
   onRemove,
   onToggleRequired,
+  onUpdateFieldSettings,
   onUpdateLabel,
   showLabel,
 }: CanvasFieldCardProps) {
@@ -87,6 +89,31 @@ export function CanvasFieldCard({
         value={fieldValue}
         onValueChange={onFieldValueChange}
       />
+
+      {!isPreview ? (
+        <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_120px]">
+          <input
+            value={field.placeholder ?? ''}
+            onChange={(event) => onUpdateFieldSettings(field.id, { placeholder: event.target.value })}
+            placeholder={text.placeholder}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          />
+          <input
+            value={field.helperText ?? ''}
+            onChange={(event) => onUpdateFieldSettings(field.id, { helperText: event.target.value })}
+            placeholder={text.helperText}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          />
+          <input
+            type="number"
+            min={0}
+            value={field.minLength ?? ''}
+            onChange={(event) => onUpdateFieldSettings(field.id, { minLength: event.target.value ? Number(event.target.value) : undefined })}
+            placeholder={text.minLength}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

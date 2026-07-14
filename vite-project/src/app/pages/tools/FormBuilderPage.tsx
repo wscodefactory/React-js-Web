@@ -50,7 +50,7 @@ export function FormBuilderPage() {
 
         <div className="space-y-6 lg:col-span-2">
           {formBuilder.mode === 'code' ? (
-            <ExportCodePanel code={formBuilder.exportCode} />
+            <ExportCodePanel code={formBuilder.exportCode} zodSchema={formBuilder.exportZodSchema} />
           ) : (
             <FormCanvasPanel
               fieldErrors={formBuilder.fieldErrors}
@@ -68,6 +68,7 @@ export function FormBuilderPage() {
               onRemoveField={formBuilder.removeField}
               onSubmit={formBuilder.submitForm}
               onToggleRequired={formBuilder.toggleRequired}
+              onUpdateFieldSettings={formBuilder.updateFieldSettings}
               onUpdateFieldLabel={formBuilder.updateFieldLabel}
             />
           )}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "../../context/LanguageContext";
 import type { MetricItem } from "../../types/showcase";
-import { buildExportCode } from "./exportCode";
+import { buildExportCode, buildZodSchema } from "./exportCode";
 import { formBuilderCopy, getFormBuilderFieldTypeLabel } from "./copy";
 import { createFallbackDraft, readStoredFormBuilderDraft, saveFormBuilderDraft } from "./draftStorage";
 import {
@@ -43,6 +43,7 @@ export function useFormBuilderController() {
   }, [fields, text.metrics.optional, text.metrics.required, text.metrics.total]);
 
   const exportCode = useMemo(() => buildExportCode(formName, submitText, showLabels, fields), [fields, formName, showLabels, submitText]);
+  const exportZodSchema = useMemo(() => buildZodSchema(formName, fields), [fields, formName]);
   const exportSchema = useMemo(() => JSON.stringify({
     fields,
     formName,
@@ -111,6 +112,12 @@ export function useFormBuilderController() {
     setFields((current) => current.map((field) => (field.id === id ? { ...field, label } : field)));
   };
 
+  const updateFieldSettings = (id: number, updates: Partial<Pick<BuilderField, "helperText" | "minLength" | "placeholder">>) => {
+    setFields((current) => current.map((field) => (field.id === id ? { ...field, ...updates } : field)));
+    setFieldErrors((current) => removeRecordKey(current, id));
+    setSubmitStatus("");
+  };
+
   const updateFieldValue = (fieldId: number, value: BuilderFieldValue) => {
     setFieldValues((current) => ({ ...current, [fieldId]: value }));
     setFieldErrors((current) => removeRecordKey(current, fieldId));
@@ -121,6 +128,18 @@ export function useFormBuilderController() {
     const nextErrors = fields.reduce<Record<number, string>>((errors, field) => {
       if (field.required && !hasBuilderFieldValue(field, fieldValues[field.id])) {
         errors[field.id] = text.status.required(field.label);
+        return errors;
+      }
+
+      const value = fieldValues[field.id];
+
+      if (
+        field.minLength
+        && typeof value === "string"
+        && value.trim().length > 0
+        && value.trim().length < field.minLength
+      ) {
+        errors[field.id] = text.status.minLength(field.label, field.minLength);
       }
 
       return errors;
@@ -163,6 +182,7 @@ export function useFormBuilderController() {
     draftStatus,
     exportCode,
     exportSchema,
+    exportZodSchema,
     fieldErrors,
     fieldValues,
     fields,
@@ -184,6 +204,7 @@ export function useFormBuilderController() {
     submitText,
     toggleRequired,
     updateFieldLabel,
+    updateFieldSettings,
     updateFieldValue,
   };
 }

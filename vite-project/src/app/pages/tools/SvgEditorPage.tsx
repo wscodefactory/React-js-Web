@@ -65,6 +65,7 @@ export function SvgEditorPage() {
         <section className="space-y-6">
           <CanvasPreview
             activeTool={svgEditor.activeTool}
+            onAlignSelected={svgEditor.alignSelectedShape}
             onBeginShapeTransform={svgEditor.beginShapeTransform}
             onCreateFreehandPath={svgEditor.createFreehandPath}
             shapes={svgEditor.shapes}

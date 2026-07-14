@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { copyTextToClipboard } from '../../utils/clipboard';
+import { SVG_CANVAS_HEIGHT, SVG_CANVAS_WIDTH } from './constants';
 import { initialShapes } from './data';
 import { exportAsset } from './exportAsset';
 import { buildSvgMarkup, parseImportedSvg } from './svgMarkup';
@@ -15,7 +16,7 @@ import {
   getSanitizedFreehandPoints,
   moveShapeToPosition,
 } from './shapeTransformUtils';
-import type { ExportFormat, ExportQuality, ExportScale, SvgPoint, SvgShape } from './types';
+import type { ExportFormat, ExportQuality, ExportScale, SvgAlignment, SvgPoint, SvgShape } from './types';
 
 export function useSvgEditorController() {
   const { language } = useLanguage();
@@ -118,6 +119,32 @@ export function useSvgEditorController() {
     ));
 
     applyShapesWithHistory(nextShapes);
+  };
+
+  const alignSelectedShape = (alignment: SvgAlignment) => {
+    if (selectedShapeId === null || !selectedShape) return;
+
+    if (selectedShape.locked) {
+      setStatus(text.status.lockedProperties(displayShapeName(selectedShape.name)));
+      return;
+    }
+
+    const alignmentUpdates: Record<SvgAlignment, Pick<SvgShape, 'x'> | Pick<SvgShape, 'y'>> = {
+      bottom: { y: SVG_CANVAS_HEIGHT - selectedShape.height },
+      center: { x: Math.round((SVG_CANVAS_WIDTH - selectedShape.width) / 2) },
+      left: { x: 0 },
+      middle: { y: Math.round((SVG_CANVAS_HEIGHT - selectedShape.height) / 2) },
+      right: { x: SVG_CANVAS_WIDTH - selectedShape.width },
+      top: { y: 0 },
+    };
+
+    const nextShapes = shapes.map((shapeItem) => (
+      shapeItem.id === selectedShapeId ? applyShapeUpdates(shapeItem, alignmentUpdates[alignment]) : shapeItem
+    ));
+
+    if (applyShapesWithHistory(nextShapes)) {
+      setStatus(text.status.aligned(displayShapeName(selectedShape.name), alignment));
+    }
   };
 
   const moveShape = (id: number, position: Pick<SvgShape, 'x' | 'y'>) => {
@@ -331,6 +358,7 @@ export function useSvgEditorController() {
 
   return {
     activeTool,
+    alignSelectedShape,
     beginShapeTransform,
     canRedo: redoStack.length > 0,
     canUndo: undoStack.length > 0,

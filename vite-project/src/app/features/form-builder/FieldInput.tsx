@@ -30,12 +30,14 @@ export function FieldInput({
     return (
       <>
         <textarea
-          placeholder={text.placeholder(field.label)}
+          placeholder={field.placeholder || text.placeholder(field.label)}
+          minLength={field.minLength}
           rows={3}
           value={stringValue(value)}
           onChange={(event) => onValueChange(field.id, event.target.value)}
           className={inputClassName}
         />
+        {field.helperText ? <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{field.helperText}</p> : null}
         {error ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       </>
     );
@@ -53,6 +55,7 @@ export function FieldInput({
           <option value="Option 1">{text.option1}</option>
           <option value="Option 2">{text.option2}</option>
         </select>
+        {field.helperText ? <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{field.helperText}</p> : null}
         {error ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       </>
     );
@@ -71,6 +74,7 @@ export function FieldInput({
           />
           {field.label}
         </label>
+        {field.helperText ? <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{field.helperText}</p> : null}
         {error ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
       </>
     );
@@ -80,12 +84,14 @@ export function FieldInput({
     <>
       <Input
         type={field.type}
-        placeholder={text.placeholder(field.label)}
+        placeholder={field.placeholder || text.placeholder(field.label)}
+        minLength={field.minLength}
         value={stringValue(value)}
         onChange={(event) => onValueChange(field.id, event.target.value)}
         aria-invalid={Boolean(error)}
         className={error ? 'border-red-500 focus:ring-red-200 dark:focus:ring-red-950' : ''}
       />
+      {field.helperText ? <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{field.helperText}</p> : null}
       {error ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
     </>
   );

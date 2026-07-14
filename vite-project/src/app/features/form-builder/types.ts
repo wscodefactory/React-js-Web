@@ -4,8 +4,11 @@ export type MoveDirection = -1 | 1;
 export type BuilderFieldValue = boolean | string;
 
 export type BuilderField = {
+  helperText?: string;
   id: number;
   label: string;
+  minLength?: number;
+  placeholder?: string;
   type: BuilderFieldType;
   required: boolean;
 };
