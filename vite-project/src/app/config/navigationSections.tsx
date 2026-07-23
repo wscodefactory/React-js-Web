@@ -35,6 +35,7 @@ import { FormBuilderPage } from "../pages/tools/FormBuilderPage";
 import { SvgEditorPage } from "../pages/tools/SvgEditorPage";
 import { ThemeBuilderPage } from "../pages/tools/ThemeBuilderPage";
 import { AccessibilityCheckerPage } from "../pages/tools/AccessibilityCheckerPage";
+import { MockApiStudioPage } from "../pages/tools/MockApiStudioPage";
 
 export const routeSections: RouteSectionDefinition[] = [
   {
@@ -107,6 +108,7 @@ export const routeSections: RouteSectionDefinition[] = [
       { label: "PowerT's Toolkit", slug: "tools/powerts-toolkit", description: "Clean up snippets and convert them into usable implementation notes.", component: PowerTsToolkitPage, badge: "New", searchKeywords: ["converter", "typescript"] },
       { label: "Form Builder", slug: "tools/form-builder", description: "Assemble fields, preview the form, and export the result.", component: FormBuilderPage, badge: "New", searchKeywords: ["builder", "forms"] },
       { label: "SVG Editor", slug: "tools/svg-editor", description: "Draw, adjust, preview, and export SVG assets in one workspace.", component: SvgEditorPage, badge: "New", searchKeywords: ["vector", "editor"] },
+      { label: "Mock API Studio", slug: "tools/mock-api-studio", description: "Design mock endpoints, preview responses, and copy fetch or MSW snippets.", component: MockApiStudioPage, badge: "New", searchKeywords: ["api", "mock", "msw", "fetch"] },
       { label: "Theme Builder", slug: "tools/theme-builder", description: "Tune colors, spacing, and radius, then export CSS theme tokens.", component: ThemeBuilderPage, badge: "New", searchKeywords: ["theme", "tokens", "css"] },
       { label: "Accessibility Checker", slug: "tools/accessibility-checker", description: "Scan markup for labels, alt text, names, heading order, and contrast.", component: AccessibilityCheckerPage, badge: "New", searchKeywords: ["a11y", "accessibility", "audit"] },
     ],
