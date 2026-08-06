@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { Compass } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 import { homeText } from "../i18n";
 import { HomeProjectMapPanel } from "../features/home/HomeProjectMapPanel";
 import { HomeQuickActionsSection } from "../features/home/HomeQuickActionsSection";
@@ -18,15 +19,16 @@ import type { SearchItem } from "../types/navigation";
 export function HomePage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { settings } = useSiteSettings();
   const text = homeText[language];
   const [searchQuery, setSearchQuery] = useState("");
 
-  const mainSections = useMemo(getMainRouteSections, []);
+  const mainSections = useMemo(() => getMainRouteSections(settings.menuVisibility), [settings.menuVisibility]);
   const readySectionCount = useMemo(() => countReadySections(mainSections), [mainSections]);
-  const totalPageCount = useMemo(getSearchablePageCount, []);
+  const totalPageCount = useMemo(() => getSearchablePageCount(settings.menuVisibility), [settings.menuVisibility]);
   const searchResults = useMemo(
-    () => getLocalizedSearchResults(searchQuery, language),
-    [language, searchQuery],
+    () => getLocalizedSearchResults(searchQuery, language, settings.menuVisibility),
+    [language, searchQuery, settings.menuVisibility],
   );
 
   function handleSelectResult(item: SearchItem) {

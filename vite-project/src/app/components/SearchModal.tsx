@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { useNavigate } from "react-router";
 import { useLanguage } from "../context/LanguageContext";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 import { searchModalText } from "../i18n";
 import type { SearchItem } from "../types/navigation";
 import type { StoredRecentSearch } from "../types/common";
@@ -28,12 +29,13 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [recentSearches, setRecentSearches] = useState<StoredRecentSearch[]>(loadRecentSearches);
   const [activeIndex, setActiveIndex] = useState(0);
   const { language } = useLanguage();
+  const { settings } = useSiteSettings();
   const navigate = useNavigate();
   const text = searchModalText[language];
 
   const filteredResults = useMemo(
-    () => getLocalizedNavigationSearchResults(searchQuery, language),
-    [language, searchQuery],
+    () => getLocalizedNavigationSearchResults(searchQuery, language, undefined, settings.menuVisibility),
+    [language, searchQuery, settings.menuVisibility],
   );
   const visibleSearchRows = searchQuery.trim() ? filteredResults : recentSearches;
 

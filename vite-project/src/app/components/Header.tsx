@@ -2,13 +2,14 @@
  * Top navigation bar for the showcase.
  * Handles primary navigation, dark-mode toggle, and the global search modal shortcut.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useLocation } from "react-router";
 import { Menu } from "lucide-react";
 import { useDarkMode } from "../context/DarkModeContext";
 import { useLanguage } from "../context/LanguageContext";
-import { topNavigationItems } from "../config/navigation";
+import { useSiteSettings } from "../context/SiteSettingsContext";
+import { getHeaderNavigationSections, getTopNavigationItems } from "../config/navigation";
 import { localizeRouteLabel, shellText } from "../i18n";
 import { IconButton } from "./common";
 import { SearchModal } from "./SearchModal";
@@ -23,10 +24,19 @@ export function Header() {
   const location = useLocation();
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const { language, toggleLanguage } = useLanguage();
+  const { settings } = useSiteSettings();
   const restoreInputRef = useRef<HTMLInputElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const text = shellText[language];
+  const visibleHeaderSections = useMemo(
+    () => getHeaderNavigationSections(settings.menuVisibility),
+    [settings.menuVisibility],
+  );
+  const visibleTopNavigationItems = useMemo(
+    () => getTopNavigationItems(settings.menuVisibility),
+    [settings.menuVisibility],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -87,7 +97,7 @@ export function Header() {
           <BrandLogo brand={text.brand} />
 
           <nav className="header-nav">
-            {topNavigationItems.map((item) => (
+            {visibleTopNavigationItems.map((item) => (
               <HeaderNavLink
                 key={item.path}
                 item={item}
@@ -109,7 +119,12 @@ export function Header() {
         </div>
 
         {isMenuOpen ? (
-          <HeaderMenuDropdown currentPath={location.pathname} language={language} onNavigate={() => setIsMenuOpen(false)} />
+          <HeaderMenuDropdown
+            currentPath={location.pathname}
+            language={language}
+            onNavigate={() => setIsMenuOpen(false)}
+            sections={visibleHeaderSections}
+          />
         ) : null}
       </header>
 

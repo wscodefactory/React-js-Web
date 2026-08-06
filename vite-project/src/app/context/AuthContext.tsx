@@ -15,6 +15,7 @@ import {
   loginWithEmail,
   logout,
   registerWithEmail,
+  resendVerificationEmail,
   saveUserProfile,
   type EmailAuthForm,
   type SignupForm,
@@ -38,6 +39,7 @@ type AuthContextValue = {
   missingConfigKeys: readonly string[];
   profile: AppUserProfile | null;
   refreshSession: () => Promise<void>;
+  resendVerification: (form: EmailAuthForm) => Promise<void>;
   role: UserRole;
   signIn: (form: EmailAuthForm) => Promise<UserRole>;
   signOut: () => Promise<void>;
@@ -157,6 +159,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await loadSession(null);
   }, [loadSession]);
 
+  const resendVerification = useCallback(async (form: EmailAuthForm) => {
+    await resendVerificationEmail(form);
+    await loadSession(null);
+  }, [loadSession]);
+
   const refreshSession = useCallback(async () => {
     await loadSession(user, true);
   }, [loadSession, user]);
@@ -171,12 +178,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     missingConfigKeys: missingFirebaseConfigKeys,
     profile,
     refreshSession,
+    resendVerification,
     role,
     signIn,
     signOut,
     signUp,
     user,
-  }), [claims, isLoading, profile, refreshSession, role, signIn, signOut, signUp, user]);
+  }), [claims, isLoading, profile, refreshSession, resendVerification, role, signIn, signOut, signUp, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

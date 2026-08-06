@@ -5,6 +5,7 @@ import { Card, CardContent } from './common';
 import { getSidebarItems } from '../config/navigation';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 import { asideItems } from '../i18n';
 import type { AsideItem } from '../types/common';
 
@@ -38,9 +39,11 @@ function AsidePanel() {
 export function Layout() {
   const auth = useAuth();
   const location = useLocation();
+  const { settings } = useSiteSettings();
   const isHomePage = location.pathname === '/';
   const sidebarItems = getSidebarItems(location.pathname, {
     isAuthenticated: auth.isLoading || Boolean(auth.user),
+    menuVisibility: settings.menuVisibility,
   });
   const hasSidebarItems = sidebarItems.length > 0;
 

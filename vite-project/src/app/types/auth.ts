@@ -13,6 +13,7 @@ export type UserPermissions = {
 export type AppUserProfile = {
   uid: string;
   email: string | null;
+  emailVerified: boolean;
   displayName: string | null;
   role: UserRole;
   permissions: UserPermissions;

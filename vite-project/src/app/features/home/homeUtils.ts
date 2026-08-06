@@ -3,9 +3,14 @@ import { routeSections } from "@/app/config/navigation";
 import { localizeRouteDescription, localizeRouteLabel } from "@/app/i18n";
 import { getLocalizedNavigationSearchResults, getSearchablePageCount } from "@/app/utils/searchCatalog";
 import type { RouteSectionDefinition } from "@/app/types/navigation";
+import type { SiteMenuVisibility } from "@/app/types/siteSettings";
+import { isConfigurableSectionKey } from "@/app/types/siteSettings";
 
-export function getMainRouteSections() {
-  return routeSections.filter((section) => section.key !== "home");
+export function getMainRouteSections(menuVisibility?: SiteMenuVisibility) {
+  return routeSections.filter((section) => (
+    section.key !== "home"
+    && (!isConfigurableSectionKey(section.key) || menuVisibility?.[section.key] !== false)
+  ));
 }
 
 export function countReadySections(sections: RouteSectionDefinition[]) {
@@ -19,8 +24,8 @@ export function getLocalizedRouteSectionCopy(language: AppLanguage, section: Rou
   };
 }
 
-export function getLocalizedSearchResults(query: string, language: AppLanguage) {
-  return getLocalizedNavigationSearchResults(query, language, 8);
+export function getLocalizedSearchResults(query: string, language: AppLanguage, menuVisibility?: SiteMenuVisibility) {
+  return getLocalizedNavigationSearchResults(query, language, 8, menuVisibility);
 }
 
 export { getSearchablePageCount };

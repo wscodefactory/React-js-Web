@@ -1,20 +1,26 @@
 import type { AppLanguage } from "@/app/context/LanguageContext";
-import { searchItems } from "@/app/config/navigation";
+import { getSearchItems } from "@/app/config/navigation";
 import { localizeSearchItem } from "@/app/i18n";
 import type { SearchItem } from "@/app/types/navigation";
+import type { SiteMenuVisibility } from "@/app/types/siteSettings";
 
-export function getSearchablePageCount() {
-  return searchItems.length;
+export function getSearchablePageCount(menuVisibility?: SiteMenuVisibility) {
+  return getSearchItems(menuVisibility).length;
 }
 
-export function getLocalizedNavigationSearchResults(query: string, language: AppLanguage, limit?: number): SearchItem[] {
+export function getLocalizedNavigationSearchResults(
+  query: string,
+  language: AppLanguage,
+  limit?: number,
+  menuVisibility?: SiteMenuVisibility,
+): SearchItem[] {
   const normalizedQuery = query.trim().toLowerCase();
 
   if (!normalizedQuery) {
     return [];
   }
 
-  const results = searchItems.flatMap((item) => {
+  const results = getSearchItems(menuVisibility).flatMap((item) => {
     const localizedItem = localizeSearchItem(language, item);
     const searchableValues = [
       item.name,

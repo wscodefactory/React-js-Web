@@ -36,6 +36,7 @@ export type SignupForm = EmailAuthForm & {
 };
 
 export const emailVerificationRequiredCode = 'auth/email-not-verified';
+export const emailAlreadyVerifiedCode = 'auth/email-already-verified';
 
 function createAuthServiceError(code: string, message: string) {
   return Object.assign(new Error(message), { code });
@@ -65,6 +66,7 @@ function normalizeUserProfile(uid: string, data: Record<string, unknown>): AppUs
     createdAt: data.createdAt,
     displayName: typeof data.displayName === 'string' ? data.displayName : null,
     email: typeof data.email === 'string' ? data.email : null,
+    emailVerified: typeof data.emailVerified === 'boolean' ? data.emailVerified : false,
     lastLoginAt: data.lastLoginAt,
     permissions: getRolePermissions(role),
     role,
@@ -82,6 +84,7 @@ export async function saveUserProfile(user: User) {
       {
         displayName: user.displayName,
         email: user.email,
+        emailVerified: user.emailVerified,
         lastLoginAt: serverTimestamp(),
         uid: user.uid,
         updatedAt: serverTimestamp(),
@@ -95,6 +98,7 @@ export async function saveUserProfile(user: User) {
     createdAt: serverTimestamp(),
     displayName: user.displayName,
     email: user.email,
+    emailVerified: user.emailVerified,
     lastLoginAt: serverTimestamp(),
     permissions: getRolePermissions('user'),
     role: 'user',
@@ -117,6 +121,7 @@ export async function registerWithEmail({ displayName, email, password }: Signup
       createdAt: serverTimestamp(),
       displayName: trimmedDisplayName || null,
       email: credential.user.email,
+      emailVerified: credential.user.emailVerified,
       lastLoginAt: serverTimestamp(),
       permissions: getRolePermissions('user'),
       role: 'user',
@@ -152,6 +157,20 @@ export async function loginWithEmail({ email, password }: EmailAuthForm): Promis
   }
 
   return credential;
+}
+
+export async function resendVerificationEmail({ email, password }: EmailAuthForm) {
+  const credential = await signInWithEmailAndPassword(requireAuth(), email, password);
+
+  await credential.user.reload();
+
+  if (credential.user.emailVerified) {
+    await signOut(requireAuth());
+    throw createAuthServiceError(emailAlreadyVerifiedCode, '이미 인증된 계정입니다. 로그인해주세요.');
+  }
+
+  await sendEmailVerification(credential.user);
+  await signOut(requireAuth());
 }
 
 export async function logout() {

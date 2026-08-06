@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { LogIn } from 'lucide-react';
+import { LogIn, MailCheck } from 'lucide-react';
 import { AuthSetupNotice } from '../../components/auth/AuthSetupNotice';
 import { Button, Card, CardContent, Input } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
@@ -19,6 +19,8 @@ function getAuthErrorMessage(error: unknown) {
   const errorCode = getAuthErrorCode(error);
 
   switch (errorCode) {
+    case 'auth/email-already-verified':
+      return '이미 인증된 계정입니다. 로그인해주세요.';
     case 'auth/email-not-verified':
       return '인증 메일을 다시 보냈습니다. 메일함의 인증 링크를 누른 뒤 로그인해주세요.';
     case 'auth/invalid-credential':
@@ -42,6 +44,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [isResending, setIsResending] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [password, setPassword] = useState('');
   const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/account';
@@ -65,6 +69,7 @@ export function LoginPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorMessage('');
+    setSuccessMessage('');
     setIsSubmitting(true);
 
     try {
@@ -76,6 +81,27 @@ export function LoginPage() {
       setErrorMessage(getAuthErrorMessage(error));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!email.trim() || !password) {
+      setErrorMessage('이메일과 비밀번호를 입력한 뒤 다시 보내기를 눌러주세요.');
+      return;
+    }
+
+    setIsResending(true);
+
+    try {
+      await auth.resendVerification({ email: email.trim(), password });
+      setSuccessMessage('인증 메일을 다시 보냈습니다. 메일함의 인증 링크를 확인해주세요.');
+    } catch (error) {
+      setErrorMessage(getAuthErrorMessage(error));
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -103,7 +129,11 @@ export function LoginPage() {
                 <span className="form-label">이메일</span>
                 <Input
                   autoComplete="email"
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setErrorMessage('');
+                    setSuccessMessage('');
+                  }}
                   required
                   type="email"
                   value={email}
@@ -114,7 +144,11 @@ export function LoginPage() {
                 <Input
                   autoComplete="current-password"
                   minLength={6}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    setErrorMessage('');
+                    setSuccessMessage('');
+                  }}
                   required
                   type="password"
                   value={password}
@@ -127,9 +161,26 @@ export function LoginPage() {
                 </p>
               ) : null}
 
+              {successMessage ? (
+                <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-3 text-sm text-green-800 dark:border-green-900/60 dark:bg-green-950/30 dark:text-green-100">
+                  <MailCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                  <p>{successMessage}</p>
+                </div>
+              ) : null}
+
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 <LogIn className="mr-2 inline h-4 w-4" />
                 {isSubmitting ? '로그인 중...' : '로그인'}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                disabled={isSubmitting || isResending}
+                onClick={handleResendVerification}
+              >
+                <MailCheck className="mr-2 inline h-4 w-4" />
+                {isResending ? '인증 메일 발송 중...' : '인증 메일 다시 보내기'}
               </Button>
             </form>
 

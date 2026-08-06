@@ -2,32 +2,38 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { AppLanguage } from "@/app/context/LanguageContext";
-import { headerNavigationSections } from "@/app/config/navigation";
 import { localizeBadge, localizeRouteLabel, shellText } from "@/app/i18n";
-import type { RouteSectionKey } from "@/app/types/navigation";
+import type { RouteSectionDefinition, RouteSectionKey } from "@/app/types/navigation";
 import { isPathActive } from "./headerUtils";
 
 type HeaderMenuDropdownProps = {
   currentPath: string;
   language: AppLanguage;
   onNavigate: () => void;
+  sections: RouteSectionDefinition[];
 };
 
-export function HeaderMenuDropdown({ currentPath, language, onNavigate }: HeaderMenuDropdownProps) {
+export function HeaderMenuDropdown({ currentPath, language, onNavigate, sections }: HeaderMenuDropdownProps) {
   const text = shellText[language];
-  const activeSection = headerNavigationSections.find((section) => isPathActive(currentPath, section.basePath));
-  const [openSectionKey, setOpenSectionKey] = useState<RouteSectionKey | "">(activeSection?.key ?? "components");
+  const activeSection = sections.find((section) => isPathActive(currentPath, section.basePath));
+  const firstSectionKey = sections[0]?.key ?? "";
+  const [openSectionKey, setOpenSectionKey] = useState<RouteSectionKey | "">(activeSection?.key ?? firstSectionKey);
 
   useEffect(() => {
     if (activeSection?.key) {
       setOpenSectionKey(activeSection.key);
+      return;
     }
-  }, [activeSection?.key]);
+
+    if (!sections.some((section) => section.key === openSectionKey)) {
+      setOpenSectionKey(firstSectionKey);
+    }
+  }, [activeSection?.key, firstSectionKey, openSectionKey, sections]);
 
   return (
     <nav id="header-mobile-menu" className="header-menu-dropdown" aria-label={text.mobileNav}>
       <div className="header-menu-dropdown-inner">
-        {headerNavigationSections.map((section) => {
+        {sections.map((section) => {
           const sectionActive = isPathActive(currentPath, section.basePath);
           const sectionCurrent = currentPath === section.basePath;
           const children = section.children ?? [];
