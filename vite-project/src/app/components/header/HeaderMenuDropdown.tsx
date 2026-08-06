@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { AppLanguage } from "@/app/context/LanguageContext";
-import { routeSections } from "@/app/config/navigation";
+import { headerNavigationSections } from "@/app/config/navigation";
 import { localizeBadge, localizeRouteLabel, shellText } from "@/app/i18n";
 import type { RouteSectionKey } from "@/app/types/navigation";
 import { isPathActive } from "./headerUtils";
@@ -15,7 +15,7 @@ type HeaderMenuDropdownProps = {
 
 export function HeaderMenuDropdown({ currentPath, language, onNavigate }: HeaderMenuDropdownProps) {
   const text = shellText[language];
-  const activeSection = routeSections.find((section) => isPathActive(currentPath, section.basePath));
+  const activeSection = headerNavigationSections.find((section) => isPathActive(currentPath, section.basePath));
   const [openSectionKey, setOpenSectionKey] = useState<RouteSectionKey | "">(activeSection?.key ?? "components");
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function HeaderMenuDropdown({ currentPath, language, onNavigate }: Header
   return (
     <nav id="header-mobile-menu" className="header-menu-dropdown" aria-label={text.mobileNav}>
       <div className="header-menu-dropdown-inner">
-        {routeSections.map((section) => {
+        {headerNavigationSections.map((section) => {
           const sectionActive = isPathActive(currentPath, section.basePath);
           const sectionCurrent = currentPath === section.basePath;
           const children = section.children ?? [];

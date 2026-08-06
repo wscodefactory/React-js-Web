@@ -36,6 +36,11 @@ import { SvgEditorPage } from "../pages/tools/SvgEditorPage";
 import { ThemeBuilderPage } from "../pages/tools/ThemeBuilderPage";
 import { AccessibilityCheckerPage } from "../pages/tools/AccessibilityCheckerPage";
 import { MockApiStudioPage } from "../pages/tools/MockApiStudioPage";
+import { AccountPage } from "../pages/auth/AccountPage";
+import { LoginPage } from "../pages/auth/LoginPage";
+import { SignupPage } from "../pages/auth/SignupPage";
+import { AdminDashboardPage } from "../pages/admin/AdminDashboardPage";
+import { AdminUsersPage } from "../pages/admin/AdminUsersPage";
 
 export const routeSections: RouteSectionDefinition[] = [
   {
@@ -119,5 +124,29 @@ export const routeSections: RouteSectionDefinition[] = [
     basePath: "/mcp",
     landingDescription: "A practical view of how shared component knowledge can be packaged.",
     landingComponent: McpPage,
+  },
+  {
+    key: "account",
+    label: "Account",
+    basePath: "/account",
+    landingDescription: "Sign in, review your profile, and refresh role claims.",
+    landingComponent: AccountPage,
+    requiresAuth: true,
+    children: [
+      { label: "Login", slug: "auth/login", description: "Sign in with Firebase Authentication.", component: LoginPage, includeInSearch: false },
+      { label: "Signup", slug: "auth/signup", description: "Create a basic user account.", component: SignupPage, includeInSearch: false },
+    ],
+  },
+  {
+    key: "admin",
+    label: "Admin",
+    basePath: "/admin",
+    landingDescription: "Manage users, roles, and protected data flows.",
+    landingComponent: AdminDashboardPage,
+    requiredRole: "admin",
+    requiresAuth: true,
+    children: [
+      { label: "Users", slug: "admin/users", description: "Review user profiles and adjust Firestore role labels.", component: AdminUsersPage, requiredRole: "admin", requiresAuth: true },
+    ],
   },
 ];

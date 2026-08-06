@@ -1,7 +1,8 @@
 import type { ComponentType } from 'react';
+import type { UserRole } from './auth';
 import type { NavigationPathItem } from './common';
 
-export type RouteSectionKey = 'home' | 'components' | 'full-apps' | 'libraries' | 'tools' | 'mcp';
+export type RouteSectionKey = 'home' | 'components' | 'full-apps' | 'libraries' | 'tools' | 'mcp' | 'account' | 'admin';
 
 export interface RoutePageDefinition {
   label: string;
@@ -12,6 +13,8 @@ export interface RoutePageDefinition {
   component: ComponentType;
   includeInSidebar?: boolean;
   includeInSearch?: boolean;
+  requiredRole?: UserRole;
+  requiresAuth?: boolean;
 }
 
 export interface RouteSectionDefinition {
@@ -21,6 +24,8 @@ export interface RouteSectionDefinition {
   landingDescription: string;
   landingComponent: ComponentType;
   children?: RoutePageDefinition[];
+  requiredRole?: UserRole;
+  requiresAuth?: boolean;
 }
 
 export interface NavigationLinkItem extends NavigationPathItem {}

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Languages, MoreHorizontal, Moon, Search, Sun, Upload } from "lucide-react";
+import { Link } from "react-router";
+import { Download, Languages, LogOut, MoreHorizontal, Moon, Search, Sun, Upload } from "lucide-react";
 import { IconButton } from "@/app/components/common";
+import { useAuth } from "@/app/context/AuthContext";
 import type { HeaderShellText } from "./types";
 
 type HeaderActionsProps = {
@@ -22,8 +24,11 @@ export function HeaderActions({
   onToggleLanguage,
   text,
 }: HeaderActionsProps) {
+  const auth = useAuth();
   const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const accountPath = auth.isAdmin ? "/admin" : "/account";
+  const accountLabel = auth.isAdmin ? "관리자" : "내 계정";
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -96,6 +101,25 @@ export function HeaderActions({
         onClick={onToggleDarkMode}
         className="header-theme-toggle"
       />
+      {auth.user ? (
+        <>
+          <Link to={accountPath} className="header-login-link" aria-label={`${accountLabel} 화면으로 이동`}>
+            {accountLabel}
+          </Link>
+          <IconButton
+            icon={<LogOut className="icon" />}
+            label="로그아웃"
+            onClick={() => {
+              void auth.signOut();
+            }}
+            className="header-theme-toggle"
+          />
+        </>
+      ) : (
+        <Link to="/auth/login" className="header-login-link" aria-label="로그인 화면으로 이동">
+          로그인
+        </Link>
+      )}
     </div>
   );
 }

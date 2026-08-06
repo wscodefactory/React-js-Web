@@ -7,10 +7,12 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "set-role": "node scripts/setUserRole.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "docs": "typedoc --entryPoints src --entryPointStrategy expand --out docs"
   },
   "dependencies": {
+    "firebase": "^12.16.0",
     "lucide-react": "0.487.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -23,6 +25,7 @@
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@vitejs/plugin-react": "4.7.0",
+    "firebase-admin": "^14.2.0",
     "tailwindcss": "4.1.12",
     "typedoc": "^0.28.19",
     "typescript": "^6.0.3",

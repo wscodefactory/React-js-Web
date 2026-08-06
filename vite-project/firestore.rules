@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return request.auth.token.role;
+    }
+
+    function isOwner() {
+      return signedIn() && (role() == 'owner' || request.auth.token.admin == true);
+    }
+
+    function isAdmin() {
+      return isOwner() || (signedIn() && role() == 'admin');
+    }
+
+    function isManager() {
+      return isAdmin() || (signedIn() && role() == 'manager');
+    }
+
+    function isEditor() {
+      return isManager() || (signedIn() && role() == 'editor');
+    }
+
+    function onlyOwnSafeProfileFieldsChanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'role',
+        'permissions',
+        'admin',
+        'claims'
+      ]);
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isManager());
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role == 'user';
+      allow update: if signedIn()
+        && (
+          (request.auth.uid == userId && onlyOwnSafeProfileFieldsChanged())
+          || isAdmin()
+        );
+      allow delete: if isOwner();
+    }
+
+    match /{document=**} {
+      allow read: if signedIn();
+      allow create, update, delete: if isEditor();
+    }
+  }
+}

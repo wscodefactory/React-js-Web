@@ -51,6 +51,10 @@
   @apply p-2 rounded-md hover:bg-gray-100 dark:hover:bg-green-800 transition-colors;
 }
 
+.header-login-link {
+  @apply inline-flex h-10 items-center justify-center rounded-md bg-green-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
+}
+
 .header-menu-dropdown {
   @apply md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900;
 }
@@ -132,6 +136,10 @@
 
 .layout-grid {
   @apply min-w-0 w-full max-w-[100vw] overflow-x-hidden md:grid md:grid-cols-[minmax(180px,200px)_minmax(0,1fr)] lg:grid-cols-[minmax(40px,5vw)_minmax(180px,15vw)_minmax(0,1fr)] xl:grid-cols-[minmax(40px,5vw)_minmax(180px,15vw)_minmax(0,1fr)_minmax(200px,20vw)_minmax(40px,5vw)] md:gap-0;
+}
+
+.layout-grid-no-sidebar {
+  @apply md:grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(40px,5vw)_minmax(0,1fr)] xl:grid-cols-[minmax(40px,5vw)_minmax(0,1fr)_minmax(200px,20vw)_minmax(40px,5vw)];
 }
 
 .layout-spacer {

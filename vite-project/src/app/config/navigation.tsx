@@ -8,8 +8,11 @@ import { routeSections } from "./navigationSections";
 
 export { routeSections };
 
-export const topNavigationItems: NavigationLinkItem[] = routeSections
-  .filter((section) => section.key !== "home")
+const hiddenTopNavigationKeys = new Set<RouteSectionKey>(["home", "account", "admin"]);
+
+export const headerNavigationSections = routeSections.filter((section) => !hiddenTopNavigationKeys.has(section.key));
+
+export const topNavigationItems: NavigationLinkItem[] = headerNavigationSections
   .map((section) => ({
     name: section.label,
     path: section.basePath,
@@ -28,10 +31,18 @@ export function getRouteSectionByPath(pathname: string): RouteSectionDefinition 
     return routeSectionLookup.get("components");
   }
 
+  if (pathname.startsWith("/auth")) {
+    return routeSectionLookup.get("account");
+  }
+
   return routeSections.find((section) => section.basePath !== "/" && pathname.startsWith(section.basePath));
 }
 
-export function getSidebarItems(pathname: string): SidebarItem[] {
+type SidebarOptions = {
+  isAuthenticated?: boolean;
+};
+
+export function getSidebarItems(pathname: string, options: SidebarOptions = {}): SidebarItem[] {
   if (pathname === "/") {
     return topNavigationItems.map((item) => ({
       name: item.name,
@@ -46,6 +57,7 @@ export function getSidebarItems(pathname: string): SidebarItem[] {
 
   return section.children
     .filter((item) => item.includeInSidebar !== false && item.slug)
+    .filter((item) => !(options.isAuthenticated && (item.slug === "auth/login" || item.slug === "auth/signup")))
     .map((item) => ({
       badge: item.badge,
       name: item.label,
