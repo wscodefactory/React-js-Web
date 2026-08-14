@@ -4,6 +4,7 @@ import { Download, Languages, LogOut, MoreHorizontal, Moon, Search, Sun, Upload 
 import { IconButton } from "@/app/components/common";
 import { useAuth } from "@/app/context/AuthContext";
 import type { HeaderShellText } from "./types";
+import { NotificationMenu } from "./NotificationMenu";
 
 type HeaderActionsProps = {
   isDarkMode: boolean;
@@ -103,6 +104,7 @@ export function HeaderActions({
       />
       {auth.user ? (
         <>
+          <NotificationMenu />
           <Link to={accountPath} className="header-login-link" aria-label={`${accountLabel} 화면으로 이동`}>
             {accountLabel}
           </Link>

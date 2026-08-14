@@ -3,6 +3,8 @@ import { Eye, EyeOff, RotateCcw, Save, Settings2, ShieldCheck, UserPlus, Wrench 
 import { Button, Card, CardContent, CardHeader, Select } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
 import { useSiteSettings } from '../../context/SiteSettingsContext';
+import { recordActivity } from '../../services/activityService';
+import { createNotification } from '../../services/notificationService';
 import {
   configurableSectionKeys,
   configurableSectionLabels,
@@ -117,6 +119,24 @@ export function AdminSettingsPage() {
     try {
       await siteSettings.saveSettings(draft, auth.user?.uid ?? null);
       setSuccessMessage('사이트 설정을 저장했습니다. 변경 내용이 전체 화면에 반영됩니다.');
+      if (auth.user) {
+        void recordActivity({
+          displayName: auth.user.displayName,
+          email: auth.user.email,
+          role: auth.role,
+          uid: auth.user.uid,
+        }, {
+          action: 'admin.settings.updated',
+          summary: '사이트 운영 설정을 변경했습니다.',
+          targetId: 'siteSettings/general',
+        }).catch((error) => console.warn('Failed to record settings activity.', error));
+        void createNotification(auth.user.uid, {
+          link: '/admin/settings',
+          message: '회원가입, 메뉴 노출 또는 페이지 접근 설정이 저장되었습니다.',
+          title: '사이트 설정 저장 완료',
+          type: 'success',
+        }).catch((error) => console.warn('Failed to create settings notification.', error));
+      }
     } catch (error) {
       setErrorMessage(getSettingsErrorMessage(error));
     } finally {

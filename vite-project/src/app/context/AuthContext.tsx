@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { getIdTokenResult, onAuthStateChanged, reload, type User } from 'firebase/auth';
 import { auth, isFirebaseConfigured, missingFirebaseConfigKeys } from '../services/firebase';
+import { recordActivity } from '../services/activityService';
 import {
   fetchUserProfile,
   loginWithEmail,
@@ -139,7 +140,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (form: EmailAuthForm) => {
     const credential = await loginWithEmail(form);
-    return (await loadSession(credential.user, true)) ?? 'user';
+    const signedInRole = (await loadSession(credential.user, true)) ?? 'user';
+
+    void recordActivity({
+      displayName: credential.user.displayName,
+      email: credential.user.email,
+      role: signedInRole,
+      uid: credential.user.uid,
+    }, {
+      action: 'auth.login',
+      summary: '계정에 로그인했습니다.',
+    }).catch((error) => console.warn('Failed to record sign-in activity.', error));
+
+    return signedInRole;
   }, [loadSession]);
 
   const signUp = useCallback(async (form: SignupForm) => {
@@ -155,9 +168,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadSession]);
 
   const signOut = useCallback(async () => {
+    if (user) {
+      try {
+        await recordActivity({
+          displayName: user.displayName,
+          email: user.email,
+          role,
+          uid: user.uid,
+        }, {
+          action: 'auth.logout',
+          summary: '계정에서 로그아웃했습니다.',
+        });
+      } catch (error) {
+        console.warn('Failed to record sign-out activity.', error);
+      }
+    }
+
     await logout();
     await loadSession(null);
-  }, [loadSession]);
+  }, [loadSession, role, user]);
 
   const resendVerification = useCallback(async (form: EmailAuthForm) => {
     await resendVerificationEmail(form);

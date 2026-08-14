@@ -1,5 +1,6 @@
-import type { ComponentType, ReactElement } from 'react';
+import { Suspense, type ComponentType, type ReactElement } from 'react';
 import { createBrowserRouter } from 'react-router';
+import { Loader2 } from 'lucide-react';
 import { ManagedRoute } from './components/auth/ManagedRoute';
 import { Layout } from './components/Layout';
 import { routeSections } from './config/navigation';
@@ -11,8 +12,23 @@ type RouteAccess = {
   requiresAuth?: boolean;
 };
 
+function RouteLoadingState() {
+  return (
+    <div className="container-page flex min-h-[50vh] items-center justify-center">
+      <div className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        화면을 불러오고 있습니다.
+      </div>
+    </div>
+  );
+}
+
 function createRouteElement(Component: ComponentType, access: RouteAccess, sectionKey?: RouteSectionKey): ReactElement {
-  const page = <Component />;
+  const page = (
+    <Suspense fallback={<RouteLoadingState />}>
+      <Component />
+    </Suspense>
+  );
 
   return (
     <ManagedRoute requiredRole={access.requiredRole} requiresAuth={access.requiresAuth} sectionKey={sectionKey}>

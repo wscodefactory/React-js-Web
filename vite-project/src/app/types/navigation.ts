@@ -2,7 +2,7 @@ import type { ComponentType } from 'react';
 import type { UserRole } from './auth';
 import type { NavigationPathItem } from './common';
 
-export type RouteSectionKey = 'home' | 'components' | 'full-apps' | 'libraries' | 'tools' | 'mcp' | 'account' | 'admin';
+export type RouteSectionKey = 'home' | 'components' | 'full-apps' | 'libraries' | 'tools' | 'mcp' | 'workspace' | 'account' | 'admin';
 
 export interface RoutePageDefinition {
   label: string;

@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Settings2, ShieldCheck, UsersRound, Workflow } from 'lucide-react';
+import { Activity, Settings2, ShieldCheck, UsersRound, Workflow } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
 import { roleDescriptions, roleLabels, userRoles } from '../../types/auth';
@@ -25,7 +25,7 @@ export function AdminDashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader
             title="현재 권한"
@@ -48,6 +48,15 @@ export function AdminDashboardPage() {
               title="사이트 설정"
               description="회원가입, 메뉴 노출과 페이지별 접근 등급을 관리합니다."
               icon={<Settings2 className="h-5 w-5 text-green-600" />}
+            />
+          </Link>
+        </Card>
+        <Card hover>
+          <Link to="/admin/activity" className="block">
+            <CardHeader
+              title="활동 기록"
+              description="로그인과 주요 운영 변경 기록을 시간순으로 확인합니다."
+              icon={<Activity className="h-5 w-5 text-green-600" />}
             />
           </Link>
         </Card>

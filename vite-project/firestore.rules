@@ -7,7 +7,10 @@ service cloud.firestore {
     }
 
     function role() {
-      return request.auth.token.get('role', 'user');
+      return request.auth.token.get(
+        'role',
+        request.auth.token.get('admin', false) == true ? 'admin' : 'user'
+      );
     }
 
     function isOwner() {
@@ -100,22 +103,24 @@ service cloud.firestore {
     }
 
     function validMenuVisibility(menuVisibility) {
-      return menuVisibility.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp'])
+      return menuVisibility.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp', 'workspace'])
         && menuVisibility.components is bool
         && menuVisibility['full-apps'] is bool
         && menuVisibility.libraries is bool
         && menuVisibility.tools is bool
-        && menuVisibility.mcp is bool;
+        && menuVisibility.mcp is bool
+        && menuVisibility.workspace is bool;
     }
 
     function validPageAccess(pageAccess) {
       let accessLevels = ['public', 'signedIn', 'user', 'editor', 'manager', 'admin', 'owner'];
-      return pageAccess.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp'])
+      return pageAccess.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp', 'workspace'])
         && pageAccess.components in accessLevels
         && pageAccess['full-apps'] in accessLevels
         && pageAccess.libraries in accessLevels
         && pageAccess.tools in accessLevels
-        && pageAccess.mcp in accessLevels;
+        && pageAccess.mcp in accessLevels
+        && pageAccess.workspace in accessLevels;
     }
 
     function validSiteSettings() {
@@ -133,6 +138,88 @@ service cloud.firestore {
         && request.resource.data.updatedBy == request.auth.uid
         && validMenuVisibility(request.resource.data.menuVisibility)
         && validPageAccess(request.resource.data.pageAccess);
+    }
+
+    function validWorkspace(userId) {
+      return request.resource.data.keys().hasOnly([
+          'fingerprint',
+          'itemCount',
+          'items',
+          'updatedAt',
+          'updatedByDeviceId',
+          'userId'
+        ])
+        && request.resource.data.userId == userId
+        && request.resource.data.fingerprint is string
+        && request.resource.data.itemCount is int
+        && request.resource.data.itemCount >= 0
+        && request.resource.data.items is map
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByDeviceId is string;
+    }
+
+    function validWorkspaceVersion(userId) {
+      return request.resource.data.keys().hasOnly([
+          'createdAt',
+          'fingerprint',
+          'itemCount',
+          'items',
+          'label',
+          'source',
+          'userId'
+        ])
+        && request.resource.data.userId == userId
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.fingerprint is string
+        && request.resource.data.itemCount is int
+        && request.resource.data.itemCount >= 0
+        && request.resource.data.items is map
+        && request.resource.data.label is string
+        && request.resource.data.source in ['manual', 'restore-backup'];
+    }
+
+    function validActivityLog() {
+      return request.resource.data.keys().hasOnly([
+          'action',
+          'actorDisplayName',
+          'actorEmail',
+          'actorRole',
+          'actorUid',
+          'createdAt',
+          'details',
+          'summary',
+          'targetId'
+        ])
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.actorRole == role()
+        && request.resource.data.action in [
+          'auth.login',
+          'auth.logout',
+          'workspace.version.created',
+          'workspace.version.restored',
+          'admin.role.updated',
+          'admin.settings.updated'
+        ]
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.summary is string;
+    }
+
+    function validNotification(userId) {
+      return request.resource.data.keys().hasOnly([
+          'createdAt',
+          'link',
+          'message',
+          'readAt',
+          'title',
+          'type',
+          'userId'
+        ])
+        && request.resource.data.userId == userId
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.readAt == null
+        && request.resource.data.message is string
+        && request.resource.data.title is string
+        && request.resource.data.type in ['info', 'success', 'warning', 'role'];
     }
 
     match /siteSettings/{settingsId} {
@@ -154,7 +241,43 @@ service cloud.firestore {
       allow delete: if isOwner();
     }
 
-    match /{document=**} {
+    match /userWorkspaces/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn()
+        && request.auth.uid == userId
+        && validWorkspace(userId);
+      allow delete: if signedIn() && request.auth.uid == userId;
+
+      match /versions/{versionId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create: if signedIn()
+          && request.auth.uid == userId
+          && validWorkspaceVersion(userId);
+        allow update: if false;
+        allow delete: if signedIn() && request.auth.uid == userId;
+      }
+    }
+
+    match /activityLogs/{activityId} {
+      allow read: if isAdmin();
+      allow create: if signedIn() && validActivityLog();
+      allow update: if false;
+      allow delete: if isOwner();
+    }
+
+    match /notifications/{userId}/items/{notificationId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && (request.auth.uid == userId || isAdmin())
+        && validNotification(userId);
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt'])
+        && request.resource.data.readAt == request.time;
+      allow delete: if signedIn() && (request.auth.uid == userId || isOwner());
+    }
+
+    match /content/{document=**} {
       allow read: if signedIn();
       allow create, update, delete: if isEditor();
     }

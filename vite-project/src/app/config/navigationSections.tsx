@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import type { RouteSectionDefinition } from "../types/navigation";
 import { HomePage } from "../pages/HomePage";
 import { ComponentsPage } from "../pages/ComponentsPage";
@@ -36,12 +37,33 @@ import { SvgEditorPage } from "../pages/tools/SvgEditorPage";
 import { ThemeBuilderPage } from "../pages/tools/ThemeBuilderPage";
 import { AccessibilityCheckerPage } from "../pages/tools/AccessibilityCheckerPage";
 import { MockApiStudioPage } from "../pages/tools/MockApiStudioPage";
-import { AccountPage } from "../pages/auth/AccountPage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { SignupPage } from "../pages/auth/SignupPage";
-import { AdminDashboardPage } from "../pages/admin/AdminDashboardPage";
-import { AdminSettingsPage } from "../pages/admin/AdminSettingsPage";
-import { AdminUsersPage } from "../pages/admin/AdminUsersPage";
+
+const WorkspacePage = lazy(async () => {
+  const pageModule = await import("../pages/WorkspacePage");
+  return { default: pageModule.WorkspacePage };
+});
+const AccountPage = lazy(async () => {
+  const pageModule = await import("../pages/auth/AccountPage");
+  return { default: pageModule.AccountPage };
+});
+const AdminDashboardPage = lazy(async () => {
+  const pageModule = await import("../pages/admin/AdminDashboardPage");
+  return { default: pageModule.AdminDashboardPage };
+});
+const AdminUsersPage = lazy(async () => {
+  const pageModule = await import("../pages/admin/AdminUsersPage");
+  return { default: pageModule.AdminUsersPage };
+});
+const AdminSettingsPage = lazy(async () => {
+  const pageModule = await import("../pages/admin/AdminSettingsPage");
+  return { default: pageModule.AdminSettingsPage };
+});
+const AdminActivityPage = lazy(async () => {
+  const pageModule = await import("../pages/admin/AdminActivityPage");
+  return { default: pageModule.AdminActivityPage };
+});
 
 export const routeSections: RouteSectionDefinition[] = [
   {
@@ -127,6 +149,14 @@ export const routeSections: RouteSectionDefinition[] = [
     landingComponent: McpPage,
   },
   {
+    key: "workspace",
+    label: "Workspace",
+    basePath: "/workspace",
+    landingDescription: "Sync saved tool data across devices and restore earlier versions.",
+    landingComponent: WorkspacePage,
+    requiresAuth: true,
+  },
+  {
     key: "account",
     label: "Account",
     basePath: "/account",
@@ -149,6 +179,7 @@ export const routeSections: RouteSectionDefinition[] = [
     children: [
       { label: "Users", slug: "admin/users", description: "Review user profiles and adjust Firestore role labels.", component: AdminUsersPage, requiredRole: "admin", requiresAuth: true },
       { label: "Settings", slug: "admin/settings", description: "Control signup, menu visibility, and page access levels.", component: AdminSettingsPage, requiredRole: "admin", requiresAuth: true },
+      { label: "Activity", slug: "admin/activity", description: "Review sign-in and administration activity.", component: AdminActivityPage, requiredRole: "admin", requiresAuth: true },
     ],
   },
 ];

@@ -3,6 +3,8 @@ import { Filter, RefreshCw, Search, ShieldAlert, UserCheck, UserX, UsersRound } 
 import { Button, Card, CardContent, CardHeader, Input, Select } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
 import { listUserProfiles, updateUserProfileRole } from '../../services/authService';
+import { recordActivity } from '../../services/activityService';
+import { createNotification } from '../../services/notificationService';
 import {
   getRolePermissions,
   roleLabels,
@@ -135,6 +137,7 @@ export function AdminUsersPage() {
   ], []);
 
   const handleRoleChange = async (uid: string, role: UserRole) => {
+    const targetUser = users.find((user) => user.uid === uid);
     setSavingUid(uid);
     setErrorMessage('');
 
@@ -143,6 +146,25 @@ export function AdminUsersPage() {
       setUsers((currentUsers) => currentUsers.map((user) => (
         user.uid === uid ? { ...user, permissions: getRolePermissions(role), role } : user
       )));
+      if (auth.user) {
+        void recordActivity({
+          displayName: auth.user.displayName,
+          email: auth.user.email,
+          role: auth.role,
+          uid: auth.user.uid,
+        }, {
+          action: 'admin.role.updated',
+          details: `${roleLabels[targetUser?.role ?? 'user']} → ${roleLabels[role]}`,
+          summary: `${targetUser?.displayName || targetUser?.email || uid} 회원의 권한을 변경했습니다.`,
+          targetId: uid,
+        }).catch((error) => console.warn('Failed to record role activity.', error));
+        void createNotification(uid, {
+          link: '/account',
+          message: `계정 권한이 ${roleLabels[role]}(으)로 변경되었습니다. 다시 로그인하면 새 권한이 적용됩니다.`,
+          title: '계정 권한 변경',
+          type: 'role',
+        }).catch((error) => console.warn('Failed to create role notification.', error));
+      }
     } catch (error) {
       setErrorMessage(getAdminErrorMessage(error));
     } finally {

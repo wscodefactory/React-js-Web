@@ -1,7 +1,7 @@
 import type { UserRole } from './auth';
 import type { RouteSectionKey } from './navigation';
 
-export const configurableSectionKeys = ['components', 'full-apps', 'libraries', 'tools', 'mcp'] as const;
+export const configurableSectionKeys = ['components', 'full-apps', 'libraries', 'tools', 'mcp', 'workspace'] as const;
 
 export type ConfigurableSectionKey = Extract<RouteSectionKey, (typeof configurableSectionKeys)[number]>;
 
@@ -26,6 +26,7 @@ export const configurableSectionLabels: Record<ConfigurableSectionKey, string> =
   libraries: 'Libraries',
   tools: 'Tools',
   mcp: 'MCP',
+  workspace: 'Workspace',
 };
 
 export const pageAccessLevels = ['public', 'signedIn', 'user', 'editor', 'manager', 'admin', 'owner'] as const;
@@ -51,6 +52,7 @@ export const defaultMenuVisibility: SiteMenuVisibility = {
   libraries: true,
   tools: true,
   mcp: true,
+  workspace: true,
 };
 
 export const defaultPageAccess: SitePageAccess = {
@@ -59,6 +61,7 @@ export const defaultPageAccess: SitePageAccess = {
   libraries: 'public',
   tools: 'public',
   mcp: 'public',
+  workspace: 'signedIn',
 };
 
 export const defaultSiteSettings: SiteSettings = {
