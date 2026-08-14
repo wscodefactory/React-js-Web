@@ -7,15 +7,16 @@ service cloud.firestore {
     }
 
     function role() {
-      return request.auth.token.role;
+      return request.auth.token.get('role', 'user');
     }
 
     function isOwner() {
-      return signedIn() && (role() == 'owner' || request.auth.token.admin == true);
+      return signedIn() && role() == 'owner';
     }
 
     function isAdmin() {
-      return isOwner() || (signedIn() && role() == 'admin');
+      return isOwner()
+        || (signedIn() && (role() == 'admin' || request.auth.token.get('admin', false) == true));
     }
 
     function isManager() {
@@ -26,30 +27,129 @@ service cloud.firestore {
       return isManager() || (signedIn() && role() == 'editor');
     }
 
-    function onlyOwnSafeProfileFieldsChanged() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-        'role',
-        'permissions',
-        'admin',
-        'claims'
-      ]);
+    function validRole(roleValue) {
+      return roleValue in ['user', 'editor', 'manager', 'admin', 'owner'];
+    }
+
+    function validPermissions(roleValue, permissions) {
+      return permissions.keys().hasOnly([
+          'canReadContent',
+          'canEditContent',
+          'canManageData',
+          'canManageUsers',
+          'canManageOwners'
+        ])
+        && permissions.canReadContent == true
+        && permissions.canEditContent == (roleValue in ['editor', 'manager', 'admin', 'owner'])
+        && permissions.canManageData == (roleValue in ['manager', 'admin', 'owner'])
+        && permissions.canManageUsers == (roleValue in ['admin', 'owner'])
+        && permissions.canManageOwners == (roleValue == 'owner');
+    }
+
+    function validNewUserProfile(userId) {
+      return request.resource.data.keys().hasOnly([
+          'createdAt',
+          'displayName',
+          'email',
+          'emailVerified',
+          'lastLoginAt',
+          'permissions',
+          'role',
+          'uid',
+          'updatedAt'
+        ])
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.emailVerified == request.auth.token.email_verified
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.lastLoginAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.role == 'user'
+        && validPermissions('user', request.resource.data.permissions);
+    }
+
+    function onlyOwnProfileFieldsChanged(userId) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'displayName',
+          'email',
+          'emailVerified',
+          'lastLoginAt',
+          'uid',
+          'updatedAt'
+        ])
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.emailVerified == request.auth.token.email_verified
+        && request.resource.data.lastLoginAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validAdminRoleChange() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'permissions',
+          'role',
+          'updatedAt'
+        ])
+        && request.resource.data.updatedAt == request.time
+        && validRole(request.resource.data.role)
+        && validPermissions(request.resource.data.role, request.resource.data.permissions)
+        && (
+          isOwner()
+          || (resource.data.role != 'owner' && request.resource.data.role != 'owner')
+        );
+    }
+
+    function validMenuVisibility(menuVisibility) {
+      return menuVisibility.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp'])
+        && menuVisibility.components is bool
+        && menuVisibility['full-apps'] is bool
+        && menuVisibility.libraries is bool
+        && menuVisibility.tools is bool
+        && menuVisibility.mcp is bool;
+    }
+
+    function validPageAccess(pageAccess) {
+      let accessLevels = ['public', 'signedIn', 'user', 'editor', 'manager', 'admin', 'owner'];
+      return pageAccess.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp'])
+        && pageAccess.components in accessLevels
+        && pageAccess['full-apps'] in accessLevels
+        && pageAccess.libraries in accessLevels
+        && pageAccess.tools in accessLevels
+        && pageAccess.mcp in accessLevels;
+    }
+
+    function validSiteSettings() {
+      return request.resource.data.keys().hasOnly([
+          'maintenanceMode',
+          'menuVisibility',
+          'pageAccess',
+          'signupEnabled',
+          'updatedAt',
+          'updatedBy'
+        ])
+        && request.resource.data.maintenanceMode is bool
+        && request.resource.data.signupEnabled is bool
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && validMenuVisibility(request.resource.data.menuVisibility)
+        && validPageAccess(request.resource.data.pageAccess);
     }
 
     match /siteSettings/{settingsId} {
-      allow read: if true;
-      allow create, update: if isAdmin();
-      allow delete: if isOwner();
+      allow read: if settingsId == 'general';
+      allow create, update: if settingsId == 'general' && isAdmin() && validSiteSettings();
+      allow delete: if settingsId == 'general' && isOwner();
     }
 
     match /users/{userId} {
       allow read: if signedIn() && (request.auth.uid == userId || isManager());
       allow create: if signedIn()
         && request.auth.uid == userId
-        && request.resource.data.role == 'user';
+        && validNewUserProfile(userId);
       allow update: if signedIn()
         && (
-          (request.auth.uid == userId && onlyOwnSafeProfileFieldsChanged())
-          || isAdmin()
+          (request.auth.uid == userId && onlyOwnProfileFieldsChanged(userId))
+          || (isAdmin() && validAdminRoleChange())
         );
       allow delete: if isOwner();
     }

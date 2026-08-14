@@ -1,9 +1,10 @@
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router';
-import { MailCheck, UserPlus } from 'lucide-react';
+import { LogIn, MailCheck, UserPlus } from 'lucide-react';
 import { AuthSetupNotice } from '../../components/auth/AuthSetupNotice';
 import { Button, Card, CardContent, Input } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
+import { useSiteSettings } from '../../context/SiteSettingsContext';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const displayNamePattern = /^[A-Za-zㄱ-ㅎ가-힣ㅏ-ㅣ\s]+$/;
@@ -99,6 +100,7 @@ function hasSignupErrors(errors: SignupFieldErrors) {
 
 export function SignupPage() {
   const auth = useAuth();
+  const siteSettings = useSiteSettings();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -113,6 +115,28 @@ export function SignupPage() {
     return (
       <div className="container-page">
         <AuthSetupNotice missingKeys={auth.missingConfigKeys} />
+      </div>
+    );
+  }
+
+  if (!siteSettings.isLoading && !siteSettings.settings.signupEnabled) {
+    return (
+      <div className="container-page">
+        <div className="mx-auto max-w-xl">
+          <Card>
+            <CardContent>
+              <UserPlus className="h-8 w-8 text-gray-400" />
+              <h1 className="mt-4 text-2xl font-bold text-gray-950 dark:text-white">회원가입이 잠시 중단되었습니다</h1>
+              <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                현재는 새 계정을 만들 수 없습니다. 기존 계정이 있다면 로그인해주세요.
+              </p>
+              <Link to="/auth/login" className="btn btn-primary mt-6 inline-flex items-center justify-center">
+                <LogIn className="mr-2 h-4 w-4" />
+                로그인
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -167,6 +191,11 @@ export function SignupPage() {
     setHasTriedSubmit(true);
     setErrorMessage('');
     setSuccessMessage('');
+
+    if (!siteSettings.settings.signupEnabled) {
+      setErrorMessage('현재는 회원가입을 이용할 수 없습니다.');
+      return;
+    }
 
     const validationErrors = validateSignupForm({
       displayName,
@@ -317,9 +346,13 @@ export function SignupPage() {
               ) : null}
 
               <div className="pt-8">
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting || siteSettings.isLoading || !siteSettings.settings.signupEnabled}
+                >
                   <UserPlus className="mr-2 inline h-4 w-4" />
-                  {isSubmitting ? '가입 중...' : '회원가입'}
+                  {siteSettings.isLoading ? '설정 확인 중...' : isSubmitting ? '가입 중...' : '회원가입'}
                 </Button>
               </div>
             </form>

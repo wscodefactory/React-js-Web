@@ -40,6 +40,7 @@ import { AccountPage } from "../pages/auth/AccountPage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { SignupPage } from "../pages/auth/SignupPage";
 import { AdminDashboardPage } from "../pages/admin/AdminDashboardPage";
+import { AdminSettingsPage } from "../pages/admin/AdminSettingsPage";
 import { AdminUsersPage } from "../pages/admin/AdminUsersPage";
 
 export const routeSections: RouteSectionDefinition[] = [
@@ -147,6 +148,7 @@ export const routeSections: RouteSectionDefinition[] = [
     requiresAuth: true,
     children: [
       { label: "Users", slug: "admin/users", description: "Review user profiles and adjust Firestore role labels.", component: AdminUsersPage, requiredRole: "admin", requiresAuth: true },
+      { label: "Settings", slug: "admin/settings", description: "Control signup, menu visibility, and page access levels.", component: AdminSettingsPage, requiredRole: "admin", requiresAuth: true },
     ],
   },
 ];

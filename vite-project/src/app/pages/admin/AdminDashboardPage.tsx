@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { ShieldCheck, UsersRound, Workflow } from 'lucide-react';
+import { Settings2, ShieldCheck, UsersRound, Workflow } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
 import { roleDescriptions, roleLabels, userRoles } from '../../types/auth';
@@ -25,7 +25,7 @@ export function AdminDashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader
             title="현재 권한"
@@ -39,6 +39,15 @@ export function AdminDashboardPage() {
               title="회원 권한 관리"
               description="Firestore 프로필 권한을 확인하고 등급을 조정합니다."
               icon={<UsersRound className="h-5 w-5 text-green-600" />}
+            />
+          </Link>
+        </Card>
+        <Card hover>
+          <Link to="/admin/settings" className="block">
+            <CardHeader
+              title="사이트 설정"
+              description="회원가입, 메뉴 노출과 페이지별 접근 등급을 관리합니다."
+              icon={<Settings2 className="h-5 w-5 text-green-600" />}
             />
           </Link>
         </Card>
