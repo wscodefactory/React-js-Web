@@ -3,7 +3,7 @@ import { CheckCircle2, LogOut, RefreshCw, ShieldCheck, UserRound } from 'lucide-
 import { AuthSetupNotice } from '../../components/auth/AuthSetupNotice';
 import { Button, Card, CardContent, CardHeader } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
-import { getRolePermissions, roleDescriptions, roleLabels } from '../../types/auth';
+import { getRolePermissions, membershipPlanLabels, roleDescriptions, roleLabels } from '../../types/auth';
 
 const permissionLabels = {
   canEditContent: '콘텐츠 수정',
@@ -62,6 +62,13 @@ export function AccountPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link
+              to="/security"
+              className="btn btn-secondary border-white/30 bg-white/10 text-white hover:bg-white/20"
+            >
+              <ShieldCheck className="mr-2 inline h-4 w-4" />
+              보안 센터
+            </Link>
             <Button
               type="button"
               variant="secondary"
@@ -110,6 +117,14 @@ export function AccountPage() {
                 <dd className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-green-700 dark:text-green-300">
                   <CheckCircle2 className="h-4 w-4" />
                   활성
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">회원 등급</dt>
+                <dd className="mt-1">
+                  <span className={`badge ${auth.membershipPlan === 'pro' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'badge-success'}`}>
+                    {membershipPlanLabels[auth.membershipPlan]}
+                  </span>
                 </dd>
               </div>
             </dl>

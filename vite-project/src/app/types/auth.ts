@@ -1,6 +1,8 @@
 export const userRoles = ['user', 'editor', 'manager', 'admin', 'owner'] as const;
+export const membershipPlans = ['free', 'pro'] as const;
 
 export type UserRole = (typeof userRoles)[number];
+export type MembershipPlan = (typeof membershipPlans)[number];
 
 export type UserPermissions = {
   canReadContent: boolean;
@@ -15,11 +17,17 @@ export type AppUserProfile = {
   email: string | null;
   emailVerified: boolean;
   displayName: string | null;
+  membershipPlan: MembershipPlan;
   role: UserRole;
   permissions: UserPermissions;
   createdAt?: unknown;
   updatedAt?: unknown;
   lastLoginAt?: unknown;
+};
+
+export const membershipPlanLabels: Record<MembershipPlan, string> = {
+  free: '일반',
+  pro: '프로',
 };
 
 export const roleLabels: Record<UserRole, string> = {
@@ -91,6 +99,10 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
 
 export function isUserRole(value: unknown): value is UserRole {
   return typeof value === 'string' && userRoles.includes(value as UserRole);
+}
+
+export function isMembershipPlan(value: unknown): value is MembershipPlan {
+  return typeof value === 'string' && membershipPlans.includes(value as MembershipPlan);
 }
 
 export function getRolePermissions(role: UserRole): UserPermissions {

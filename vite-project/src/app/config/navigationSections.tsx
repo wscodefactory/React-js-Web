@@ -44,6 +44,14 @@ const WorkspacePage = lazy(async () => {
   const pageModule = await import("../pages/WorkspacePage");
   return { default: pageModule.WorkspacePage };
 });
+const ProjectHubPage = lazy(async () => {
+  const pageModule = await import("../pages/ProjectHubPage");
+  return { default: pageModule.ProjectHubPage };
+});
+const SecurityCenterPage = lazy(async () => {
+  const pageModule = await import("../pages/SecurityCenterPage");
+  return { default: pageModule.SecurityCenterPage };
+});
 const AccountPage = lazy(async () => {
   const pageModule = await import("../pages/auth/AccountPage");
   return { default: pageModule.AccountPage };
@@ -147,6 +155,22 @@ export const routeSections: RouteSectionDefinition[] = [
     basePath: "/mcp",
     landingDescription: "A practical view of how shared component knowledge can be packaged.",
     landingComponent: McpPage,
+  },
+  {
+    key: "projects",
+    label: "Projects",
+    basePath: "/projects",
+    landingDescription: "Group saved tool data into focused personal projects.",
+    landingComponent: ProjectHubPage,
+    requiresAuth: true,
+  },
+  {
+    key: "security",
+    label: "Security",
+    basePath: "/security",
+    landingDescription: "Review account security, password settings, and recent sign-in activity.",
+    landingComponent: SecurityCenterPage,
+    requiresAuth: true,
   },
   {
     key: "workspace",

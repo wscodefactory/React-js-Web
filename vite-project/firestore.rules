@@ -56,6 +56,7 @@ service cloud.firestore {
           'email',
           'emailVerified',
           'lastLoginAt',
+          'membershipPlan',
           'permissions',
           'role',
           'uid',
@@ -67,6 +68,7 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.lastLoginAt == request.time
         && request.resource.data.updatedAt == request.time
+        && request.resource.data.membershipPlan == 'free'
         && request.resource.data.role == 'user'
         && validPermissions('user', request.resource.data.permissions);
     }
@@ -103,23 +105,27 @@ service cloud.firestore {
     }
 
     function validMenuVisibility(menuVisibility) {
-      return menuVisibility.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp', 'workspace'])
+      return menuVisibility.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp', 'projects', 'security', 'workspace'])
         && menuVisibility.components is bool
         && menuVisibility['full-apps'] is bool
         && menuVisibility.libraries is bool
         && menuVisibility.tools is bool
         && menuVisibility.mcp is bool
+        && menuVisibility.projects is bool
+        && menuVisibility.security is bool
         && menuVisibility.workspace is bool;
     }
 
     function validPageAccess(pageAccess) {
       let accessLevels = ['public', 'signedIn', 'user', 'editor', 'manager', 'admin', 'owner'];
-      return pageAccess.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp', 'workspace'])
+      return pageAccess.keys().hasOnly(['components', 'full-apps', 'libraries', 'tools', 'mcp', 'projects', 'security', 'workspace'])
         && pageAccess.components in accessLevels
         && pageAccess['full-apps'] in accessLevels
         && pageAccess.libraries in accessLevels
         && pageAccess.tools in accessLevels
         && pageAccess.mcp in accessLevels
+        && pageAccess.projects in accessLevels
+        && pageAccess.security in accessLevels
         && pageAccess.workspace in accessLevels;
     }
 
@@ -195,8 +201,16 @@ service cloud.firestore {
         && request.resource.data.action in [
           'auth.login',
           'auth.logout',
+          'auth.password.updated',
+          'auth.password.reset-requested',
           'workspace.version.created',
           'workspace.version.restored',
+          'project.created',
+          'project.updated',
+          'project.duplicated',
+          'project.archived',
+          'project.restored',
+          'project.deleted',
           'admin.role.updated',
           'admin.settings.updated'
         ]
@@ -220,6 +234,46 @@ service cloud.firestore {
         && request.resource.data.message is string
         && request.resource.data.title is string
         && request.resource.data.type in ['info', 'success', 'warning', 'role'];
+    }
+
+    function validProjectData(userId) {
+      return request.resource.data.keys().hasOnly([
+          'accentColor',
+          'createdAt',
+          'description',
+          'isFavorite',
+          'linkedStorageKeys',
+          'name',
+          'status',
+          'tags',
+          'updatedAt',
+          'userId'
+        ])
+        && request.resource.data.userId == userId
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 60
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 200
+        && request.resource.data.tags is list
+        && request.resource.data.tags.size() <= 5
+        && request.resource.data.linkedStorageKeys is list
+        && request.resource.data.linkedStorageKeys.size() <= 50
+        && request.resource.data.accentColor in ['green', 'blue', 'amber', 'rose', 'gray']
+        && request.resource.data.isFavorite is bool
+        && request.resource.data.status in ['active', 'archived'];
+    }
+
+    function validNewProject(userId) {
+      return validProjectData(userId)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validUpdatedProject(userId) {
+      return validProjectData(userId)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
     }
 
     match /siteSettings/{settingsId} {
@@ -258,8 +312,20 @@ service cloud.firestore {
       }
     }
 
+    match /userProjects/{userId}/items/{projectId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && validNewProject(userId);
+      allow update: if signedIn()
+        && request.auth.uid == userId
+        && validUpdatedProject(userId);
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
     match /activityLogs/{activityId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.actorUid == request.auth.uid);
       allow create: if signedIn() && validActivityLog();
       allow update: if false;
       allow delete: if isOwner();

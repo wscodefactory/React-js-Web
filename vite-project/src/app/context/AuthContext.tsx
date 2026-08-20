@@ -23,8 +23,10 @@ import {
 } from '../services/authService';
 import {
   hasRoleAtLeast,
+  isMembershipPlan,
   isUserRole,
   type AppUserProfile,
+  type MembershipPlan,
   type UserRole,
 } from '../types/auth';
 
@@ -37,6 +39,8 @@ type AuthContextValue = {
   isAdmin: boolean;
   isAuthenticated: boolean;
   isLoading: boolean;
+  canUseProContent: boolean;
+  membershipPlan: MembershipPlan;
   missingConfigKeys: readonly string[];
   profile: AppUserProfile | null;
   refreshSession: () => Promise<void>;
@@ -66,9 +70,14 @@ function resolveRoleFromClaims(claims: AuthClaims): UserRole {
   return 'user';
 }
 
+function resolveMembershipPlanFromClaims(claims: AuthClaims): MembershipPlan {
+  return isMembershipPlan(claims.membershipPlan) ? claims.membershipPlan : 'free';
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [claims, setClaims] = useState<AuthClaims>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [membershipPlan, setMembershipPlan] = useState<MembershipPlan>('free');
   const [profile, setProfile] = useState<AppUserProfile | null>(null);
   const [role, setRole] = useState<UserRole>('user');
   const [user, setUser] = useState<User | null>(null);
@@ -77,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadSession = useCallback(async (sessionUser: User | null, forceRefresh = false) => {
     if (!sessionUser) {
       setClaims({});
+      setMembershipPlan('free');
       setProfile(null);
       setRole('user');
       setUser(null);
@@ -88,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!sessionUser.emailVerified) {
         setClaims({});
+        setMembershipPlan('free');
         setProfile(null);
         setRole('user');
         setUser(null);
@@ -102,10 +113,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const tokenResult = await getIdTokenResult(sessionUser, forceRefresh);
     const resolvedClaims = tokenResult.claims as AuthClaims;
+    const resolvedMembershipPlan = resolveMembershipPlanFromClaims(resolvedClaims);
     const resolvedRole = resolveRoleFromClaims(resolvedClaims);
     let resolvedProfile: AppUserProfile | null = null;
 
     setClaims(resolvedClaims);
+    setMembershipPlan(resolvedMembershipPlan);
     setRole(resolvedRole);
     setUser(sessionUser);
 
@@ -198,12 +211,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadSession, user]);
 
   const value = useMemo<AuthContextValue>(() => ({
+    canUseProContent: membershipPlan === 'pro' || hasRoleAtLeast(role, 'admin'),
     claims,
     firebaseReady: isFirebaseConfigured,
     hasRole: (requiredRole) => hasRoleAtLeast(role, requiredRole),
     isAdmin: hasRoleAtLeast(role, 'admin'),
     isAuthenticated: Boolean(user),
     isLoading,
+    membershipPlan,
     missingConfigKeys: missingFirebaseConfigKeys,
     profile,
     refreshSession,
@@ -213,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     signUp,
     user,
-  }), [claims, isLoading, profile, refreshSession, resendVerification, role, signIn, signOut, signUp, user]);
+  }), [claims, isLoading, membershipPlan, profile, refreshSession, resendVerification, role, signIn, signOut, signUp, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,5 +1,7 @@
-import { Link2, MoreVertical, Star } from "lucide-react";
+import { Link2, LockKeyhole, MoreVertical, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router";
+import { useAuth } from "@/app/context/AuthContext";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { componentShowcaseText, localizeBadge } from "@/app/i18n";
 import type { ComponentPreviewItem } from "@/app/types/component-showcase";
@@ -31,9 +33,14 @@ export function getPreviewSectionId(value: string) {
  * Includes a lightweight action menu so each showcase block can expose a shareable deep link.
  */
 export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
+  const auth = useAuth();
   const { language } = useLanguage();
   const text = componentShowcaseText[language];
-  const tone = item.badge?.tone ?? "free";
+  const isProItem = item.badge?.tone === "pro";
+  const isProLocked = isProItem && !auth.canUseProContent;
+  const accessTone = isProItem ? "pro" : "free";
+  const statusTone = item.badge?.tone;
+  const showsStatusBadge = statusTone === "new" || statusTone === "featured";
   const sectionId = useMemo(() => getPreviewSectionId(item.id ?? item.title), [item.id, item.title]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -103,6 +110,10 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
   }
 
   function handleToggleSave() {
+    if (isProLocked && !isSaved) {
+      return;
+    }
+
     try {
       toggleSavedPreviewId(sectionId, isSaved);
       setIsSaved(!isSaved);
@@ -123,8 +134,11 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
         <div>
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h3>
-            {item.badge ? (
-              <span className={`rounded-full px-3 py-1 text-xs font-medium ${badgeToneClasses[tone]}`}>
+            <span className={`rounded-full px-3 py-1 text-xs font-medium ${badgeToneClasses[accessTone]}`}>
+              {isProItem ? text.proMembership : text.generalMembership}
+            </span>
+            {item.badge && showsStatusBadge && statusTone ? (
+              <span className={`rounded-full px-3 py-1 text-xs font-medium ${badgeToneClasses[statusTone]}`}>
                 {localizeBadge(language, item.badge.label)}
               </span>
             ) : null}
@@ -154,7 +168,8 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
               <button
                 type="button"
                 onClick={handleToggleSave}
-                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+                disabled={isProLocked && !isSaved}
+                className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 <Star className={`h-4 w-4 ${isSaved ? "fill-current text-amber-500" : ""}`} />
                 <span>{isSaved ? text.removeSaved : text.savePreview}</span>
@@ -179,7 +194,23 @@ export function ComponentPreviewCard({ item }: ComponentPreviewCardProps) {
       </div>
 
       <div className="min-w-0 border-t border-gray-200 pt-4 dark:border-gray-700">
-        <div className="min-w-0 overflow-x-auto rounded-xl bg-white p-4 dark:bg-gray-900">{item.preview}</div>
+        {isProLocked ? (
+          <div className="flex min-h-48 flex-col items-center justify-center rounded-xl bg-white px-4 py-8 text-center dark:bg-gray-900">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+              <LockKeyhole className="h-5 w-5" />
+            </span>
+            <h4 className="mt-4 text-base font-semibold text-gray-950 dark:text-white">{text.proOnlyTitle}</h4>
+            <p className="mt-2 max-w-md text-sm text-gray-600 dark:text-gray-400">{text.proOnlyDescription}</p>
+            <Link
+              to={auth.isAuthenticated ? "/account" : "/auth/login"}
+              className="btn btn-secondary mt-5"
+            >
+              {text.checkMembership}
+            </Link>
+          </div>
+        ) : (
+          <div className="min-w-0 overflow-x-auto rounded-xl bg-white p-4 dark:bg-gray-900">{item.preview}</div>
+        )}
       </div>
     </section>
   );

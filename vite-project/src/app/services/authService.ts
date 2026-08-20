@@ -1,8 +1,12 @@
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  sendPasswordResetEmail,
   sendEmailVerification,
   signInWithEmailAndPassword,
   signOut,
+  updatePassword,
   updateProfile,
   type User,
   type UserCredential,
@@ -21,6 +25,7 @@ import {
 import { auth, db } from './firebase';
 import {
   getRolePermissions,
+  isMembershipPlan,
   isUserRole,
   type AppUserProfile,
   type UserRole,
@@ -59,6 +64,7 @@ function requireDb() {
 }
 
 function normalizeUserProfile(uid: string, data: Record<string, unknown>): AppUserProfile {
+  const membershipPlan = isMembershipPlan(data.membershipPlan) ? data.membershipPlan : 'free';
   const role = isUserRole(data.role) ? data.role : 'user';
 
   return {
@@ -68,6 +74,7 @@ function normalizeUserProfile(uid: string, data: Record<string, unknown>): AppUs
     email: typeof data.email === 'string' ? data.email : null,
     emailVerified: typeof data.emailVerified === 'boolean' ? data.emailVerified : false,
     lastLoginAt: data.lastLoginAt,
+    membershipPlan,
     permissions: getRolePermissions(role),
     role,
     updatedAt: data.updatedAt,
@@ -100,6 +107,7 @@ export async function saveUserProfile(user: User) {
     email: user.email,
     emailVerified: user.emailVerified,
     lastLoginAt: serverTimestamp(),
+    membershipPlan: 'free',
     permissions: getRolePermissions('user'),
     role: 'user',
     uid: user.uid,
@@ -123,6 +131,7 @@ export async function registerWithEmail({ displayName, email, password }: Signup
       email: credential.user.email,
       emailVerified: credential.user.emailVerified,
       lastLoginAt: serverTimestamp(),
+      membershipPlan: 'free',
       permissions: getRolePermissions('user'),
       role: 'user',
       uid: credential.user.uid,
@@ -175,6 +184,28 @@ export async function resendVerificationEmail({ email, password }: EmailAuthForm
 
 export async function logout() {
   await signOut(requireAuth());
+}
+
+export function hasPasswordProvider(user: User) {
+  return user.providerData.some((provider) => provider.providerId === 'password');
+}
+
+export async function changeUserPassword(user: User, currentPassword: string, newPassword: string) {
+  if (!user.email || !hasPasswordProvider(user)) {
+    throw createAuthServiceError('auth/password-provider-required', '이 계정은 이메일 비밀번호 변경을 지원하지 않습니다.');
+  }
+
+  const credential = EmailAuthProvider.credential(user.email, currentPassword);
+  await reauthenticateWithCredential(user, credential);
+  await updatePassword(user, newPassword);
+}
+
+export async function sendCurrentUserPasswordReset(user: User) {
+  if (!user.email || !hasPasswordProvider(user)) {
+    throw createAuthServiceError('auth/password-provider-required', '이 계정은 비밀번호 재설정 메일을 지원하지 않습니다.');
+  }
+
+  await sendPasswordResetEmail(requireAuth(), user.email);
 }
 
 export async function fetchUserProfile(uid: string): Promise<AppUserProfile | null> {

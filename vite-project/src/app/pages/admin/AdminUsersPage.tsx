@@ -7,6 +7,7 @@ import { recordActivity } from '../../services/activityService';
 import { createNotification } from '../../services/notificationService';
 import {
   getRolePermissions,
+  membershipPlanLabels,
   roleLabels,
   roleOptions,
   userRoles,
@@ -178,9 +179,9 @@ export function AdminUsersPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <p className="text-sm font-semibold text-green-600 dark:text-green-400">Admin</p>
-            <h1 className="mt-2 text-3xl font-bold text-gray-950 dark:text-white">회원 권한 관리</h1>
+            <h1 className="mt-2 text-3xl font-bold text-gray-950 dark:text-white">회원 및 권한 관리</h1>
             <p className="mt-3 max-w-2xl text-sm text-gray-600 dark:text-gray-300">
-              회원 프로필, 이메일 인증 상태, Firestore 등급을 한곳에서 확인합니다.
+              회원 프로필, 이메일 인증 상태, 회원 등급과 운영 권한을 한곳에서 확인합니다.
             </p>
           </div>
           <Button type="button" variant="secondary" onClick={loadUsers} disabled={isLoading}>
@@ -210,8 +211,8 @@ export function AdminUsersPage() {
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-1 h-5 w-5 shrink-0 text-yellow-600 dark:text-yellow-400" />
             <p className="text-sm text-yellow-900 dark:text-yellow-100">
-              이 화면은 Firestore 프로필의 등급을 바꿉니다. 관리자 화면 접근 같은 핵심 보안 권한은
-              `npm run set-role -- 이메일 등급`으로 Custom Claim까지 맞춰야 완전히 반영됩니다.
+              운영 권한은 `npm run set-role -- 이메일 권한`, 회원 등급은
+              `npm run set-membership -- 이메일 free|pro` 명령으로 Custom Claim까지 함께 반영해주세요.
             </p>
           </div>
         </CardContent>
@@ -239,7 +240,7 @@ export function AdminUsersPage() {
               </div>
             </label>
             <label className="form-group">
-              <span className="form-label">등급</span>
+              <span className="form-label">관리 권한</span>
               <Select
                 onChange={(event) => setRoleFilter(event.target.value as UserRole | typeof allRoleFilter)}
                 options={roleFilterOptions}
@@ -271,15 +272,16 @@ export function AdminUsersPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] text-left text-sm">
+              <table className="w-full min-w-[1080px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 text-xs uppercase text-gray-500 dark:border-gray-700 dark:text-gray-400">
                     <th className="py-3 pr-4">회원</th>
                     <th className="py-3 pr-4">UID</th>
                     <th className="py-3 pr-4">이메일 인증</th>
                     <th className="py-3 pr-4">마지막 로그인</th>
-                    <th className="py-3 pr-4">현재 등급</th>
-                    <th className="py-3 pr-4">등급 변경</th>
+                    <th className="py-3 pr-4">회원 등급</th>
+                    <th className="py-3 pr-4">관리 권한</th>
+                    <th className="py-3 pr-4">권한 변경</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -304,6 +306,11 @@ export function AdminUsersPage() {
                           </span>
                         </td>
                         <td className="py-3 pr-4 text-gray-600 dark:text-gray-300">{formatDate(user.lastLoginAt)}</td>
+                        <td className="py-3 pr-4">
+                          <span className={`badge ${user.membershipPlan === 'pro' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'badge-success'}`}>
+                            {membershipPlanLabels[user.membershipPlan]}
+                          </span>
+                        </td>
                         <td className="py-3 pr-4">
                           <span className="badge badge-success">{roleLabels[user.role]}</span>
                         </td>

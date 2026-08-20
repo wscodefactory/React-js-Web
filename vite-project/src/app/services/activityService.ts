@@ -1,4 +1,15 @@
-import { addDoc, collection, getDocs, limit, orderBy, query, serverTimestamp } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  serverTimestamp,
+  where,
+  type DocumentData,
+  type QueryDocumentSnapshot,
+} from 'firebase/firestore';
 import { db } from './firebase';
 import {
   activityActions,
@@ -33,6 +44,34 @@ function isActivityAction(value: unknown): value is ActivityAction {
   return typeof value === 'string' && activityActions.includes(value as ActivityAction);
 }
 
+function normalizeActivityLog(activityDoc: QueryDocumentSnapshot<DocumentData>): ActivityLog | null {
+  const data = activityDoc.data();
+
+  if (!isActivityAction(data.action)) {
+    return null;
+  }
+
+  return {
+    action: data.action,
+    actorDisplayName: typeof data.actorDisplayName === 'string' ? data.actorDisplayName : null,
+    actorEmail: typeof data.actorEmail === 'string' ? data.actorEmail : null,
+    actorRole: isUserRole(data.actorRole) ? data.actorRole : 'user',
+    actorUid: typeof data.actorUid === 'string' ? data.actorUid : '',
+    createdAt: data.createdAt,
+    details: typeof data.details === 'string' ? data.details : null,
+    id: activityDoc.id,
+    summary: typeof data.summary === 'string' ? data.summary : '활동 기록',
+    targetId: typeof data.targetId === 'string' ? data.targetId : null,
+  };
+}
+
+function toTimestamp(value: unknown) {
+  if (!value || typeof value !== 'object' || !('toMillis' in value)) return 0;
+
+  const toMillis = (value as { toMillis?: unknown }).toMillis;
+  return typeof toMillis === 'function' ? Number(toMillis.call(value)) : 0;
+}
+
 export async function recordActivity(actor: ActivityActor, input: ActivityInput) {
   await addDoc(collection(requireDb(), 'activityLogs'), {
     action: input.action,
@@ -54,24 +93,18 @@ export async function listActivityLogs(maxCount = 200): Promise<ActivityLog[]> {
     limit(maxCount),
   ));
 
-  return snapshot.docs.flatMap((activityDoc) => {
-    const data = activityDoc.data();
+  return snapshot.docs.map(normalizeActivityLog).filter((item): item is ActivityLog => item !== null);
+}
 
-    if (!isActivityAction(data.action)) {
-      return [];
-    }
+export async function listUserActivityLogs(userId: string, maxCount = 40): Promise<ActivityLog[]> {
+  const snapshot = await getDocs(query(
+    collection(requireDb(), 'activityLogs'),
+    where('actorUid', '==', userId),
+    limit(maxCount),
+  ));
 
-    return [{
-      action: data.action,
-      actorDisplayName: typeof data.actorDisplayName === 'string' ? data.actorDisplayName : null,
-      actorEmail: typeof data.actorEmail === 'string' ? data.actorEmail : null,
-      actorRole: isUserRole(data.actorRole) ? data.actorRole : 'user',
-      actorUid: typeof data.actorUid === 'string' ? data.actorUid : '',
-      createdAt: data.createdAt,
-      details: typeof data.details === 'string' ? data.details : null,
-      id: activityDoc.id,
-      summary: typeof data.summary === 'string' ? data.summary : '활동 기록',
-      targetId: typeof data.targetId === 'string' ? data.targetId : null,
-    }];
-  });
+  return snapshot.docs
+    .map(normalizeActivityLog)
+    .filter((item): item is ActivityLog => item !== null)
+    .sort((firstItem, secondItem) => toTimestamp(secondItem.createdAt) - toTimestamp(firstItem.createdAt));
 }

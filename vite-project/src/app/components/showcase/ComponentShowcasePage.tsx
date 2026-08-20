@@ -39,11 +39,12 @@ export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
         section.title,
         section.description,
         section.badge?.label ?? "",
+        section.badge?.tone === "pro" ? text.proMembership : text.generalMembership,
       ].join(" ").toLowerCase();
 
       return searchableText.includes(normalizedQuery);
     });
-  }, [localizedConfig.sections, query]);
+  }, [localizedConfig.sections, query, text.generalMembership, text.proMembership]);
   const visibleSections = useMemo(
     () => showSavedOnly
       ? matchingSections.filter((section) => savedPreviewIds.includes(getPreviewSectionId(section.id ?? section.title)))
