@@ -1,5 +1,13 @@
 import type { ComponentShowcaseConfig } from "@/app/types/component-showcase";
+import { extractExportedFunctionSource } from "@/app/utils/componentSource";
 import { AppShellPreview, DrawerPreview, ProductCardPreview, SidebarPreview } from "./layoutPreviews";
+
+const layoutPreviewSourcePath = "src/app/data/component-showcases/layoutPreviews.tsx";
+
+async function loadLayoutPreviewSource(exportName: string) {
+  const sourceModule = await import("./layoutPreviews.tsx?raw");
+  return extractExportedFunctionSource(sourceModule.default, exportName);
+}
 
 export const layoutComponentShowcases = {
   appShells: {
@@ -12,6 +20,8 @@ export const layoutComponentShowcases = {
         title: "Dashboard Shell",
         description: "A practical layout for admin tools and internal dashboards.",
         badge: { label: "FEATURED", tone: "featured" },
+        loadSourceCode: () => loadLayoutPreviewSource("AppShellPreview"),
+        sourcePath: layoutPreviewSourcePath,
         preview: <AppShellPreview />,
       },
     ],
@@ -25,6 +35,8 @@ export const layoutComponentShowcases = {
       {
         title: "Product Card",
         description: "A product summary card with details and a clear next action.",
+        loadSourceCode: () => loadLayoutPreviewSource("ProductCardPreview"),
+        sourcePath: layoutPreviewSourcePath,
         preview: <ProductCardPreview />,
       },
     ],
@@ -38,6 +50,8 @@ export const layoutComponentShowcases = {
       {
         title: "Side Drawer",
         description: "A compact side panel for settings and supporting details.",
+        loadSourceCode: () => loadLayoutPreviewSource("DrawerPreview"),
+        sourcePath: layoutPreviewSourcePath,
         preview: <DrawerPreview />,
       },
     ],
@@ -51,6 +65,8 @@ export const layoutComponentShowcases = {
       {
         title: "Collapsible Sidebar",
         description: "A two-column shell with navigation that can expand or collapse.",
+        loadSourceCode: () => loadLayoutPreviewSource("SidebarPreview"),
+        sourcePath: layoutPreviewSourcePath,
         preview: <SidebarPreview />,
       },
     ],

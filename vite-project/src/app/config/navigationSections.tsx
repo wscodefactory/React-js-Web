@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import { lazy, type ComponentType } from "react";
 import type { RouteSectionDefinition } from "../types/navigation";
 import { HomePage } from "../pages/HomePage";
 import { ComponentsPage } from "../pages/ComponentsPage";
@@ -6,24 +6,6 @@ import { FullAppsPage } from "../pages/FullAppsPage";
 import { LibrariesPage } from "../pages/LibrariesPage";
 import { ToolsPage } from "../pages/ToolsPage";
 import { McpPage } from "../pages/McpPage";
-import { Accordions } from "../pages/components/Accordions";
-import { Animations } from "../pages/components/Animations";
-import { AppShells } from "../pages/components/AppShells";
-import { Badge } from "../pages/components/Badge";
-import { Buttons } from "../pages/components/Buttons";
-import { ButtonGroup } from "../pages/components/ButtonGroup";
-import { Calendars } from "../pages/components/Calendars";
-import { Cards } from "../pages/components/Cards";
-import { Drawer } from "../pages/components/Drawer";
-import { Dropdowns } from "../pages/components/Dropdowns";
-import { Gallery } from "../pages/components/Gallery";
-import { Modals } from "../pages/components/Modals";
-import { NavigationBars } from "../pages/components/NavigationBars";
-import { SidebarShowcasePage } from "../pages/components/SidebarShowcasePage";
-import { Steppers } from "../pages/components/Steppers";
-import { Tabs } from "../pages/components/Tabs";
-import { Toggles } from "../pages/components/Toggles";
-import { InputFields } from "../pages/components/InputFields";
 import { FeedbackAppPage } from "../pages/fullapps/FeedbackAppPage";
 import { ProjectManagementAppPage } from "../pages/fullapps/ProjectManagementAppPage";
 import { ChromeExtensionsPage } from "../pages/fullapps/ChromeExtensionsPage";
@@ -40,6 +22,35 @@ import { MockApiStudioPage } from "../pages/tools/MockApiStudioPage";
 import { LoginPage } from "../pages/auth/LoginPage";
 import { SignupPage } from "../pages/auth/SignupPage";
 
+function lazyNamedPage<TModule extends Record<string, unknown>>(
+  loadModule: () => Promise<TModule>,
+  exportName: keyof TModule,
+) {
+  return lazy(async () => {
+    const pageModule = await loadModule();
+    return { default: pageModule[exportName] as ComponentType };
+  });
+}
+
+const Accordions = lazyNamedPage(() => import("../pages/components/Accordions"), "Accordions");
+const Animations = lazyNamedPage(() => import("../pages/components/Animations"), "Animations");
+const AppShells = lazyNamedPage(() => import("../pages/components/AppShells"), "AppShells");
+const Badge = lazyNamedPage(() => import("../pages/components/Badge"), "Badge");
+const Buttons = lazyNamedPage(() => import("../pages/components/Buttons"), "Buttons");
+const ButtonGroup = lazyNamedPage(() => import("../pages/components/ButtonGroup"), "ButtonGroup");
+const Calendars = lazyNamedPage(() => import("../pages/components/Calendars"), "Calendars");
+const Cards = lazyNamedPage(() => import("../pages/components/Cards"), "Cards");
+const Drawer = lazyNamedPage(() => import("../pages/components/Drawer"), "Drawer");
+const Dropdowns = lazyNamedPage(() => import("../pages/components/Dropdowns"), "Dropdowns");
+const Gallery = lazyNamedPage(() => import("../pages/components/Gallery"), "Gallery");
+const InputFields = lazyNamedPage(() => import("../pages/components/InputFields"), "InputFields");
+const Modals = lazyNamedPage(() => import("../pages/components/Modals"), "Modals");
+const NavigationBars = lazyNamedPage(() => import("../pages/components/NavigationBars"), "NavigationBars");
+const SidebarShowcasePage = lazyNamedPage(() => import("../pages/components/SidebarShowcasePage"), "SidebarShowcasePage");
+const Steppers = lazyNamedPage(() => import("../pages/components/Steppers"), "Steppers");
+const Tabs = lazyNamedPage(() => import("../pages/components/Tabs"), "Tabs");
+const Toggles = lazyNamedPage(() => import("../pages/components/Toggles"), "Toggles");
+
 const WorkspacePage = lazy(async () => {
   const pageModule = await import("../pages/WorkspacePage");
   return { default: pageModule.WorkspacePage };
@@ -55,6 +66,10 @@ const SecurityCenterPage = lazy(async () => {
 const AccountPage = lazy(async () => {
   const pageModule = await import("../pages/auth/AccountPage");
   return { default: pageModule.AccountPage };
+});
+const CollectionsPage = lazy(async () => {
+  const pageModule = await import("../pages/CollectionsPage");
+  return { default: pageModule.CollectionsPage };
 });
 const AdminDashboardPage = lazy(async () => {
   const pageModule = await import("../pages/admin/AdminDashboardPage");
@@ -178,6 +193,14 @@ export const routeSections: RouteSectionDefinition[] = [
     basePath: "/workspace",
     landingDescription: "Sync saved tool data across devices and restore earlier versions.",
     landingComponent: WorkspacePage,
+    requiresAuth: true,
+  },
+  {
+    key: "collections",
+    label: "Collections",
+    basePath: "/collections",
+    landingDescription: "Organize saved components into personal collections and revisit recent previews.",
+    landingComponent: CollectionsPage,
     requiresAuth: true,
   },
   {

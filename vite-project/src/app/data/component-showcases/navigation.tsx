@@ -1,5 +1,13 @@
 import type { ComponentShowcaseConfig } from "@/app/types/component-showcase";
+import { extractExportedFunctionSource } from "@/app/utils/componentSource";
 import { DropdownPreview, NavigationBarPreview, SegmentedControlsPreview, TabsPreview } from "./navigationPreviews";
+
+const navigationPreviewSourcePath = "src/app/data/component-showcases/navigationPreviews.tsx";
+
+async function loadNavigationPreviewSource(exportName: string) {
+  const sourceModule = await import("./navigationPreviews.tsx?raw");
+  return extractExportedFunctionSource(sourceModule.default, exportName);
+}
 
 export const navigationComponentShowcases = {
   buttonGroup: {
@@ -11,6 +19,8 @@ export const navigationComponentShowcases = {
       {
         title: "Segmented Controls",
         description: "Connected buttons for moving between sibling views.",
+        loadSourceCode: () => loadNavigationPreviewSource("SegmentedControlsPreview"),
+        sourcePath: navigationPreviewSourcePath,
         preview: <SegmentedControlsPreview />,
       },
     ],
@@ -24,6 +34,8 @@ export const navigationComponentShowcases = {
       {
         title: "Menu Dropdown",
         description: "A compact action menu for rename, duplicate, share, and archive.",
+        loadSourceCode: () => loadNavigationPreviewSource("DropdownPreview"),
+        sourcePath: navigationPreviewSourcePath,
         preview: <DropdownPreview />,
       },
     ],
@@ -37,6 +49,8 @@ export const navigationComponentShowcases = {
       {
         title: "Top Navigation",
         description: "A responsive navbar with a logo, links, and a clear start button.",
+        loadSourceCode: () => loadNavigationPreviewSource("NavigationBarPreview"),
+        sourcePath: navigationPreviewSourcePath,
         preview: <NavigationBarPreview />,
       },
     ],
@@ -50,6 +64,8 @@ export const navigationComponentShowcases = {
       {
         title: "Horizontal Tabs",
         description: "A simple tab strip with a clear active state.",
+        loadSourceCode: () => loadNavigationPreviewSource("TabsPreview"),
+        sourcePath: navigationPreviewSourcePath,
         preview: <TabsPreview />,
       },
     ],

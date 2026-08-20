@@ -13,7 +13,7 @@ import { routeSections } from "./navigationSections";
 
 export { routeSections };
 
-const hiddenTopNavigationKeys = new Set<RouteSectionKey>(["home", "account", "admin"]);
+const hiddenTopNavigationKeys = new Set<RouteSectionKey>(["home", "collections", "account", "admin"]);
 
 function isSectionVisible(section: RouteSectionDefinition, menuVisibility = defaultSiteSettings.menuVisibility) {
   return !isConfigurableSectionKey(section.key) || menuVisibility[section.key] !== false;

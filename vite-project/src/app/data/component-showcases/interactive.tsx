@@ -1,4 +1,5 @@
 import type { ComponentShowcaseConfig } from "@/app/types/component-showcase";
+import { extractExportedFunctionSource } from "@/app/utils/componentSource";
 import {
   AnimatedLineChartPreview,
   AnimatedTogglePreview,
@@ -6,6 +7,13 @@ import {
   ModalPreview,
   StepperPreview,
 } from "./interactivePreviews";
+
+const interactivePreviewSourcePath = "src/app/data/component-showcases/interactivePreviews.tsx";
+
+async function loadInteractivePreviewSource(exportName: string) {
+  const sourceModule = await import("./interactivePreviews.tsx?raw");
+  return extractExportedFunctionSource(sourceModule.default, exportName);
+}
 
 export const interactiveComponentShowcases = {
   animations: {
@@ -19,12 +27,16 @@ export const interactiveComponentShowcases = {
         title: "Animated Line Chart",
         description: "A small chart motion for KPI cards and trend widgets.",
         badge: { label: "PRO", tone: "pro" },
+        loadSourceCode: () => loadInteractivePreviewSource("AnimatedLineChartPreview"),
+        sourcePath: interactivePreviewSourcePath,
         preview: <AnimatedLineChartPreview />,
       },
       {
         title: "Animated Toggle",
         description: "A segmented control that makes mode changes feel smoother.",
         badge: { label: "PRO", tone: "pro" },
+        loadSourceCode: () => loadInteractivePreviewSource("AnimatedTogglePreview"),
+        sourcePath: interactivePreviewSourcePath,
         preview: <AnimatedTogglePreview />,
       },
     ],
@@ -38,6 +50,8 @@ export const interactiveComponentShowcases = {
       {
         title: "Date Picker",
         description: "A lightweight monthly view for choosing a date inside a form.",
+        loadSourceCode: () => loadInteractivePreviewSource("CalendarPreview"),
+        sourcePath: interactivePreviewSourcePath,
         preview: <CalendarPreview />,
       },
     ],
@@ -51,6 +65,8 @@ export const interactiveComponentShowcases = {
       {
         title: "Confirmation Modal",
         description: "A confirmation modal for destructive or important actions.",
+        loadSourceCode: () => loadInteractivePreviewSource("ModalPreview"),
+        sourcePath: interactivePreviewSourcePath,
         preview: <ModalPreview />,
       },
     ],
@@ -64,6 +80,8 @@ export const interactiveComponentShowcases = {
       {
         title: "Progress Stepper",
         description: "A horizontal stepper for setup, review, and approval flows.",
+        loadSourceCode: () => loadInteractivePreviewSource("StepperPreview"),
+        sourcePath: interactivePreviewSourcePath,
         preview: <StepperPreview />,
       },
     ],

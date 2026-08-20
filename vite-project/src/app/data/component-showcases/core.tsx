@@ -1,4 +1,5 @@
 import type { ComponentShowcaseConfig } from "@/app/types/component-showcase";
+import { extractExportedFunctionSource } from "@/app/utils/componentSource";
 import {
   ButtonActionPreview,
   EditableInputPreview,
@@ -6,6 +7,13 @@ import {
   StatusBadgePreview,
   TogglePreview,
 } from "./corePreviews";
+
+const corePreviewSourcePath = "src/app/data/component-showcases/corePreviews.tsx";
+
+async function loadCorePreviewSource(exportName: string) {
+  const sourceModule = await import("./corePreviews.tsx?raw");
+  return extractExportedFunctionSource(sourceModule.default, exportName);
+}
 
 export const coreComponentShowcases = {
   accordions: {
@@ -19,6 +27,8 @@ export const coreComponentShowcases = {
         title: "Accordion Plus",
         description: "A clear plus/minus accordion for dense settings or help content.",
         badge: { label: "PRO", tone: "pro" },
+        loadSourceCode: () => loadCorePreviewSource("InteractiveAccordionPreview"),
+        sourcePath: corePreviewSourcePath,
         preview: (
           <InteractiveAccordionPreview
             variant="plus"
@@ -34,6 +44,8 @@ export const coreComponentShowcases = {
         title: "Classic Accordion",
         description: "A quiet stacked layout for documentation, help, and answers.",
         badge: { label: "FREE", tone: "free" },
+        loadSourceCode: () => loadCorePreviewSource("InteractiveAccordionPreview"),
+        sourcePath: corePreviewSourcePath,
         preview: (
           <InteractiveAccordionPreview
             variant="classic"
@@ -57,6 +69,8 @@ export const coreComponentShowcases = {
         title: "Status Badges",
         description: "Reusable badges for success, pending, blocked, and reviewed states.",
         badge: { label: "NEW", tone: "new" },
+        loadSourceCode: () => loadCorePreviewSource("StatusBadgePreview"),
+        sourcePath: corePreviewSourcePath,
         preview: <StatusBadgePreview />,
       },
     ],
@@ -72,18 +86,24 @@ export const coreComponentShowcases = {
         title: "Primary Button",
         description: "Strong buttons for the action users should notice first.",
         badge: { label: "FREE", tone: "free" },
+        loadSourceCode: () => loadCorePreviewSource("ButtonActionPreview"),
+        sourcePath: corePreviewSourcePath,
         preview: <ButtonActionPreview variant="solid" />,
       },
       {
         title: "Outline Buttons",
         description: "Softer buttons for secondary choices and supporting actions.",
         badge: { label: "PRO", tone: "pro" },
+        loadSourceCode: () => loadCorePreviewSource("ButtonActionPreview"),
+        sourcePath: corePreviewSourcePath,
         preview: <ButtonActionPreview variant="outline" />,
       },
       {
         title: "Icon Buttons",
         description: "Compact buttons that pair an icon cue with a readable label.",
         badge: { label: "PRO", tone: "pro" },
+        loadSourceCode: () => loadCorePreviewSource("ButtonActionPreview"),
+        sourcePath: corePreviewSourcePath,
         preview: <ButtonActionPreview variant="icon" />,
       },
     ],
@@ -98,6 +118,8 @@ export const coreComponentShowcases = {
         title: "Text Input",
         description: "A text field that gives helpful validation feedback right away.",
         badge: { label: "NEW", tone: "new" },
+        loadSourceCode: () => loadCorePreviewSource("EditableInputPreview"),
+        sourcePath: corePreviewSourcePath,
         preview: <EditableInputPreview />,
       },
     ],
@@ -111,6 +133,8 @@ export const coreComponentShowcases = {
       {
         title: "Switch Toggle",
         description: "A clear switch for notification, preference, and feature settings.",
+        loadSourceCode: () => loadCorePreviewSource("TogglePreview"),
+        sourcePath: corePreviewSourcePath,
         preview: <TogglePreview />,
       },
     ],

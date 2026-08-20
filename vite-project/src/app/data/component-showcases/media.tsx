@@ -1,5 +1,6 @@
 import type { ComponentShowcaseConfig } from '@/app/types/component-showcase';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { extractExportedFunctionSource } from '@/app/utils/componentSource';
 import { useState } from 'react';
 
 const galleryPreviewText = {
@@ -15,7 +16,7 @@ const galleryPreviewText = {
   },
 } as const;
 
-function GalleryPreview() {
+export function GalleryPreview() {
   const { language } = useLanguage();
   const text = galleryPreviewText[language];
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -71,6 +72,11 @@ export const mediaComponentShowcases = {
       {
         title: "Photo Grid",
         description: "A gallery with one large preview and quick thumbnail choices.",
+        loadSourceCode: async () => {
+          const sourceModule = await import("./media.tsx?raw");
+          return extractExportedFunctionSource(sourceModule.default, "GalleryPreview");
+        },
+        sourcePath: "src/app/data/component-showcases/media.tsx",
         preview: <GalleryPreview />,
       },
     ],

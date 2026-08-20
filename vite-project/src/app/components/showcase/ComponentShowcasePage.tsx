@@ -18,7 +18,17 @@ export interface ComponentShowcasePageProps {
 export function ComponentShowcasePage({ config }: ComponentShowcasePageProps) {
   const { language } = useLanguage();
   const text = componentShowcaseText[language];
-  const localizedConfig = useMemo(() => getComponentShowcaseConfigCopy(language, config), [config, language]);
+  const localizedConfig = useMemo(() => {
+    const localizedCopy = getComponentShowcaseConfigCopy(language, config);
+
+    return {
+      ...localizedCopy,
+      sections: localizedCopy.sections.map((section, index) => ({
+        ...section,
+        id: config.sections[index]?.id ?? getPreviewSectionId(config.sections[index]?.title ?? section.title),
+      })),
+    };
+  }, [config, language]);
   const [savedPreviewIds, setSavedPreviewIds] = useState<string[]>([]);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [query, setQuery] = useState("");

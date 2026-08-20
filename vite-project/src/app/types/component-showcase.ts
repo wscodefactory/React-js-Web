@@ -11,6 +11,9 @@ export interface ComponentPreviewItem {
     tone?: ShowcaseBadgeTone;
   };
   preview: ReactNode;
+  loadSourceCode?: () => Promise<string>;
+  sourceCode?: string;
+  sourcePath?: string;
 }
 
 export interface ComponentShowcaseConfig {

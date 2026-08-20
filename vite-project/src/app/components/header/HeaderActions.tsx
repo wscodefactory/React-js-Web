@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { Download, Languages, LogOut, MoreHorizontal, Moon, Search, Sun, Upload } from "lucide-react";
+import { Download, FolderHeart, Languages, LogOut, MoreHorizontal, Moon, Search, Sun, Upload } from "lucide-react";
 import { IconButton } from "@/app/components/common";
 import { useAuth } from "@/app/context/AuthContext";
 import type { HeaderShellText } from "./types";
@@ -83,6 +83,14 @@ export function HeaderActions({
               <Upload className="icon-sm" />
               Restore workspace
             </button>
+            <Link
+              to="/collections"
+              onClick={() => setIsUtilityMenuOpen(false)}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              <FolderHeart className="icon-sm" />
+              내 컬렉션
+            </Link>
           </div>
         ) : null}
       </div>
