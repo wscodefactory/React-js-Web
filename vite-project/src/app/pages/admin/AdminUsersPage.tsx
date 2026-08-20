@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Filter, RefreshCw, Search, ShieldAlert, UserCheck, UserX, UsersRound } from 'lucide-react';
+import { Check, Clipboard, Crown, Filter, RefreshCw, Search, ShieldAlert, UserCheck, UserX, UsersRound, XCircle } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, Input, Select } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
 import { listUserProfiles, updateUserProfileRole } from '../../services/authService';
 import { recordActivity } from '../../services/activityService';
+import {
+  listMembershipRequests,
+  reviewMembershipRequest,
+} from '../../services/membershipRequestService';
 import { createNotification } from '../../services/notificationService';
 import {
   getRolePermissions,
@@ -14,6 +18,12 @@ import {
   type AppUserProfile,
   type UserRole,
 } from '../../types/auth';
+import {
+  membershipRequestStatusLabels,
+  type MembershipRequest,
+  type MembershipRequestStatus,
+} from '../../types/membership-request';
+import { copyTextToClipboard } from '../../utils/clipboard';
 
 type VerificationFilter = 'all' | 'verified' | 'unverified';
 
@@ -79,6 +89,10 @@ export function AdminUsersPage() {
   const auth = useAuth();
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [copiedMembershipUid, setCopiedMembershipUid] = useState<string | null>(null);
+  const [membershipError, setMembershipError] = useState('');
+  const [membershipRequests, setMembershipRequests] = useState<MembershipRequest[]>([]);
+  const [reviewingMembershipUid, setReviewingMembershipUid] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<UserRole | typeof allRoleFilter>(allRoleFilter);
   const [savingUid, setSavingUid] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,12 +100,18 @@ export function AdminUsersPage() {
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>('all');
   const canManageOwners = auth.hasRole('owner');
 
-  const loadUsers = async () => {
+  const loadAdminData = async () => {
     setErrorMessage('');
+    setMembershipError('');
     setIsLoading(true);
 
     try {
-      setUsers(sortByRecentActivity(await listUserProfiles()));
+      const [userProfiles, requests] = await Promise.all([
+        listUserProfiles(),
+        listMembershipRequests(),
+      ]);
+      setUsers(sortByRecentActivity(userProfiles));
+      setMembershipRequests(requests);
     } catch (error) {
       setErrorMessage(getAdminErrorMessage(error));
     } finally {
@@ -100,8 +120,13 @@ export function AdminUsersPage() {
   };
 
   useEffect(() => {
-    void loadUsers();
+    void loadAdminData();
   }, []);
+
+  const pendingMembershipCount = useMemo(
+    () => membershipRequests.filter((request) => request.status === 'pending').length,
+    [membershipRequests],
+  );
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -173,6 +198,74 @@ export function AdminUsersPage() {
     }
   };
 
+  const handleCopyMembershipCommand = async (request: MembershipRequest) => {
+    const command = `npm run set-membership -- ${request.email} pro`;
+    setMembershipError('');
+
+    try {
+      const copied = await copyTextToClipboard(command);
+
+      if (!copied) {
+        throw new Error('클립보드를 사용할 수 없습니다.');
+      }
+
+      setCopiedMembershipUid(request.uid);
+    } catch (error) {
+      setMembershipError(getAdminErrorMessage(error));
+    }
+  };
+
+  const handleMembershipReview = async (
+    request: MembershipRequest,
+    status: Extract<MembershipRequestStatus, 'approved' | 'rejected'>,
+  ) => {
+    if (!auth.user) return;
+
+    setReviewingMembershipUid(request.uid);
+    setMembershipError('');
+
+    try {
+      await reviewMembershipRequest(request.uid, status, auth.user.uid);
+      setMembershipRequests((currentRequests) => currentRequests.map((currentRequest) => (
+        currentRequest.uid === request.uid
+          ? {
+              ...currentRequest,
+              reviewedAt: new Date(),
+              reviewedBy: auth.user?.uid ?? null,
+              status,
+              updatedAt: new Date(),
+            }
+          : currentRequest
+      )));
+      setCopiedMembershipUid((currentUid) => currentUid === request.uid ? null : currentUid);
+
+      void recordActivity({
+        displayName: auth.user.displayName,
+        email: auth.user.email,
+        role: auth.role,
+        uid: auth.user.uid,
+      }, {
+        action: 'admin.membership.reviewed',
+        details: status === 'approved' ? '프로 등급 적용 완료' : '프로 등급 신청 거절',
+        summary: `${request.displayName || request.email} 회원의 프로 등급 신청을 처리했습니다.`,
+        targetId: request.uid,
+      }).catch((error) => console.warn('Failed to record membership review activity.', error));
+
+      void createNotification(request.uid, {
+        link: '/account',
+        message: status === 'approved'
+          ? '프로 등급 적용이 완료되었습니다. 다시 로그인하거나 권한을 새로고침해주세요.'
+          : '프로 등급 신청이 승인되지 않았습니다. 내 계정에서 다시 신청할 수 있습니다.',
+        title: status === 'approved' ? '프로 등급 적용 완료' : '프로 등급 신청 결과',
+        type: status === 'approved' ? 'success' : 'warning',
+      }).catch((error) => console.warn('Failed to create membership notification.', error));
+    } catch (error) {
+      setMembershipError(getAdminErrorMessage(error));
+    } finally {
+      setReviewingMembershipUid(null);
+    }
+  };
+
   return (
     <div className="container-page space-y-6">
       <section className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900 md:p-8">
@@ -184,7 +277,7 @@ export function AdminUsersPage() {
               회원 프로필, 이메일 인증 상태, 회원 등급과 운영 권한을 한곳에서 확인합니다.
             </p>
           </div>
-          <Button type="button" variant="secondary" onClick={loadUsers} disabled={isLoading}>
+          <Button type="button" variant="secondary" onClick={loadAdminData} disabled={isLoading}>
             <RefreshCw className="mr-2 inline h-4 w-4" />
             새로고침
           </Button>
@@ -215,6 +308,109 @@ export function AdminUsersPage() {
               `npm run set-membership -- 이메일 free|pro` 명령으로 Custom Claim까지 함께 반영해주세요.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="프로 등급 신청"
+          description={`처리 대기 ${pendingMembershipCount}건 · 최근 신청 ${membershipRequests.length}건`}
+          icon={<Crown className="h-5 w-5 text-purple-600" />}
+        />
+        <CardContent className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            대기 중인 신청은 명령 복사 후 프로젝트 터미널에서 실행하고, 성공 메시지를 확인한 뒤 적용 완료를 눌러주세요.
+          </p>
+
+          {membershipError ? (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+              {membershipError}
+            </p>
+          ) : null}
+
+          {isLoading ? (
+            <p className="text-sm text-gray-600 dark:text-gray-300">프로 등급 신청을 불러오는 중입니다.</p>
+          ) : membershipRequests.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
+              현재 프로 등급 신청이 없습니다.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {membershipRequests.slice(0, 20).map((request) => {
+                const command = `npm run set-membership -- ${request.email} pro`;
+                const isPending = request.status === 'pending';
+                const isReviewing = reviewingMembershipUid === request.uid;
+                const commandWasCopied = copiedMembershipUid === request.uid;
+                const statusClass = {
+                  approved: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+                  cancelled: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+                  pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+                  rejected: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
+                }[request.status];
+
+                return (
+                  <div
+                    key={request.uid}
+                    className="border-b border-gray-200 py-4 first:pt-0 last:border-b-0 last:pb-0 dark:border-gray-700"
+                  >
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold text-gray-950 dark:text-white">
+                            {request.displayName || '이름 없음'}
+                          </p>
+                          <span className={`badge ${statusClass}`}>
+                            {membershipRequestStatusLabels[request.status]}
+                          </span>
+                        </div>
+                        <p className="mt-1 break-all text-sm text-gray-600 dark:text-gray-300">{request.email}</p>
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          신청일 {formatDate(request.requestedAt)}
+                        </p>
+                        {isPending ? (
+                          <code className="mt-3 block max-w-full overflow-x-auto rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                            {command}
+                          </code>
+                        ) : null}
+                      </div>
+
+                      {isPending ? (
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={isReviewing}
+                            onClick={() => void handleCopyMembershipCommand(request)}
+                          >
+                            {commandWasCopied ? <Check className="mr-2 inline h-4 w-4" /> : <Clipboard className="mr-2 inline h-4 w-4" />}
+                            {commandWasCopied ? '복사됨' : '명령 복사'}
+                          </Button>
+                          <Button
+                            type="button"
+                            disabled={isReviewing || !commandWasCopied}
+                            onClick={() => void handleMembershipReview(request, 'approved')}
+                          >
+                            <Check className="mr-2 inline h-4 w-4" />
+                            적용 완료
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            disabled={isReviewing}
+                            onClick={() => void handleMembershipReview(request, 'rejected')}
+                            className="text-red-600 dark:text-red-300"
+                          >
+                            <XCircle className="mr-2 inline h-4 w-4" />
+                            거절
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -30,6 +30,10 @@ service cloud.firestore {
       return isManager() || (signedIn() && role() == 'editor');
     }
 
+    function isProMember() {
+      return signedIn() && request.auth.token.get('membershipPlan', 'free') == 'pro';
+    }
+
     function validRole(roleValue) {
       return roleValue in ['user', 'editor', 'manager', 'admin', 'owner'];
     }
@@ -211,6 +215,9 @@ service cloud.firestore {
           'project.archived',
           'project.restored',
           'project.deleted',
+          'membership.request.created',
+          'membership.request.cancelled',
+          'admin.membership.reviewed',
           'admin.role.updated',
           'admin.settings.updated'
         ]
@@ -234,6 +241,61 @@ service cloud.firestore {
         && request.resource.data.message is string
         && request.resource.data.title is string
         && request.resource.data.type in ['info', 'success', 'warning', 'role'];
+    }
+
+    function validMembershipRequestSubmission(userId) {
+      return request.resource.data.keys().hasOnly([
+          'displayName',
+          'email',
+          'requestedAt',
+          'requestedPlan',
+          'reviewedAt',
+          'reviewedBy',
+          'status',
+          'uid',
+          'updatedAt'
+        ])
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.email is string
+        && (
+          request.resource.data.displayName == null
+          || request.resource.data.displayName is string
+        )
+        && request.resource.data.requestedPlan == 'pro'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.requestedAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.reviewedAt == null
+        && request.resource.data.reviewedBy == null;
+    }
+
+    function validMembershipRequestResubmission(userId) {
+      return resource.data.status in ['approved', 'rejected', 'cancelled']
+        && !isProMember()
+        && validMembershipRequestSubmission(userId);
+    }
+
+    function validMembershipRequestCancellation(userId) {
+      return resource.data.uid == userId
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status == 'cancelled'
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validMembershipRequestReview() {
+      return resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'reviewedAt',
+          'reviewedBy',
+          'status',
+          'updatedAt'
+        ])
+        && request.resource.data.status in ['approved', 'rejected']
+        && request.resource.data.reviewedAt == request.time
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
     }
 
     function validProjectData(userId) {
@@ -329,6 +391,21 @@ service cloud.firestore {
       allow create: if signedIn() && validActivityLog();
       allow update: if false;
       allow delete: if isOwner();
+    }
+
+    match /membershipRequests/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && !isProMember()
+        && validMembershipRequestSubmission(userId);
+      allow update: if signedIn()
+        && (
+          (request.auth.uid == userId && validMembershipRequestCancellation(userId))
+          || (request.auth.uid == userId && validMembershipRequestResubmission(userId))
+          || (isAdmin() && validMembershipRequestReview())
+        );
+      allow delete: if false;
     }
 
     match /notifications/{userId}/items/{notificationId} {

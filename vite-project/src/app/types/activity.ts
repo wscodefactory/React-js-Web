@@ -13,6 +13,9 @@ export const activityActions = [
   'project.archived',
   'project.restored',
   'project.deleted',
+  'membership.request.created',
+  'membership.request.cancelled',
+  'admin.membership.reviewed',
   'admin.role.updated',
   'admin.settings.updated',
 ] as const;
@@ -45,6 +48,9 @@ export const activityActionLabels: Record<ActivityAction, string> = {
   'project.archived': '프로젝트 보관',
   'project.restored': '프로젝트 보관 해제',
   'project.deleted': '프로젝트 삭제',
+  'membership.request.created': '프로 등급 신청',
+  'membership.request.cancelled': '프로 등급 신청 취소',
+  'admin.membership.reviewed': '프로 등급 신청 처리',
   'admin.role.updated': '회원 권한 변경',
   'admin.settings.updated': '사이트 설정 변경',
 };
